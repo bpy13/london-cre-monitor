@@ -57,18 +57,6 @@ class Settings(BaseSettings):
     #: (a truncated structured response fails validation and wastes the call).
     llm_max_tokens: int = 16000
 
-    # --- LLM HTTP transport (see llm.build_http_clients) --------------------
-    # Typical corporate needs: an outbound proxy, a company root CA for TLS
-    # inspection, longer timeouts. All optional - unset means SDK defaults.
-    #: Outbound proxy for Claude API calls, e.g. "http://proxy.corp.local:8080".
-    llm_proxy_url: str | None = None
-    #: Path to a CA bundle (PEM) to trust, e.g. a corporate TLS-inspection root.
-    llm_ca_bundle: Path | None = None
-    #: Read timeout per Claude request, seconds (long agent turns can be slow).
-    llm_timeout_s: float = 600.0
-    #: Connection timeout, seconds.
-    llm_connect_timeout_s: float = 10.0
-
     # --- Run modes (see module docstring) ---------------------------------
     cre_offline: bool = False
     cre_demo_mode: bool | None = None  # None -> derived from API key presence

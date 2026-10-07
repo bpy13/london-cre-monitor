@@ -1,0 +1,28 @@
+{
+  "skill": "supply-pipeline",
+  "headline": "Space under construction is at its lowest level since Q3 2021, and refurbishments now make up about two-thirds of new starts, pointing to a Grade A supply gap from 2027.",
+  "summary": "JLL reports central London space under construction at its lowest level since Q3 2021. Savills (as cited by K2 Space) forecasts about 8.5m sq ft of 2026 completions across central London, around two-thirds already pre-let, with 4.85m sq ft in the City; West End completions fall to 1.6m sq ft by 2028. Office starts in 2025 were about 4.8m sq ft against a five-year average of about 6.5m sq ft, and roughly two-thirds were refurbishments (London Construction Magazine). CoStar's forecast expects demand to outpace supply from mid-2027.",
+  "metrics": [
+    {"key": "completions_sqft", "submarket": "Central London", "value": 8500000, "unit": "sq ft", "period": "2026", "source": "Savills (via K2 Space)", "url": "https://k2space.co.uk/knowledge/london-office-market", "note": "forecast 2026 completions"},
+    {"key": "completions_sqft", "submarket": "City", "value": 4850000, "unit": "sq ft", "period": "2026", "source": "Savills (via K2 Space)", "url": "https://k2space.co.uk/knowledge/london-office-market", "note": "forecast 2026 completions"},
+    {"key": "pipeline_prelet_sqft", "submarket": "Central London", "value": 5670000, "unit": "sq ft", "period": "2026", "source": "Savills (via K2 Space)", "url": "https://k2space.co.uk/knowledge/london-office-market", "note": "derived: ~two-thirds of 8.5m pre-let"},
+    {"key": "pipeline_speculative_sqft", "submarket": "Central London", "value": 2830000, "unit": "sq ft", "period": "2026", "source": "Savills (via K2 Space)", "url": "https://k2space.co.uk/knowledge/london-office-market", "note": "derived: ~one-third of 8.5m not pre-let"}
+  ],
+  "insights": [
+    "Starts in 2025: ~4.8m sq ft vs a ~6.5m sq ft five-year average; refurbishments made up ~two-thirds of start volume (London Construction Magazine, Aug 2026).",
+    "Google's 860,000 sq ft King's Cross HQ has completed; OpenAI has pre-let all of Jahn Court for late 2026 (Avison Young).",
+    "West End completions are forecast to fall to 1.6m sq ft by 2028 (Savills via K2 Space).",
+    "CoStar's UK office forecast expects demand to outpace supply from mid-2027."
+  ],
+  "signals": [
+    {"type": "opportunity", "severity": "high", "title": "2027-2029 Grade A supply gap", "rationale": "Low construction volumes and slowing starts, set against strong Grade A demand, favour schemes able to deliver in 2027-2029, especially refurbishments that are quicker and lower in embodied carbon.", "submarket": "Central London"},
+    {"type": "risk", "severity": "medium", "title": "City 2026 completion wave", "rationale": "About 4.85m sq ft completes in the City in 2026; the unlet portion will compete for the same occupiers in the near term.", "submarket": "City"}
+  ],
+  "citations": [
+    {"title": "Central London Office Market Dynamics Q2 2026", "url": "https://www.jll.com/en-uk/insights/market-dynamics/central-london-office", "publisher": "JLL", "published": "2026-08-04"},
+    {"title": "London Office Market Review 2026 (citing Savills)", "url": "https://k2space.co.uk/knowledge/london-office-market", "publisher": "K2 Space"},
+    {"title": "London Office Pipeline 2027-2030: Which Major Projects Will Actually Start?", "url": "https://www.constructionmagazine.uk/2026/08/london-office-pipeline-2027-2030.html", "publisher": "London Construction Magazine", "published": "2026-08-13"},
+    {"title": "UK office forecast calls for demand to outpace supply from mid-2027 onwards", "url": "https://www.costar.com/article/880841483/uk-office-forecast-calls-for-demand-to-outpace-supply-from-mid-2027-onwards", "publisher": "CoStar News"}
+  ],
+  "confidence": 0.6
+}

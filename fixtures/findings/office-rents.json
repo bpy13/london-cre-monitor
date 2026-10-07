@@ -1,0 +1,25 @@
+{
+  "skill": "office-rents",
+  "headline": "Prime rents hit new highs in Q2 2026: West End GBP 190 psf and City GBP 95 psf, with central London prime rental growth of 6.5% year on year.",
+  "summary": "JLL reports prime West End rents of GBP 190.00 psf and City rents of GBP 95.00 psf in Q2 2026, up from GBP 175.00 and GBP 92.50 respectively in Q1 2026 according to BNP Paribas Real Estate (different brokers, so part of the jump may be definitional). Avison Young puts central London prime rental growth at 6.5% between Q2 2025 and Q2 2026, with Mayfair, St James's and Canary Wharf among the notable growth markets. Growth remains concentrated in the best buildings, consistent with an acute shortage of Grade A space.",
+  "metrics": [
+    {"key": "prime_rent", "submarket": "West End", "value": 190.0, "unit": "GBP psf pa", "period": "2026-Q2", "source": "JLL", "url": "https://www.jll.com/en-uk/insights/market-dynamics/central-london-office", "as_of": "2026-08-04"},
+    {"key": "prime_rent", "submarket": "City", "value": 95.0, "unit": "GBP psf pa", "period": "2026-Q2", "source": "JLL", "url": "https://www.jll.com/en-uk/insights/market-dynamics/central-london-office", "as_of": "2026-08-04"},
+    {"key": "prime_rent_growth_yoy", "submarket": "Central London", "value": 6.5, "unit": "%", "period": "2026-Q2", "source": "Avison Young", "url": "https://www.avisonyoung.co.uk/central-london-office-analysis", "note": "Q2 2025 to Q2 2026"}
+  ],
+  "insights": [
+    "The West End premium over the City widened to GBP 95 psf (GBP 190 vs GBP 95, JLL Q2 2026).",
+    "Q1 2026 baseline (BNP Paribas RE): West End GBP 175 psf (+6.1% y/y), City GBP 92.50 psf (+8.8% y/y).",
+    "Avison Young names Mayfair, St James's and Canary Wharf among the notable rental growth markets in Q2 2026."
+  ],
+  "signals": [
+    {"type": "opportunity", "severity": "high", "title": "Sustained prime rental growth", "rationale": "Record prime rents and 6.5% annual growth support the economics of best-in-class development and comprehensive refurbishment.", "submarket": "Central London"},
+    {"type": "risk", "severity": "medium", "title": "Two-tier market widening", "rationale": "Growth is concentrated in prime buildings; secondary stock that fails occupier quality/ESG expectations risks falling further behind.", "submarket": "Central London"}
+  ],
+  "citations": [
+    {"title": "Central London Office Market Dynamics Q2 2026", "url": "https://www.jll.com/en-uk/insights/market-dynamics/central-london-office", "publisher": "JLL", "published": "2026-08-04"},
+    {"title": "Central London Office Market Analysis Q2 2026", "url": "https://www.avisonyoung.co.uk/central-london-office-analysis", "publisher": "Avison Young"},
+    {"title": "Central London Market Update Q1 2026", "url": "https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-05/Q12026CentralLondonMarketUpdate.pdf", "publisher": "BNP Paribas Real Estate"}
+  ],
+  "confidence": 0.8
+}

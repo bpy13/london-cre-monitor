@@ -1,0 +1,16 @@
+# Conda environment for the London CRE Market Monitor.
+#
+# Create:   conda env create -f environment.yml
+# Activate: conda activate london-cre
+#
+# Python dependencies are declared once, in pyproject.toml, and installed
+# in editable mode so that `cre-monitor` CLI and `import cre_monitor` work
+# from anywhere inside the environment.
+name: london-cre
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - -e .[dev]

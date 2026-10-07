@@ -1,0 +1,39 @@
+# Evaluation questions for the chat agent.
+#
+# Each case checks that:
+#   * expected_skills  - the planner routes to (at least) these skills
+#   * must_contain     - the answer mentions these strings (case-insensitive)
+#   * the answer cites at least one source link
+#
+# Run: python evals/run_evals.py            (demo/offline by default)
+#      python evals/run_evals.py --live     (real LLM + live data; needs keys)
+# In live mode, must_contain values are checked loosely: figures can change as
+# new quarterly data is published, so update them when the fixtures are refreshed.
+
+- question: What are prime office rents in the West End and the City?
+  expected_skills: [office-rents]
+  must_contain: ["190", "95"]
+
+- question: How is Canary Wharf vacancy trending?
+  expected_skills: [vacancy-availability, submarket-dynamics]
+  must_contain: ["Docklands"]
+
+- question: How much leasing take-up was there last quarter compared with the 10-year average?
+  expected_skills: [leasing-take-up]
+  must_contain: ["2.6m"]
+
+- question: What does the development pipeline look like - how much speculative space completes in 2026?
+  expected_skills: [supply-pipeline]
+  must_contain: ["pre-let"]
+
+- question: Where are UK interest rates and gilt yields, and what does it mean for office values?
+  expected_skills: [macro-economy]
+  must_contain: ["3.75", "gilt"]
+
+- question: How are ESG and EPC requirements affecting occupier demand?
+  expected_skills: [occupier-demand]
+  must_contain: ["EPC"]
+
+- question: Any major London office news this month?
+  expected_skills: [news-events]
+  must_contain: ["CoStar"]

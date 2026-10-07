@@ -1,0 +1,28 @@
+{
+  "skill": "vacancy-availability",
+  "headline": "Grade A vacancy is just 1.9% across central London (1.3% in both the West End and City), even though overall vacancy figures range from 6.3% to 8.6% depending on the broker.",
+  "summary": "Avison Young reports central London vacancy unchanged at 6.3% in Q2 2026, the lowest since the pandemic, while JLL's measure stands at 8.6%; BNP Paribas RE reported 8.4% for Q1 2026. The gap reflects definitional differences, but every source shows a market tightening at the top end: Grade A vacancy is 1.9% (up 40bp q/q) and only 1.3% in both the West End and the City. Midtown is the tightest submarket at 4.3% (down 60bp).",
+  "metrics": [
+    {"key": "vacancy_rate", "submarket": "Central London", "value": 6.3, "unit": "%", "period": "2026-Q2", "source": "Avison Young", "url": "https://www.avisonyoung.co.uk/central-london-office-analysis", "note": "Avison Young vacancy definition"},
+    {"key": "vacancy_rate", "submarket": "Central London", "value": 8.6, "unit": "%", "period": "2026-Q2", "source": "JLL", "url": "https://www.jll.com/en-uk/insights/market-dynamics/central-london-office", "as_of": "2026-08-04", "note": "JLL vacancy definition"},
+    {"key": "vacancy_rate", "submarket": "Midtown", "value": 4.3, "unit": "%", "period": "2026-Q2", "source": "Avison Young", "url": "https://www.avisonyoung.co.uk/central-london-office-analysis"},
+    {"key": "new_build_vacancy_rate", "submarket": "Central London", "value": 1.9, "unit": "%", "period": "2026-Q2", "source": "Avison Young", "url": "https://www.avisonyoung.co.uk/central-london-office-analysis", "note": "Grade A vacancy"},
+    {"key": "new_build_vacancy_rate", "submarket": "West End", "value": 1.3, "unit": "%", "period": "2026-Q2", "source": "Avison Young", "url": "https://www.avisonyoung.co.uk/central-london-office-analysis", "note": "Grade A vacancy"},
+    {"key": "new_build_vacancy_rate", "submarket": "City", "value": 1.3, "unit": "%", "period": "2026-Q2", "source": "Avison Young", "url": "https://www.avisonyoung.co.uk/central-london-office-analysis", "note": "Grade A vacancy"}
+  ],
+  "insights": [
+    "Brokers disagree on the overall level (6.3% Avison Young vs 8.6% JLL), but agree on the direction: a tight market for quality space.",
+    "Midtown (4.3%) is now the lowest-vacancy submarket in London, according to Avison Young.",
+    "CoStar reports that Docklands Core vacancy hit 18.6% in recent months, a record since 2003, which suggests East London is diverging from the core."
+  ],
+  "signals": [
+    {"type": "opportunity", "severity": "high", "title": "Grade A scarcity in West End and City", "rationale": "Grade A vacancy of 1.3% leaves occupiers few options, supporting pre-lets and rental growth for deliveries over 2026-2028.", "submarket": "Central London"},
+    {"type": "risk", "severity": "high", "title": "Docklands vacancy at record high", "rationale": "Record Docklands Core vacancy (CoStar) points to value and letting risk for Canary Wharf / Isle of Dogs assets, particularly second-hand space.", "submarket": "Canary Wharf"}
+  ],
+  "citations": [
+    {"title": "Central London Office Market Analysis Q2 2026", "url": "https://www.avisonyoung.co.uk/central-london-office-analysis", "publisher": "Avison Young"},
+    {"title": "Central London Office Market Dynamics Q2 2026", "url": "https://www.jll.com/en-uk/insights/market-dynamics/central-london-office", "publisher": "JLL", "published": "2026-08-04"},
+    {"title": "Office vacancies in Docklands Core rise to the highest on record", "url": "https://costar.com/article/1584652790/office-vacancies-in-docklands-core-rise-to-the-highest-on-record", "publisher": "CoStar News"}
+  ],
+  "confidence": 0.7
+}

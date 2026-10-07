@@ -1,0 +1,1514 @@
+{
+ "bank_rate": {
+  "name": "bank_rate",
+  "label": "Official Bank Rate (%)",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "observations": [
+   {
+    "period": "2024-10-01",
+    "value": 5.0
+   },
+   {
+    "period": "2024-10-08",
+    "value": 5.0
+   },
+   {
+    "period": "2024-10-15",
+    "value": 5.0
+   },
+   {
+    "period": "2024-10-22",
+    "value": 5.0
+   },
+   {
+    "period": "2024-10-29",
+    "value": 5.0
+   },
+   {
+    "period": "2024-11-05",
+    "value": 5.0
+   },
+   {
+    "period": "2024-11-12",
+    "value": 4.75
+   },
+   {
+    "period": "2024-11-19",
+    "value": 4.75
+   },
+   {
+    "period": "2024-11-26",
+    "value": 4.75
+   },
+   {
+    "period": "2024-12-03",
+    "value": 4.75
+   },
+   {
+    "period": "2024-12-10",
+    "value": 4.75
+   },
+   {
+    "period": "2024-12-17",
+    "value": 4.75
+   },
+   {
+    "period": "2024-12-24",
+    "value": 4.75
+   },
+   {
+    "period": "2025-01-03",
+    "value": 4.75
+   },
+   {
+    "period": "2025-01-10",
+    "value": 4.75
+   },
+   {
+    "period": "2025-01-17",
+    "value": 4.75
+   },
+   {
+    "period": "2025-01-24",
+    "value": 4.75
+   },
+   {
+    "period": "2025-01-31",
+    "value": 4.75
+   },
+   {
+    "period": "2025-02-07",
+    "value": 4.5
+   },
+   {
+    "period": "2025-02-14",
+    "value": 4.5
+   },
+   {
+    "period": "2025-02-21",
+    "value": 4.5
+   },
+   {
+    "period": "2025-02-28",
+    "value": 4.5
+   },
+   {
+    "period": "2025-03-07",
+    "value": 4.5
+   },
+   {
+    "period": "2025-03-14",
+    "value": 4.5
+   },
+   {
+    "period": "2025-03-21",
+    "value": 4.5
+   },
+   {
+    "period": "2025-03-28",
+    "value": 4.5
+   },
+   {
+    "period": "2025-04-04",
+    "value": 4.5
+   },
+   {
+    "period": "2025-04-11",
+    "value": 4.5
+   },
+   {
+    "period": "2025-04-22",
+    "value": 4.5
+   },
+   {
+    "period": "2025-04-29",
+    "value": 4.5
+   },
+   {
+    "period": "2025-05-07",
+    "value": 4.5
+   },
+   {
+    "period": "2025-05-14",
+    "value": 4.25
+   },
+   {
+    "period": "2025-05-21",
+    "value": 4.25
+   },
+   {
+    "period": "2025-05-29",
+    "value": 4.25
+   },
+   {
+    "period": "2025-06-05",
+    "value": 4.25
+   },
+   {
+    "period": "2025-06-12",
+    "value": 4.25
+   },
+   {
+    "period": "2025-06-19",
+    "value": 4.25
+   },
+   {
+    "period": "2025-06-26",
+    "value": 4.25
+   },
+   {
+    "period": "2025-07-03",
+    "value": 4.25
+   },
+   {
+    "period": "2025-07-10",
+    "value": 4.25
+   },
+   {
+    "period": "2025-07-17",
+    "value": 4.25
+   },
+   {
+    "period": "2025-07-24",
+    "value": 4.25
+   },
+   {
+    "period": "2025-07-31",
+    "value": 4.25
+   },
+   {
+    "period": "2025-08-07",
+    "value": 4.0
+   },
+   {
+    "period": "2025-08-14",
+    "value": 4.0
+   },
+   {
+    "period": "2025-08-21",
+    "value": 4.0
+   },
+   {
+    "period": "2025-08-29",
+    "value": 4.0
+   },
+   {
+    "period": "2025-09-05",
+    "value": 4.0
+   },
+   {
+    "period": "2025-09-12",
+    "value": 4.0
+   },
+   {
+    "period": "2025-09-19",
+    "value": 4.0
+   },
+   {
+    "period": "2025-09-26",
+    "value": 4.0
+   },
+   {
+    "period": "2025-10-03",
+    "value": 4.0
+   },
+   {
+    "period": "2025-10-10",
+    "value": 4.0
+   },
+   {
+    "period": "2025-10-17",
+    "value": 4.0
+   },
+   {
+    "period": "2025-10-24",
+    "value": 4.0
+   },
+   {
+    "period": "2025-10-31",
+    "value": 4.0
+   },
+   {
+    "period": "2025-11-07",
+    "value": 4.0
+   },
+   {
+    "period": "2025-11-14",
+    "value": 4.0
+   },
+   {
+    "period": "2025-11-21",
+    "value": 4.0
+   },
+   {
+    "period": "2025-11-28",
+    "value": 4.0
+   },
+   {
+    "period": "2025-12-05",
+    "value": 4.0
+   },
+   {
+    "period": "2025-12-12",
+    "value": 4.0
+   },
+   {
+    "period": "2025-12-19",
+    "value": 3.75
+   },
+   {
+    "period": "2025-12-30",
+    "value": 3.75
+   },
+   {
+    "period": "2026-01-07",
+    "value": 3.75
+   },
+   {
+    "period": "2026-01-14",
+    "value": 3.75
+   },
+   {
+    "period": "2026-01-21",
+    "value": 3.75
+   },
+   {
+    "period": "2026-01-28",
+    "value": 3.75
+   },
+   {
+    "period": "2026-02-04",
+    "value": 3.75
+   },
+   {
+    "period": "2026-02-11",
+    "value": 3.75
+   },
+   {
+    "period": "2026-02-18",
+    "value": 3.75
+   },
+   {
+    "period": "2026-02-25",
+    "value": 3.75
+   },
+   {
+    "period": "2026-03-04",
+    "value": 3.75
+   },
+   {
+    "period": "2026-03-11",
+    "value": 3.75
+   },
+   {
+    "period": "2026-03-18",
+    "value": 3.75
+   },
+   {
+    "period": "2026-03-25",
+    "value": 3.75
+   },
+   {
+    "period": "2026-04-01",
+    "value": 3.75
+   },
+   {
+    "period": "2026-04-10",
+    "value": 3.75
+   },
+   {
+    "period": "2026-04-17",
+    "value": 3.75
+   },
+   {
+    "period": "2026-04-24",
+    "value": 3.75
+   },
+   {
+    "period": "2026-05-01",
+    "value": 3.75
+   },
+   {
+    "period": "2026-05-11",
+    "value": 3.75
+   },
+   {
+    "period": "2026-05-18",
+    "value": 3.75
+   },
+   {
+    "period": "2026-05-26",
+    "value": 3.75
+   },
+   {
+    "period": "2026-06-02",
+    "value": 3.75
+   },
+   {
+    "period": "2026-06-09",
+    "value": 3.75
+   },
+   {
+    "period": "2026-06-16",
+    "value": 3.75
+   },
+   {
+    "period": "2026-06-23",
+    "value": 3.75
+   },
+   {
+    "period": "2026-06-30",
+    "value": 3.75
+   },
+   {
+    "period": "2026-07-07",
+    "value": 3.75
+   },
+   {
+    "period": "2026-07-14",
+    "value": 3.75
+   },
+   {
+    "period": "2026-07-21",
+    "value": 3.75
+   },
+   {
+    "period": "2026-07-28",
+    "value": 3.75
+   },
+   {
+    "period": "2026-08-04",
+    "value": 3.75
+   },
+   {
+    "period": "2026-08-11",
+    "value": 3.75
+   },
+   {
+    "period": "2026-08-18",
+    "value": 3.75
+   },
+   {
+    "period": "2026-08-25",
+    "value": 3.75
+   },
+   {
+    "period": "2026-09-02",
+    "value": 3.75
+   },
+   {
+    "period": "2026-09-09",
+    "value": 3.75
+   },
+   {
+    "period": "2026-09-16",
+    "value": 3.75
+   },
+   {
+    "period": "2026-09-23",
+    "value": 3.75
+   },
+   {
+    "period": "2026-09-30",
+    "value": 3.75
+   },
+   {
+    "period": "2026-10-06",
+    "value": 3.75
+   }
+  ]
+ },
+ "sonia": {
+  "name": "sonia",
+  "label": "SONIA overnight rate (%)",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "observations": [
+   {
+    "period": "2024-10-01",
+    "value": 4.95
+   },
+   {
+    "period": "2024-10-08",
+    "value": 4.95
+   },
+   {
+    "period": "2024-10-15",
+    "value": 4.95
+   },
+   {
+    "period": "2024-10-22",
+    "value": 4.95
+   },
+   {
+    "period": "2024-10-29",
+    "value": 4.95
+   },
+   {
+    "period": "2024-11-05",
+    "value": 4.95
+   },
+   {
+    "period": "2024-11-12",
+    "value": 4.7
+   },
+   {
+    "period": "2024-11-19",
+    "value": 4.7
+   },
+   {
+    "period": "2024-11-26",
+    "value": 4.7
+   },
+   {
+    "period": "2024-12-03",
+    "value": 4.7
+   },
+   {
+    "period": "2024-12-10",
+    "value": 4.7
+   },
+   {
+    "period": "2024-12-17",
+    "value": 4.7
+   },
+   {
+    "period": "2024-12-24",
+    "value": 4.7
+   },
+   {
+    "period": "2025-01-03",
+    "value": 4.7
+   },
+   {
+    "period": "2025-01-10",
+    "value": 4.7
+   },
+   {
+    "period": "2025-01-17",
+    "value": 4.7
+   },
+   {
+    "period": "2025-01-24",
+    "value": 4.7
+   },
+   {
+    "period": "2025-01-31",
+    "value": 4.7037
+   },
+   {
+    "period": "2025-02-07",
+    "value": 4.454
+   },
+   {
+    "period": "2025-02-14",
+    "value": 4.4543
+   },
+   {
+    "period": "2025-02-21",
+    "value": 4.4549
+   },
+   {
+    "period": "2025-02-28",
+    "value": 4.4552
+   },
+   {
+    "period": "2025-03-07",
+    "value": 4.4548
+   },
+   {
+    "period": "2025-03-14",
+    "value": 4.4549
+   },
+   {
+    "period": "2025-03-21",
+    "value": 4.4563
+   },
+   {
+    "period": "2025-03-28",
+    "value": 4.4558
+   },
+   {
+    "period": "2025-04-04",
+    "value": 4.4554
+   },
+   {
+    "period": "2025-04-11",
+    "value": 4.4584
+   },
+   {
+    "period": "2025-04-22",
+    "value": 4.4593
+   },
+   {
+    "period": "2025-04-29",
+    "value": 4.4592
+   },
+   {
+    "period": "2025-05-07",
+    "value": 4.4601
+   },
+   {
+    "period": "2025-05-14",
+    "value": 4.2108
+   },
+   {
+    "period": "2025-05-21",
+    "value": 4.2115
+   },
+   {
+    "period": "2025-05-29",
+    "value": 4.2107
+   },
+   {
+    "period": "2025-06-05",
+    "value": 4.2119
+   },
+   {
+    "period": "2025-06-12",
+    "value": 4.2126
+   },
+   {
+    "period": "2025-06-19",
+    "value": 4.2169
+   },
+   {
+    "period": "2025-06-26",
+    "value": 4.217
+   },
+   {
+    "period": "2025-07-03",
+    "value": 4.2173
+   },
+   {
+    "period": "2025-07-10",
+    "value": 4.2175
+   },
+   {
+    "period": "2025-07-17",
+    "value": 4.2175
+   },
+   {
+    "period": "2025-07-24",
+    "value": 4.2174
+   },
+   {
+    "period": "2025-07-31",
+    "value": 4.217
+   },
+   {
+    "period": "2025-08-07",
+    "value": 3.9676
+   },
+   {
+    "period": "2025-08-14",
+    "value": 3.9674
+   },
+   {
+    "period": "2025-08-21",
+    "value": 3.9675
+   },
+   {
+    "period": "2025-08-29",
+    "value": 3.9665
+   },
+   {
+    "period": "2025-09-05",
+    "value": 3.9669
+   },
+   {
+    "period": "2025-09-12",
+    "value": 3.9672
+   },
+   {
+    "period": "2025-09-19",
+    "value": 3.9673
+   },
+   {
+    "period": "2025-09-26",
+    "value": 3.9669
+   },
+   {
+    "period": "2025-10-03",
+    "value": 3.9672
+   },
+   {
+    "period": "2025-10-10",
+    "value": 3.9678
+   },
+   {
+    "period": "2025-10-17",
+    "value": 3.9682
+   },
+   {
+    "period": "2025-10-24",
+    "value": 3.9691
+   },
+   {
+    "period": "2025-10-31",
+    "value": 3.9689
+   },
+   {
+    "period": "2025-11-07",
+    "value": 3.9697
+   },
+   {
+    "period": "2025-11-14",
+    "value": 3.9694
+   },
+   {
+    "period": "2025-11-21",
+    "value": 3.969
+   },
+   {
+    "period": "2025-11-28",
+    "value": 3.9693
+   },
+   {
+    "period": "2025-12-05",
+    "value": 3.9741
+   },
+   {
+    "period": "2025-12-12",
+    "value": 3.9743
+   },
+   {
+    "period": "2025-12-19",
+    "value": 3.7236
+   },
+   {
+    "period": "2025-12-30",
+    "value": 3.7254
+   },
+   {
+    "period": "2026-01-07",
+    "value": 3.7248
+   },
+   {
+    "period": "2026-01-14",
+    "value": 3.7248
+   },
+   {
+    "period": "2026-01-21",
+    "value": 3.7246
+   },
+   {
+    "period": "2026-01-28",
+    "value": 3.7248
+   },
+   {
+    "period": "2026-02-04",
+    "value": 3.7265
+   },
+   {
+    "period": "2026-02-11",
+    "value": 3.7274
+   },
+   {
+    "period": "2026-02-18",
+    "value": 3.7277
+   },
+   {
+    "period": "2026-02-25",
+    "value": 3.7276
+   },
+   {
+    "period": "2026-03-04",
+    "value": 3.7301
+   },
+   {
+    "period": "2026-03-11",
+    "value": 3.7295
+   },
+   {
+    "period": "2026-03-18",
+    "value": 3.7296
+   },
+   {
+    "period": "2026-03-25",
+    "value": 3.7278
+   },
+   {
+    "period": "2026-04-01",
+    "value": 3.7297
+   },
+   {
+    "period": "2026-04-10",
+    "value": 3.7295
+   },
+   {
+    "period": "2026-04-17",
+    "value": 3.73
+   },
+   {
+    "period": "2026-04-24",
+    "value": 3.7305
+   },
+   {
+    "period": "2026-05-01",
+    "value": 3.7295
+   },
+   {
+    "period": "2026-05-11",
+    "value": 3.729
+   },
+   {
+    "period": "2026-05-18",
+    "value": 3.7297
+   },
+   {
+    "period": "2026-05-26",
+    "value": 3.729
+   },
+   {
+    "period": "2026-06-02",
+    "value": 3.7308
+   },
+   {
+    "period": "2026-06-09",
+    "value": 3.7271
+   },
+   {
+    "period": "2026-06-16",
+    "value": 3.7304
+   },
+   {
+    "period": "2026-06-23",
+    "value": 3.7295
+   },
+   {
+    "period": "2026-06-30",
+    "value": 3.7318
+   },
+   {
+    "period": "2026-07-07",
+    "value": 3.7297
+   },
+   {
+    "period": "2026-07-14",
+    "value": 3.7311
+   },
+   {
+    "period": "2026-07-21",
+    "value": 3.7302
+   },
+   {
+    "period": "2026-07-28",
+    "value": 3.7316
+   },
+   {
+    "period": "2026-08-04",
+    "value": 3.7318
+   },
+   {
+    "period": "2026-08-11",
+    "value": 3.7315
+   },
+   {
+    "period": "2026-08-18",
+    "value": 3.7311
+   },
+   {
+    "period": "2026-08-25",
+    "value": 3.7316
+   },
+   {
+    "period": "2026-09-02",
+    "value": 3.7298
+   },
+   {
+    "period": "2026-09-09",
+    "value": 3.7296
+   },
+   {
+    "period": "2026-09-16",
+    "value": 3.7303
+   },
+   {
+    "period": "2026-09-23",
+    "value": 3.7305
+   },
+   {
+    "period": "2026-09-30",
+    "value": 3.7329
+   },
+   {
+    "period": "2026-10-05",
+    "value": 3.7323
+   }
+  ]
+ },
+ "gilt_10y_yield": {
+  "name": "gilt_10y_yield",
+  "label": "10-year nominal gilt par yield (%)",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "observations": [
+   {
+    "period": "2024-10-01",
+    "value": 3.9542
+   },
+   {
+    "period": "2024-10-08",
+    "value": 4.1933
+   },
+   {
+    "period": "2024-10-15",
+    "value": 4.2284
+   },
+   {
+    "period": "2024-10-22",
+    "value": 4.2009
+   },
+   {
+    "period": "2024-10-29",
+    "value": 4.2908
+   },
+   {
+    "period": "2024-11-05",
+    "value": 4.5527
+   },
+   {
+    "period": "2024-11-12",
+    "value": 4.4213
+   },
+   {
+    "period": "2024-11-19",
+    "value": 4.3753
+   },
+   {
+    "period": "2024-11-26",
+    "value": 4.3263
+   },
+   {
+    "period": "2024-12-03",
+    "value": 4.2491
+   },
+   {
+    "period": "2024-12-10",
+    "value": 4.3578
+   },
+   {
+    "period": "2024-12-17",
+    "value": 4.5202
+   },
+   {
+    "period": "2024-12-24",
+    "value": 4.6342
+   },
+   {
+    "period": "2025-01-03",
+    "value": 4.5325
+   },
+   {
+    "period": "2025-01-10",
+    "value": 4.86
+   },
+   {
+    "period": "2025-01-17",
+    "value": 4.6424
+   },
+   {
+    "period": "2025-01-24",
+    "value": 4.6379
+   },
+   {
+    "period": "2025-01-31",
+    "value": 4.5072
+   },
+   {
+    "period": "2025-02-07",
+    "value": 4.474
+   },
+   {
+    "period": "2025-02-14",
+    "value": 4.5277
+   },
+   {
+    "period": "2025-02-21",
+    "value": 4.5268
+   },
+   {
+    "period": "2025-02-28",
+    "value": 4.5004
+   },
+   {
+    "period": "2025-03-07",
+    "value": 4.5589
+   },
+   {
+    "period": "2025-03-14",
+    "value": 4.6501
+   },
+   {
+    "period": "2025-03-21",
+    "value": 4.67
+   },
+   {
+    "period": "2025-03-28",
+    "value": 4.693
+   },
+   {
+    "period": "2025-04-04",
+    "value": 4.4944
+   },
+   {
+    "period": "2025-04-11",
+    "value": 4.739
+   },
+   {
+    "period": "2025-04-22",
+    "value": 4.648
+   },
+   {
+    "period": "2025-04-29",
+    "value": 4.4406
+   },
+   {
+    "period": "2025-05-07",
+    "value": 4.4164
+   },
+   {
+    "period": "2025-05-14",
+    "value": 4.6795
+   },
+   {
+    "period": "2025-05-21",
+    "value": 4.7585
+   },
+   {
+    "period": "2025-05-29",
+    "value": 4.6159
+   },
+   {
+    "period": "2025-06-05",
+    "value": 4.5778
+   },
+   {
+    "period": "2025-06-12",
+    "value": 4.491
+   },
+   {
+    "period": "2025-06-19",
+    "value": 4.5397
+   },
+   {
+    "period": "2025-06-26",
+    "value": 4.4305
+   },
+   {
+    "period": "2025-07-03",
+    "value": 4.547
+   },
+   {
+    "period": "2025-07-10",
+    "value": 4.5949
+   },
+   {
+    "period": "2025-07-17",
+    "value": 4.6372
+   },
+   {
+    "period": "2025-07-24",
+    "value": 4.6078
+   },
+   {
+    "period": "2025-07-31",
+    "value": 4.5773
+   },
+   {
+    "period": "2025-08-07",
+    "value": 4.5471
+   },
+   {
+    "period": "2025-08-14",
+    "value": 4.6284
+   },
+   {
+    "period": "2025-08-21",
+    "value": 4.7273
+   },
+   {
+    "period": "2025-08-29",
+    "value": 4.7238
+   },
+   {
+    "period": "2025-09-05",
+    "value": 4.644
+   },
+   {
+    "period": "2025-09-12",
+    "value": 4.669
+   },
+   {
+    "period": "2025-09-19",
+    "value": 4.7296
+   },
+   {
+    "period": "2025-09-26",
+    "value": 4.7396
+   },
+   {
+    "period": "2025-10-03",
+    "value": 4.6982
+   },
+   {
+    "period": "2025-10-10",
+    "value": 4.6814
+   },
+   {
+    "period": "2025-10-17",
+    "value": 4.5587
+   },
+   {
+    "period": "2025-10-24",
+    "value": 4.4576
+   },
+   {
+    "period": "2025-10-31",
+    "value": 4.4234
+   },
+   {
+    "period": "2025-11-07",
+    "value": 4.4865
+   },
+   {
+    "period": "2025-11-14",
+    "value": 4.5733
+   },
+   {
+    "period": "2025-11-21",
+    "value": 4.5272
+   },
+   {
+    "period": "2025-11-28",
+    "value": 4.4703
+   },
+   {
+    "period": "2025-12-05",
+    "value": 4.471
+   },
+   {
+    "period": "2025-12-12",
+    "value": 4.498
+   },
+   {
+    "period": "2025-12-19",
+    "value": 4.496
+   },
+   {
+    "period": "2025-12-30",
+    "value": 4.4816
+   },
+   {
+    "period": "2026-01-07",
+    "value": 4.4072
+   },
+   {
+    "period": "2026-01-14",
+    "value": 4.3806
+   },
+   {
+    "period": "2026-01-21",
+    "value": 4.4425
+   },
+   {
+    "period": "2026-01-28",
+    "value": 4.5328
+   },
+   {
+    "period": "2026-02-04",
+    "value": 4.5336
+   },
+   {
+    "period": "2026-02-11",
+    "value": 4.4889
+   },
+   {
+    "period": "2026-02-18",
+    "value": 4.3897
+   },
+   {
+    "period": "2026-02-25",
+    "value": 4.3644
+   },
+   {
+    "period": "2026-03-04",
+    "value": 4.4312
+   },
+   {
+    "period": "2026-03-11",
+    "value": 4.6388
+   },
+   {
+    "period": "2026-03-18",
+    "value": 4.7002
+   },
+   {
+    "period": "2026-03-25",
+    "value": 4.7721
+   },
+   {
+    "period": "2026-04-01",
+    "value": 4.7802
+   },
+   {
+    "period": "2026-04-10",
+    "value": 4.758
+   },
+   {
+    "period": "2026-04-17",
+    "value": 4.6973
+   },
+   {
+    "period": "2026-04-24",
+    "value": 4.879
+   },
+   {
+    "period": "2026-05-01",
+    "value": 4.9241
+   },
+   {
+    "period": "2026-05-11",
+    "value": 4.9589
+   },
+   {
+    "period": "2026-05-18",
+    "value": 5.1026
+   },
+   {
+    "period": "2026-05-26",
+    "value": 4.8428
+   },
+   {
+    "period": "2026-06-02",
+    "value": 4.8314
+   },
+   {
+    "period": "2026-06-09",
+    "value": 4.8873
+   },
+   {
+    "period": "2026-06-16",
+    "value": 4.7794
+   },
+   {
+    "period": "2026-06-23",
+    "value": 4.7322
+   },
+   {
+    "period": "2026-06-30",
+    "value": 4.742
+   },
+   {
+    "period": "2026-07-07",
+    "value": 4.8092
+   },
+   {
+    "period": "2026-07-14",
+    "value": 4.9386
+   },
+   {
+    "period": "2026-07-21",
+    "value": 5.021
+   },
+   {
+    "period": "2026-07-28",
+    "value": 4.9409
+   },
+   {
+    "period": "2026-08-04",
+    "value": 4.9031
+   },
+   {
+    "period": "2026-08-11",
+    "value": 4.9462
+   },
+   {
+    "period": "2026-08-18",
+    "value": 5.0676
+   },
+   {
+    "period": "2026-08-25",
+    "value": 4.9959
+   },
+   {
+    "period": "2026-09-02",
+    "value": 5.171
+   },
+   {
+    "period": "2026-09-09",
+    "value": 5.1922
+   },
+   {
+    "period": "2026-09-16",
+    "value": 5.2421
+   },
+   {
+    "period": "2026-09-23",
+    "value": 5.291
+   },
+   {
+    "period": "2026-09-30",
+    "value": 5.3714
+   },
+   {
+    "period": "2026-10-05",
+    "value": 5.3634
+   }
+  ]
+ },
+ "cpih_yoy": {
+  "name": "cpih_yoy",
+  "label": "CPIH annual rate (%)",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23",
+  "observations": [
+   {
+    "period": "2025-09",
+    "value": 4.1
+   },
+   {
+    "period": "2025-10",
+    "value": 3.8
+   },
+   {
+    "period": "2025-11",
+    "value": 3.5
+   },
+   {
+    "period": "2025-12",
+    "value": 3.6
+   },
+   {
+    "period": "2026-01",
+    "value": 3.2
+   },
+   {
+    "period": "2026-02",
+    "value": 3.2
+   },
+   {
+    "period": "2026-03",
+    "value": 3.4
+   },
+   {
+    "period": "2026-04",
+    "value": 3.0
+   },
+   {
+    "period": "2026-05",
+    "value": 3.0
+   },
+   {
+    "period": "2026-06",
+    "value": 2.8
+   },
+   {
+    "period": "2026-07",
+    "value": 3.1
+   },
+   {
+    "period": "2026-08",
+    "value": 3.3
+   }
+  ]
+ },
+ "cpi_yoy": {
+  "name": "cpi_yoy",
+  "label": "CPI annual rate (%)",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23",
+  "observations": [
+   {
+    "period": "2025-09",
+    "value": 3.8
+   },
+   {
+    "period": "2025-10",
+    "value": 3.6
+   },
+   {
+    "period": "2025-11",
+    "value": 3.2
+   },
+   {
+    "period": "2025-12",
+    "value": 3.4
+   },
+   {
+    "period": "2026-01",
+    "value": 3.0
+   },
+   {
+    "period": "2026-02",
+    "value": 3.0
+   },
+   {
+    "period": "2026-03",
+    "value": 3.3
+   },
+   {
+    "period": "2026-04",
+    "value": 2.8
+   },
+   {
+    "period": "2026-05",
+    "value": 2.8
+   },
+   {
+    "period": "2026-06",
+    "value": 2.6
+   },
+   {
+    "period": "2026-07",
+    "value": 2.9
+   },
+   {
+    "period": "2026-08",
+    "value": 3.1
+   }
+  ]
+ },
+ "unemployment_rate": {
+  "name": "unemployment_rate",
+  "label": "UK unemployment rate 16+ (%)",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/timeseries/mgsx/lms",
+  "observations": [
+   {
+    "period": "2025-07",
+    "value": 4.8
+   },
+   {
+    "period": "2025-08",
+    "value": 5.0
+   },
+   {
+    "period": "2025-09",
+    "value": 5.1
+   },
+   {
+    "period": "2025-10",
+    "value": 5.1
+   },
+   {
+    "period": "2025-11",
+    "value": 5.2
+   },
+   {
+    "period": "2025-12",
+    "value": 5.2
+   },
+   {
+    "period": "2026-01",
+    "value": 4.9
+   },
+   {
+    "period": "2026-02",
+    "value": 5.0
+   },
+   {
+    "period": "2026-03",
+    "value": 4.9
+   },
+   {
+    "period": "2026-04",
+    "value": 4.9
+   },
+   {
+    "period": "2026-05",
+    "value": 4.9
+   },
+   {
+    "period": "2026-06",
+    "value": 4.9
+   }
+  ]
+ },
+ "gdp_growth_qoq": {
+  "name": "gdp_growth_qoq",
+  "label": "UK real GDP growth, quarter on quarter (%)",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/ihyq/qna",
+  "observations": [
+   {
+    "period": "2023-Q3",
+    "value": -0.2
+   },
+   {
+    "period": "2023-Q4",
+    "value": -0.3
+   },
+   {
+    "period": "2024-Q1",
+    "value": 0.7
+   },
+   {
+    "period": "2024-Q2",
+    "value": 0.6
+   },
+   {
+    "period": "2024-Q3",
+    "value": 0.2
+   },
+   {
+    "period": "2024-Q4",
+    "value": 0.4
+   },
+   {
+    "period": "2025-Q1",
+    "value": 0.6
+   },
+   {
+    "period": "2025-Q2",
+    "value": 0.0
+   },
+   {
+    "period": "2025-Q3",
+    "value": 0.2
+   },
+   {
+    "period": "2025-Q4",
+    "value": 0.0
+   },
+   {
+    "period": "2026-Q1",
+    "value": 0.6
+   },
+   {
+    "period": "2026-Q2",
+    "value": 0.5
+   }
+  ]
+ },
+ "london_employment_rate": {
+  "name": "london_employment_rate",
+  "label": "London employment rate, aged 16-64 (%)",
+  "source": "ONS Annual Population Survey via Nomis",
+  "url": "https://www.nomisweb.co.uk/",
+  "observations": [
+   {
+    "period": "Apr 2024-Mar 2025",
+    "value": 75.4
+   },
+   {
+    "period": "Jul 2024-Jun 2025",
+    "value": 75.5
+   },
+   {
+    "period": "Oct 2024-Sep 2025",
+    "value": 75.0
+   },
+   {
+    "period": "Jan 2025-Dec 2025",
+    "value": 74.9
+   },
+   {
+    "period": "Apr 2025-Mar 2026",
+    "value": 74.8
+   }
+  ]
+ }
+}

@@ -1,0 +1,24 @@
+{
+  "skill": "occupier-demand",
+  "headline": "Flight to quality is the dominant demand driver: occupiers are competing for scarce sustainable Grade A space, AI firms are a new source of demand, and secondary stock faces an ESG cliff.",
+  "summary": "Carter Jonas notes that demand for high-quality, sustainable Grade A space continues to outstrip supply, particularly in the West End, Midtown and the City. That matches Grade A vacancy of only 1.9% (1.3% in the West End and City, Avison Young). AI companies took about 700,000 sq ft in H1 2026 (Avison Young) and favour large, highly specified, well-connected buildings. On ESG, the government's proposed MEES trajectory (EPC C by 2027, EPC B by 2030 for commercial lettings) remains the key regulatory risk for older stock; the final timetable should be confirmed before any decisions are made.",
+  "metrics": [
+    {"key": "new_build_vacancy_rate", "submarket": "Central London", "value": 1.9, "unit": "%", "period": "2026-Q2", "source": "Avison Young", "url": "https://www.avisonyoung.co.uk/central-london-office-analysis", "note": "Grade A vacancy"}
+  ],
+  "insights": [
+    "Flight to quality: demand for sustainable Grade A space is outstripping supply in the West End, Midtown and City (Carter Jonas Q2 2026).",
+    "AI occupiers (Anthropic, OpenAI and others) prioritise high-spec, amenity-rich buildings in the West End and King's Cross.",
+    "Refurbishment-led supply (about two-thirds of 2025 starts) reflects both cost and embodied-carbon policy, i.e. 'retrofit first'.",
+    "ESG: proposed MEES minimum of EPC C (2027) and B (2030) for lettings. Assets rated D-G face capex or obsolescence; confirm the latest government position."
+  ],
+  "signals": [
+    {"type": "opportunity", "severity": "high", "title": "Retrofit-to-prime strategy", "rationale": "Buying well-located secondary buildings and upgrading them to EPC A/B Grade A meets unmet demand at a lower carbon and cost basis than new build.", "submarket": "Central London"},
+    {"type": "risk", "severity": "high", "title": "ESG stranding of secondary stock", "rationale": "Buildings unable to reach the MEES trajectory face letting restrictions, higher capex and value discounts.", "submarket": "Central London"}
+  ],
+  "citations": [
+    {"title": "The London Office Market Q2 2026", "url": "https://carterjonas.co.uk/insights/the-london-office-market-q2-2026", "publisher": "Carter Jonas"},
+    {"title": "Central London Office Market Analysis Q2 2026", "url": "https://www.avisonyoung.co.uk/central-london-office-analysis", "publisher": "Avison Young"},
+    {"title": "London Office Pipeline 2027-2030", "url": "https://www.constructionmagazine.uk/2026/08/london-office-pipeline-2027-2030.html", "publisher": "London Construction Magazine", "published": "2026-08-13"}
+  ],
+  "confidence": 0.65
+}

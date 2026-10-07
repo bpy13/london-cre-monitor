@@ -1,0 +1,102 @@
+{# Markdown version of the brief - same context as report.html.j2. #}
+# {{ synthesis.title }}
+
+_Generated {{ generated }} · run `{{ run_id }}`{% if demo_mode %} · **demo mode (canned research, no LLM)**{% endif %}{% if offline %} · offline data{% endif %}_
+
+{% if kpis %}
+| Indicator | Value | Change | Period | Source |
+|---|---|---|---|---|
+{% for k in kpis %}
+| {{ k.label }} | {{ k.value }} | {{ k.change or "-" }} | {{ k.period }} | {{ k.source }} |
+{% endfor %}
+{% endif %}
+
+## Executive summary
+
+{{ synthesis.executive_summary }}
+
+**Key takeaways**
+
+{% for t in synthesis.key_takeaways %}
+- {{ t }}
+{% endfor %}
+
+{% if synthesis.what_changed or deltas %}
+## What changed
+
+{% for c in (synthesis.what_changed or deltas) %}
+- {{ c }}
+{% endfor %}
+{% endif %}
+
+## Risks & opportunities
+
+| Type | Severity | Signal | Submarket | Rationale |
+|---|---|---|---|---|
+{% for s in synthesis.risks %}
+| Risk | {{ s.severity.value|title }} | {{ s.title }} | {{ s.submarket }} | {{ s.rationale }} |
+{% endfor %}
+{% for s in synthesis.opportunities %}
+| Opportunity | {{ s.severity.value|title }} | {{ s.title }} | {{ s.submarket }} | {{ s.rationale }} |
+{% endfor %}
+
+{% if png_charts %}
+## Market charts
+
+{% for cid, path in png_charts.items() %}
+![{{ cid|label }}]({{ path }})
+
+{% endfor %}
+{% endif %}
+## Research by topic
+
+{% for f in findings %}
+### {{ f.skill|replace("-", " ")|title }}
+
+{% if f.error %}
+> Skill failed: {{ f.error }}
+{% else %}
+**{{ f.headline }}**
+
+{{ f.summary }}
+
+{% for i in f.insights %}
+- {{ i }}
+{% endfor %}
+
+{% if f.metrics %}
+| Metric | Submarket | Value | Period | Source |
+|---|---|---|---|---|
+{% for m in f.metrics %}
+| {{ m.key|label }} | {{ m.submarket }} | {{ "{:,.4g}".format(m.value) }} {{ m.unit }} | {{ m.period }} | {% if m.url %}[{{ m.source }}]({{ m.url }}){% else %}{{ m.source }}{% endif %} |
+{% endfor %}
+{% endif %}
+
+_Confidence {{ "%.0f"|format(f.confidence * 100) }}%_
+{% endif %}
+
+{% endfor %}
+{% if synthesis.watch_list %}
+## Watch list
+
+{% for w in synthesis.watch_list %}
+- {{ w }}
+{% endfor %}
+{% endif %}
+
+{% if issues %}
+## Data quality notes
+
+{% for i in issues %}
+- **{{ i.level|title }}** ({{ i.skill }}): {{ i.message }}
+{% endfor %}
+{% endif %}
+
+## Sources
+
+{% for c in citations %}
+{{ loop.index }}. {% if c.url %}[{{ c.title }}]({{ c.url }}){% else %}{{ c.title }}{% endif %}{% if c.publisher %} - {{ c.publisher }}{% endif %}{% if c.published %}, {{ c.published }}{% endif %}
+
+{% endfor %}
+---
+_Figures are from the cited third-party sources; brokers define metrics differently. Not investment advice._

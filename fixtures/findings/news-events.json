@@ -1,0 +1,24 @@
+{
+  "skill": "news-events",
+  "headline": "Recent news is polarised: Docklands vacancy has hit a record high while AI-driven lettings and supply-shortage forecasts dominate the core, against a backdrop of sharply higher gilt yields.",
+  "summary": "The most material recent items are: CoStar reporting record Docklands Core vacancy of 18.6%; CoStar's forecast that UK office demand will outpace supply from mid-2027; continued AI-sector leasing (Anthropic, OpenAI, PromethiusAI) highlighted in JLL's Q2 review; and analysis showing 2025 office starts well below average, with refurbishments dominant. In the background, the 10-year gilt yield has climbed to 5.36% (Bank of England data), which is likely to weigh on investment pricing.",
+  "metrics": [],
+  "insights": [
+    "[Sep/Oct 2026] Docklands Core vacancy reaches 18.6%, the highest since 2003. Canary Wharf landlords face pressure despite large deals (CoStar).",
+    "[2026] CoStar UK office forecast: demand to outpace supply from mid-2027, supporting prime rental growth (CoStar).",
+    "[Aug 2026] JLL Q2 review: TMT took 33% of take-up on a wave of AI occupiers; space under construction is at a five-year low (JLL).",
+    "[Aug 2026] 2025 office starts of ~4.8m sq ft were below the ~6.5m five-year average, with refurbishments ~two-thirds of starts (London Construction Magazine).",
+    "[Oct 2026] The 10-year gilt yield is at 5.36%, up ~107bp since February (Bank of England)."
+  ],
+  "signals": [
+    {"type": "risk", "severity": "medium", "title": "Investment pricing under pressure", "rationale": "Rising gilt yields are likely to delay the recovery in investment volumes and could push prime yields out.", "submarket": "Central London"},
+    {"type": "opportunity", "severity": "medium", "title": "Counter-cyclical acquisitions in Docklands", "rationale": "Record vacancy may create discounted entry points for long-term repositioning, for example to life sciences or residential.", "submarket": "Canary Wharf"}
+  ],
+  "citations": [
+    {"title": "Office vacancies in Docklands Core rise to the highest on record", "url": "https://costar.com/article/1584652790/office-vacancies-in-docklands-core-rise-to-the-highest-on-record", "publisher": "CoStar News"},
+    {"title": "UK office forecast calls for demand to outpace supply from mid-2027 onwards", "url": "https://www.costar.com/article/880841483/uk-office-forecast-calls-for-demand-to-outpace-supply-from-mid-2027-onwards", "publisher": "CoStar News"},
+    {"title": "Central London Office Market Dynamics Q2 2026", "url": "https://www.jll.com/en-uk/insights/market-dynamics/central-london-office", "publisher": "JLL", "published": "2026-08-04"},
+    {"title": "London Office Pipeline 2027-2030", "url": "https://www.constructionmagazine.uk/2026/08/london-office-pipeline-2027-2030.html", "publisher": "London Construction Magazine", "published": "2026-08-13"}
+  ],
+  "confidence": 0.6
+}

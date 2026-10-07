@@ -1,0 +1,182 @@
+{#
+  London office market brief - HTML template.
+  Context variables are documented in cre_monitor/reporting/render.py::write_report.
+  Charts always sit on a light card (the surface their palette is validated for);
+  the page chrome follows the viewer's light/dark preference.
+#}
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ synthesis.title }}</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+    --hairline: #e1e0d9; --border: rgba(11,11,11,0.10); --accent: #2a78d6;
+    --good: #006300; --critical: #d03b3b; --warning-ink: #8a5a00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+      --hairline: #2c2c2a; --border: rgba(255,255,255,0.10); --accent: #3987e5;
+      --good: #0ca30c; --critical: #e66767; --warning-ink: #fab219;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink);
+         font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; }
+  header { border-bottom: 1px solid var(--hairline); padding-bottom: 16px; margin-bottom: 24px; }
+  h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 20px; margin: 40px 0 12px; }
+  h3 { font-size: 16px; margin: 0 0 6px; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px;
+           border: 1px solid var(--border); color: var(--ink-2); margin-left: 6px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .grid { display: grid; gap: 16px; }
+  .kpis { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+  .kpi .label { color: var(--ink-2); font-size: 13px; }
+  .kpi .value { font-size: 26px; font-weight: 600; margin: 4px 0; }
+  .kpi .sub { color: var(--muted); font-size: 12px; }
+  .delta { font-size: 13px; color: var(--ink-2); }
+  /* auto-fill (not auto-fit): Plotly draws each chart as the page parses, and with
+     auto-fit the first card would briefly span the full row and keep that width. */
+  .charts { grid-template-columns: repeat(auto-fill, minmax(min(100%, 480px), 1fr)); }
+  /* Charts keep the light surface their palette was validated against. */
+  .chart { background: #fcfcfb; border: 1px solid rgba(11,11,11,0.10); border-radius: 10px; padding: 8px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--hairline); vertical-align: top; }
+  th { color: var(--ink-2); font-weight: 600; font-size: 13px; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .sev { font-weight: 600; font-size: 12px; white-space: nowrap; }
+  .sev.high::before { content: "\25B2 "; } .sev.medium::before { content: "\25CF "; } .sev.low::before { content: "\25BD "; }
+  .risk .sev { color: var(--critical); } .opportunity .sev { color: var(--good); }
+  ul { padding-left: 20px; margin: 6px 0; }
+  .skill { margin-top: 20px; }
+  .skill .headline { font-weight: 600; }
+  .conf { color: var(--muted); font-size: 12px; }
+  .issue-error { color: var(--critical); } .issue-warning { color: var(--warning-ink); }
+  a { color: var(--accent); }
+  details summary { cursor: pointer; color: var(--ink-2); margin-top: 8px; }
+  footer { margin-top: 48px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--hairline); padding-top: 12px; }
+  @media (max-width: 600px) { h1 { font-size: 22px; } .kpi .value { font-size: 22px; } table { font-size: 13px; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>{{ synthesis.title }}</h1>
+    <div class="meta">
+      Generated {{ generated }} · run {{ run_id }}
+      {% if demo_mode %}<span class="badge">Demo mode - canned research, no LLM</span>{% endif %}
+      {% if offline %}<span class="badge">Offline data</span>{% endif %}
+    </div>
+  </header>
+
+  {% if kpis %}
+  <section class="grid kpis" aria-label="Headline indicators">
+    {% for k in kpis %}
+    <div class="card kpi">
+      <div class="label">{{ k.label }}</div>
+      <div class="value">{{ k.value }}</div>
+      {% if k.change %}<div class="delta">{% if k.direction == "up" %}&#9650;{% elif k.direction == "down" %}&#9660;{% else %}&#9644;{% endif %} {{ k.change }}</div>{% endif %}
+      <div class="sub">{{ k.period }} · {{ k.source }}</div>
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <h2>Executive summary</h2>
+  <div class="card">
+    <p>{{ synthesis.executive_summary }}</p>
+    <h3>Key takeaways</h3>
+    <ul>{% for t in synthesis.key_takeaways %}<li>{{ t }}</li>{% endfor %}</ul>
+  </div>
+
+  {% if synthesis.what_changed or deltas %}
+  <h2>What changed</h2>
+  <div class="card"><ul>
+    {% for c in (synthesis.what_changed or deltas) %}<li>{{ c }}</li>{% endfor %}
+  </ul></div>
+  {% endif %}
+
+  <h2>Risks &amp; opportunities</h2>
+  <div class="card">
+    <table>
+      <thead><tr><th>Type</th><th>Severity</th><th>Signal</th><th>Submarket</th><th>Rationale</th></tr></thead>
+      <tbody>
+      {% for s in synthesis.risks %}
+        <tr class="risk"><td>Risk</td><td><span class="sev {{ s.severity.value }}">{{ s.severity.value|title }}</span></td><td>{{ s.title }}</td><td>{{ s.submarket }}</td><td>{{ s.rationale }}</td></tr>
+      {% endfor %}
+      {% for s in synthesis.opportunities %}
+        <tr class="opportunity"><td>Opportunity</td><td><span class="sev {{ s.severity.value }}">{{ s.severity.value|title }}</span></td><td>{{ s.title }}</td><td>{{ s.submarket }}</td><td>{{ s.rationale }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if charts %}
+  <h2>Market charts</h2>
+  <section class="grid charts">
+    {% for cid, html in charts.items() %}<div class="chart" id="chart-{{ cid }}">{{ html|safe }}</div>{% endfor %}
+  </section>
+  {% endif %}
+
+  <h2>Research by topic</h2>
+  {% for f in findings %}
+  <section class="card skill" id="skill-{{ f.skill }}">
+    <h3>{{ f.skill|replace("-", " ")|title }}</h3>
+    {% if f.error %}
+      <p class="issue-error">This skill failed: {{ f.error }}</p>
+    {% else %}
+      <p class="headline">{{ f.headline }}</p>
+      <p>{{ f.summary }}</p>
+      {% if f.insights %}<ul>{% for i in f.insights %}<li>{{ i }}</li>{% endfor %}</ul>{% endif %}
+      {% if f.metrics %}
+      <details>
+        <summary>Data table ({{ f.metrics|length }} figures)</summary>
+        <table>
+          <thead><tr><th>Metric</th><th>Submarket</th><th>Value</th><th>Period</th><th>Source</th></tr></thead>
+          <tbody>
+          {% for m in f.metrics %}
+            <tr><td>{{ m.key|label }}</td><td>{{ m.submarket }}</td><td class="num">{{ "{:,.4g}".format(m.value) }} {{ m.unit }}</td><td>{{ m.period }}</td>
+                <td>{% if m.url %}<a href="{{ m.url }}" target="_blank" rel="noopener">{{ m.source }}</a>{% else %}{{ m.source }}{% endif %}{% if m.note %} <span class="conf">({{ m.note }})</span>{% endif %}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </details>
+      {% endif %}
+      <div class="conf">Confidence {{ "%.0f"|format(f.confidence * 100) }}%</div>
+    {% endif %}
+  </section>
+  {% endfor %}
+
+  {% if synthesis.watch_list %}
+  <h2>Watch list</h2>
+  <div class="card"><ul>{% for w in synthesis.watch_list %}<li>{{ w }}</li>{% endfor %}</ul></div>
+  {% endif %}
+
+  {% if issues %}
+  <h2>Data quality notes</h2>
+  <div class="card"><ul>
+    {% for i in issues %}<li class="issue-{{ i.level }}"><strong>{{ i.level|title }}</strong> ({{ i.skill }}): {{ i.message }}</li>{% endfor %}
+  </ul></div>
+  {% endif %}
+
+  <h2>Sources</h2>
+  <div class="card"><ol>
+    {% for c in citations %}<li>{% if c.url %}<a href="{{ c.url }}" target="_blank" rel="noopener">{{ c.title }}</a>{% else %}{{ c.title }}{% endif %}{% if c.publisher %} - {{ c.publisher }}{% endif %}{% if c.published %}, {{ c.published }}{% endif %}</li>{% endfor %}
+  </ol></div>
+
+  <footer>
+    Produced by the London CRE Market Monitor (LangGraph agent PoC, Nan Fung Group). Figures are taken from the cited
+    third-party sources; brokers define metrics differently, so compare like with like. This is not investment advice.
+  </footer>
+</main>
+</body>
+</html>

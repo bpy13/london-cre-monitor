@@ -1,0 +1,26 @@
+{
+  "skill": "leasing-take-up",
+  "headline": "Q2 2026 take-up of 2.6m sq ft was 6% above the 10-year average and the strongest quarter in a year, led by a wave of AI occupiers.",
+  "summary": "Avison Young and JLL both record 2.6m sq ft of central London take-up in Q2 2026, up 15% on Q1 (JLL) and 6% above the 10-year quarterly average (Avison Young). Tech, media and telecoms (TMT) accounted for 33% of take-up. AI companies took roughly 500,000 sq ft in Q2 alone and 700,000 sq ft in H1 2026, including Anthropic (158,000 sq ft) and OpenAI. Q1 2026 had been subdued, at 2.5m sq ft (-19.7% y/y, BNP Paribas RE).",
+  "metrics": [
+    {"key": "take_up_sqft", "submarket": "Central London", "value": 2600000, "unit": "sq ft", "period": "2026-Q2", "source": "Avison Young", "url": "https://www.avisonyoung.co.uk/central-london-office-analysis"},
+    {"key": "take_up_vs_10y_avg", "submarket": "Central London", "value": 6.0, "unit": "%", "period": "2026-Q2", "source": "Avison Young", "url": "https://www.avisonyoung.co.uk/central-london-office-analysis", "note": "vs 10-year average (all quarters)"},
+    {"key": "take_up_10y_avg_sqft", "submarket": "Central London", "value": 2450000, "unit": "sq ft", "period": "2026-Q2", "source": "Avison Young", "url": "https://www.avisonyoung.co.uk/central-london-office-analysis", "note": "derived: 2.6m is 6% above the average"}
+  ],
+  "insights": [
+    "AI sector: ~500,000 sq ft taken in Q2 and 700,000 sq ft in H1 2026 (Avison Young); Anthropic took 158,000 sq ft.",
+    "OpenAI pre-let the whole of Jahn Court, King's Cross, due for completion in late 2026 (Avison Young).",
+    "TMT made up 33% of Q2 take-up, with Anthropic, OpenAI and PromethiusAI among the occupiers (JLL).",
+    "In Q1 2026, media/tech (23.5%) and services (19.8%) were the most active sectors (BNP Paribas RE)."
+  ],
+  "signals": [
+    {"type": "opportunity", "severity": "high", "title": "AI occupiers as a new demand engine", "rationale": "AI firms are taking large, high-spec floorplates (King's Cross, West End). Schemes that can deliver power-rich, amenitised Grade A space in 2026-2028 stand to benefit.", "submarket": "King's Cross"},
+    {"type": "risk", "severity": "low", "title": "Demand concentration in one sector", "rationale": "A third of take-up from TMT/AI exposes leasing momentum to a sector that is volatile and funded by venture capital.", "submarket": "Central London"}
+  ],
+  "citations": [
+    {"title": "Central London Office Market Analysis Q2 2026", "url": "https://www.avisonyoung.co.uk/central-london-office-analysis", "publisher": "Avison Young"},
+    {"title": "Central London Office Market Dynamics Q2 2026", "url": "https://www.jll.com/en-uk/insights/market-dynamics/central-london-office", "publisher": "JLL", "published": "2026-08-04"},
+    {"title": "Central London Market Update Q1 2026", "url": "https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-05/Q12026CentralLondonMarketUpdate.pdf", "publisher": "BNP Paribas Real Estate"}
+  ],
+  "confidence": 0.85
+}

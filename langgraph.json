@@ -1,0 +1,7 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "london_cre_monitor": "./src/cre_monitor/graph/builder.py:graph"
+  },
+  "env": ".env"
+}

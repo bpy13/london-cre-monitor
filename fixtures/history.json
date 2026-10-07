@@ -1,0 +1,1228 @@
+[
+ {
+  "key": "vacancy_rate",
+  "submarket": "Central London",
+  "value": 8.6,
+  "unit": "%",
+  "period": "2025-Q3",
+  "source": "Avison Young",
+  "url": "https://avison-young.foleon.com/research-uk/cloa-q3-2025/west-end",
+  "note": ""
+ },
+ {
+  "key": "vacancy_rate",
+  "submarket": "West End",
+  "value": 5.7,
+  "unit": "%",
+  "period": "2025-Q3",
+  "source": "Avison Young",
+  "url": "https://avison-young.foleon.com/research-uk/cloa-q3-2025/west-end",
+  "note": ""
+ },
+ {
+  "key": "take_up_sqft",
+  "submarket": "West End",
+  "value": 1200000,
+  "unit": "sq ft",
+  "period": "2025-Q3",
+  "source": "Avison Young",
+  "url": "https://avison-young.foleon.com/research-uk/cloa-q3-2025/west-end",
+  "note": ""
+ },
+ {
+  "key": "prime_rent",
+  "submarket": "West End",
+  "value": 175.0,
+  "unit": "GBP psf pa",
+  "period": "2026-Q1",
+  "source": "BNP Paribas Real Estate",
+  "url": "https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-05/Q12026CentralLondonMarketUpdate.pdf",
+  "note": ""
+ },
+ {
+  "key": "prime_rent",
+  "submarket": "City",
+  "value": 92.5,
+  "unit": "GBP psf pa",
+  "period": "2026-Q1",
+  "source": "BNP Paribas Real Estate",
+  "url": "https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-05/Q12026CentralLondonMarketUpdate.pdf",
+  "note": ""
+ },
+ {
+  "key": "prime_rent_growth_yoy",
+  "submarket": "West End",
+  "value": 6.1,
+  "unit": "%",
+  "period": "2026-Q1",
+  "source": "BNP Paribas Real Estate",
+  "url": "https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-05/Q12026CentralLondonMarketUpdate.pdf",
+  "note": ""
+ },
+ {
+  "key": "prime_rent_growth_yoy",
+  "submarket": "City",
+  "value": 8.8,
+  "unit": "%",
+  "period": "2026-Q1",
+  "source": "BNP Paribas Real Estate",
+  "url": "https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-05/Q12026CentralLondonMarketUpdate.pdf",
+  "note": ""
+ },
+ {
+  "key": "vacancy_rate",
+  "submarket": "Central London",
+  "value": 8.4,
+  "unit": "%",
+  "period": "2026-Q1",
+  "source": "BNP Paribas Real Estate",
+  "url": "https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-05/Q12026CentralLondonMarketUpdate.pdf",
+  "note": ""
+ },
+ {
+  "key": "take_up_sqft",
+  "submarket": "Central London",
+  "value": 2500000,
+  "unit": "sq ft",
+  "period": "2026-Q1",
+  "source": "BNP Paribas Real Estate",
+  "url": "https://www.realestate.bnpparibas.co.uk/sites/default/files/2026-05/Q12026CentralLondonMarketUpdate.pdf",
+  "note": ""
+ },
+ {
+  "key": "vacancy_rate",
+  "submarket": "Midtown",
+  "value": 4.9,
+  "unit": "%",
+  "period": "2026-Q1",
+  "source": "Avison Young",
+  "url": "https://www.avisonyoung.co.uk/central-london-office-analysis",
+  "note": "derived: Q2 4.3% after a 60bp fall"
+ },
+ {
+  "key": "new_build_vacancy_rate",
+  "submarket": "Central London",
+  "value": 1.5,
+  "unit": "%",
+  "period": "2026-Q1",
+  "source": "Avison Young",
+  "url": "https://www.avisonyoung.co.uk/central-london-office-analysis",
+  "note": "derived: Q2 1.9% after a 40bp rise"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 5.0,
+  "unit": "%",
+  "period": "2024-10",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2024-10-31"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 4.75,
+  "unit": "%",
+  "period": "2024-11",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2024-11-29"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 4.75,
+  "unit": "%",
+  "period": "2024-12",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2024-12-31"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 4.75,
+  "unit": "%",
+  "period": "2025-01",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-01-31"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 4.5,
+  "unit": "%",
+  "period": "2025-02",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-02-28"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 4.5,
+  "unit": "%",
+  "period": "2025-03",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-03-31"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 4.5,
+  "unit": "%",
+  "period": "2025-04",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-04-30"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 4.25,
+  "unit": "%",
+  "period": "2025-05",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-05-30"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 4.25,
+  "unit": "%",
+  "period": "2025-06",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-06-30"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 4.25,
+  "unit": "%",
+  "period": "2025-07",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-07-31"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 4.0,
+  "unit": "%",
+  "period": "2025-08",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-08-29"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 4.0,
+  "unit": "%",
+  "period": "2025-09",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-09-30"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 4.0,
+  "unit": "%",
+  "period": "2025-10",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-10-31"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 4.0,
+  "unit": "%",
+  "period": "2025-11",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-11-28"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 3.75,
+  "unit": "%",
+  "period": "2025-12",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-12-31"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 3.75,
+  "unit": "%",
+  "period": "2026-01",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-01-30"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 3.75,
+  "unit": "%",
+  "period": "2026-02",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-02-27"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 3.75,
+  "unit": "%",
+  "period": "2026-03",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-03-31"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 3.75,
+  "unit": "%",
+  "period": "2026-04",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-04-30"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 3.75,
+  "unit": "%",
+  "period": "2026-05",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-05-29"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 3.75,
+  "unit": "%",
+  "period": "2026-06",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-06-30"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 3.75,
+  "unit": "%",
+  "period": "2026-07",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-07-31"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 3.75,
+  "unit": "%",
+  "period": "2026-08",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-08-28"
+ },
+ {
+  "key": "bank_rate",
+  "submarket": "UK",
+  "value": 3.75,
+  "unit": "%",
+  "period": "2026-09",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-09-30"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 4.95,
+  "unit": "%",
+  "period": "2024-10",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2024-10-31"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 4.7,
+  "unit": "%",
+  "period": "2024-11",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2024-11-29"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 4.7003,
+  "unit": "%",
+  "period": "2024-12",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2024-12-31"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 4.7037,
+  "unit": "%",
+  "period": "2025-01",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-01-31"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 4.4552,
+  "unit": "%",
+  "period": "2025-02",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-02-28"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 4.4554,
+  "unit": "%",
+  "period": "2025-03",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-03-31"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 4.4592,
+  "unit": "%",
+  "period": "2025-04",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-04-30"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 4.2111,
+  "unit": "%",
+  "period": "2025-05",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-05-30"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 4.2171,
+  "unit": "%",
+  "period": "2025-06",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-06-30"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 4.217,
+  "unit": "%",
+  "period": "2025-07",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-07-31"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 3.9665,
+  "unit": "%",
+  "period": "2025-08",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-08-29"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 3.9671,
+  "unit": "%",
+  "period": "2025-09",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-09-30"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 3.9689,
+  "unit": "%",
+  "period": "2025-10",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-10-31"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 3.9693,
+  "unit": "%",
+  "period": "2025-11",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-11-28"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 3.7257,
+  "unit": "%",
+  "period": "2025-12",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-12-31"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 3.7254,
+  "unit": "%",
+  "period": "2026-01",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-01-30"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 3.7267,
+  "unit": "%",
+  "period": "2026-02",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-02-27"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 3.7296,
+  "unit": "%",
+  "period": "2026-03",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-03-31"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 3.7299,
+  "unit": "%",
+  "period": "2026-04",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-04-30"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 3.7302,
+  "unit": "%",
+  "period": "2026-05",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-05-29"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 3.7318,
+  "unit": "%",
+  "period": "2026-06",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-06-30"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 3.7313,
+  "unit": "%",
+  "period": "2026-07",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-07-31"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 3.7308,
+  "unit": "%",
+  "period": "2026-08",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-08-28"
+ },
+ {
+  "key": "sonia",
+  "submarket": "UK",
+  "value": 3.7329,
+  "unit": "%",
+  "period": "2026-09",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-09-30"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.4102,
+  "unit": "%",
+  "period": "2024-10",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2024-10-31"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.2484,
+  "unit": "%",
+  "period": "2024-11",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2024-11-29"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.5173,
+  "unit": "%",
+  "period": "2024-12",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2024-12-31"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.5072,
+  "unit": "%",
+  "period": "2025-01",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-01-31"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.5004,
+  "unit": "%",
+  "period": "2025-02",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-02-28"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.653,
+  "unit": "%",
+  "period": "2025-03",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-03-31"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.4072,
+  "unit": "%",
+  "period": "2025-04",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-04-30"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.5907,
+  "unit": "%",
+  "period": "2025-05",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-05-30"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.4412,
+  "unit": "%",
+  "period": "2025-06",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-06-30"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.5773,
+  "unit": "%",
+  "period": "2025-07",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-07-31"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.7238,
+  "unit": "%",
+  "period": "2025-08",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-08-29"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.6909,
+  "unit": "%",
+  "period": "2025-09",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-09-30"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.4234,
+  "unit": "%",
+  "period": "2025-10",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-10-31"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.4703,
+  "unit": "%",
+  "period": "2025-11",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-11-28"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.4664,
+  "unit": "%",
+  "period": "2025-12",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2025-12-31"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.518,
+  "unit": "%",
+  "period": "2026-01",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-01-30"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.2935,
+  "unit": "%",
+  "period": "2026-02",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-02-27"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.8615,
+  "unit": "%",
+  "period": "2026-03",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-03-31"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.9609,
+  "unit": "%",
+  "period": "2026-04",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-04-30"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.776,
+  "unit": "%",
+  "period": "2026-05",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-05-29"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 4.742,
+  "unit": "%",
+  "period": "2026-06",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-06-30"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 5.0257,
+  "unit": "%",
+  "period": "2026-07",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-07-31"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 5.0631,
+  "unit": "%",
+  "period": "2026-08",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-08-28"
+ },
+ {
+  "key": "gilt_10y_yield",
+  "submarket": "UK",
+  "value": 5.3714,
+  "unit": "%",
+  "period": "2026-09",
+  "source": "Bank of England",
+  "url": "https://www.bankofengland.co.uk/boeapps/database/",
+  "as_of": "2026-09-30"
+ },
+ {
+  "key": "cpih_yoy",
+  "submarket": "UK",
+  "value": 4.1,
+  "unit": "%",
+  "period": "2025-09",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23"
+ },
+ {
+  "key": "cpih_yoy",
+  "submarket": "UK",
+  "value": 3.8,
+  "unit": "%",
+  "period": "2025-10",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23"
+ },
+ {
+  "key": "cpih_yoy",
+  "submarket": "UK",
+  "value": 3.5,
+  "unit": "%",
+  "period": "2025-11",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23"
+ },
+ {
+  "key": "cpih_yoy",
+  "submarket": "UK",
+  "value": 3.6,
+  "unit": "%",
+  "period": "2025-12",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23"
+ },
+ {
+  "key": "cpih_yoy",
+  "submarket": "UK",
+  "value": 3.2,
+  "unit": "%",
+  "period": "2026-01",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23"
+ },
+ {
+  "key": "cpih_yoy",
+  "submarket": "UK",
+  "value": 3.2,
+  "unit": "%",
+  "period": "2026-02",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23"
+ },
+ {
+  "key": "cpih_yoy",
+  "submarket": "UK",
+  "value": 3.4,
+  "unit": "%",
+  "period": "2026-03",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23"
+ },
+ {
+  "key": "cpih_yoy",
+  "submarket": "UK",
+  "value": 3.0,
+  "unit": "%",
+  "period": "2026-04",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23"
+ },
+ {
+  "key": "cpih_yoy",
+  "submarket": "UK",
+  "value": 3.0,
+  "unit": "%",
+  "period": "2026-05",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23"
+ },
+ {
+  "key": "cpih_yoy",
+  "submarket": "UK",
+  "value": 2.8,
+  "unit": "%",
+  "period": "2026-06",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23"
+ },
+ {
+  "key": "cpih_yoy",
+  "submarket": "UK",
+  "value": 3.1,
+  "unit": "%",
+  "period": "2026-07",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/l55o/mm23"
+ },
+ {
+  "key": "cpi_yoy",
+  "submarket": "UK",
+  "value": 3.8,
+  "unit": "%",
+  "period": "2025-09",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23"
+ },
+ {
+  "key": "cpi_yoy",
+  "submarket": "UK",
+  "value": 3.6,
+  "unit": "%",
+  "period": "2025-10",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23"
+ },
+ {
+  "key": "cpi_yoy",
+  "submarket": "UK",
+  "value": 3.2,
+  "unit": "%",
+  "period": "2025-11",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23"
+ },
+ {
+  "key": "cpi_yoy",
+  "submarket": "UK",
+  "value": 3.4,
+  "unit": "%",
+  "period": "2025-12",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23"
+ },
+ {
+  "key": "cpi_yoy",
+  "submarket": "UK",
+  "value": 3.0,
+  "unit": "%",
+  "period": "2026-01",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23"
+ },
+ {
+  "key": "cpi_yoy",
+  "submarket": "UK",
+  "value": 3.0,
+  "unit": "%",
+  "period": "2026-02",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23"
+ },
+ {
+  "key": "cpi_yoy",
+  "submarket": "UK",
+  "value": 3.3,
+  "unit": "%",
+  "period": "2026-03",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23"
+ },
+ {
+  "key": "cpi_yoy",
+  "submarket": "UK",
+  "value": 2.8,
+  "unit": "%",
+  "period": "2026-04",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23"
+ },
+ {
+  "key": "cpi_yoy",
+  "submarket": "UK",
+  "value": 2.8,
+  "unit": "%",
+  "period": "2026-05",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23"
+ },
+ {
+  "key": "cpi_yoy",
+  "submarket": "UK",
+  "value": 2.6,
+  "unit": "%",
+  "period": "2026-06",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23"
+ },
+ {
+  "key": "cpi_yoy",
+  "submarket": "UK",
+  "value": 2.9,
+  "unit": "%",
+  "period": "2026-07",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/inflationandpriceindices/timeseries/d7g7/mm23"
+ },
+ {
+  "key": "unemployment_rate",
+  "submarket": "UK",
+  "value": 4.8,
+  "unit": "%",
+  "period": "2025-07",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/timeseries/mgsx/lms"
+ },
+ {
+  "key": "unemployment_rate",
+  "submarket": "UK",
+  "value": 5.0,
+  "unit": "%",
+  "period": "2025-08",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/timeseries/mgsx/lms"
+ },
+ {
+  "key": "unemployment_rate",
+  "submarket": "UK",
+  "value": 5.1,
+  "unit": "%",
+  "period": "2025-09",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/timeseries/mgsx/lms"
+ },
+ {
+  "key": "unemployment_rate",
+  "submarket": "UK",
+  "value": 5.1,
+  "unit": "%",
+  "period": "2025-10",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/timeseries/mgsx/lms"
+ },
+ {
+  "key": "unemployment_rate",
+  "submarket": "UK",
+  "value": 5.2,
+  "unit": "%",
+  "period": "2025-11",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/timeseries/mgsx/lms"
+ },
+ {
+  "key": "unemployment_rate",
+  "submarket": "UK",
+  "value": 5.2,
+  "unit": "%",
+  "period": "2025-12",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/timeseries/mgsx/lms"
+ },
+ {
+  "key": "unemployment_rate",
+  "submarket": "UK",
+  "value": 4.9,
+  "unit": "%",
+  "period": "2026-01",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/timeseries/mgsx/lms"
+ },
+ {
+  "key": "unemployment_rate",
+  "submarket": "UK",
+  "value": 5.0,
+  "unit": "%",
+  "period": "2026-02",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/timeseries/mgsx/lms"
+ },
+ {
+  "key": "unemployment_rate",
+  "submarket": "UK",
+  "value": 4.9,
+  "unit": "%",
+  "period": "2026-03",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/timeseries/mgsx/lms"
+ },
+ {
+  "key": "unemployment_rate",
+  "submarket": "UK",
+  "value": 4.9,
+  "unit": "%",
+  "period": "2026-04",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/timeseries/mgsx/lms"
+ },
+ {
+  "key": "unemployment_rate",
+  "submarket": "UK",
+  "value": 4.9,
+  "unit": "%",
+  "period": "2026-05",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/employmentandlabourmarket/peoplenotinwork/unemployment/timeseries/mgsx/lms"
+ },
+ {
+  "key": "gdp_growth_qoq",
+  "submarket": "UK",
+  "value": -0.2,
+  "unit": "%",
+  "period": "2023-Q3",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/ihyq/qna"
+ },
+ {
+  "key": "gdp_growth_qoq",
+  "submarket": "UK",
+  "value": -0.3,
+  "unit": "%",
+  "period": "2023-Q4",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/ihyq/qna"
+ },
+ {
+  "key": "gdp_growth_qoq",
+  "submarket": "UK",
+  "value": 0.7,
+  "unit": "%",
+  "period": "2024-Q1",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/ihyq/qna"
+ },
+ {
+  "key": "gdp_growth_qoq",
+  "submarket": "UK",
+  "value": 0.6,
+  "unit": "%",
+  "period": "2024-Q2",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/ihyq/qna"
+ },
+ {
+  "key": "gdp_growth_qoq",
+  "submarket": "UK",
+  "value": 0.2,
+  "unit": "%",
+  "period": "2024-Q3",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/ihyq/qna"
+ },
+ {
+  "key": "gdp_growth_qoq",
+  "submarket": "UK",
+  "value": 0.4,
+  "unit": "%",
+  "period": "2024-Q4",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/ihyq/qna"
+ },
+ {
+  "key": "gdp_growth_qoq",
+  "submarket": "UK",
+  "value": 0.6,
+  "unit": "%",
+  "period": "2025-Q1",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/ihyq/qna"
+ },
+ {
+  "key": "gdp_growth_qoq",
+  "submarket": "UK",
+  "value": 0.0,
+  "unit": "%",
+  "period": "2025-Q2",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/ihyq/qna"
+ },
+ {
+  "key": "gdp_growth_qoq",
+  "submarket": "UK",
+  "value": 0.2,
+  "unit": "%",
+  "period": "2025-Q3",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/ihyq/qna"
+ },
+ {
+  "key": "gdp_growth_qoq",
+  "submarket": "UK",
+  "value": 0.0,
+  "unit": "%",
+  "period": "2025-Q4",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/ihyq/qna"
+ },
+ {
+  "key": "gdp_growth_qoq",
+  "submarket": "UK",
+  "value": 0.6,
+  "unit": "%",
+  "period": "2026-Q1",
+  "source": "ONS",
+  "url": "https://www.ons.gov.uk/economy/grossdomesticproductgdp/timeseries/ihyq/qna"
+ }
+]

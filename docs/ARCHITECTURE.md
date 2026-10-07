@@ -125,6 +125,8 @@ PNG export failure is non-fatal).
 | Add a metric | Add the key + unit to `schemas.METRIC_KEYS`; reference it in a skill's `metrics` / `sanity_ranges` |
 | Add a chart | New function in `reporting/charts.py`, register in `build_charts` |
 | Change models | `.env`: `MODEL_ROUTER`, `MODEL_SKILL`, `MODEL_SYNTHESIS` |
+| Proxy / CA bundle / timeouts for Claude calls | `.env`: `LLM_PROXY_URL`, `LLM_CA_BUNDLE`, `LLM_TIMEOUT_S` (built by `llm.build_http_clients`) |
+| Inject a fully custom HTTP client | `get_llm(tier, http_client=anthropic.DefaultHttpxClient(...))`. Uses httpx2 (not httpx), via the `ChatAnthropicHTTP` subclass in `llm.py` |
 | Deliver reports elsewhere | Add a node after `report_writer` (e.g. email/Teams) |
 
 ## Production hardening (not in PoC scope)

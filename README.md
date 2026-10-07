@@ -42,6 +42,39 @@ cre-monitor ask "How is Canary Wharf vacancy trending?"
 cre-monitor ui                         # Streamlit chat + briefs + dashboard
 ```
 
+### Run in GitHub Codespaces (no local setup)
+
+The repo includes `.devcontainer/`, so a codespace builds itself. On first start it:
+* creates the same `london-cre` conda env from `environment.yml`;
+* installs Chromium for the PNG charts;
+* runs the offline tests.
+
+1. **Add your keys as Codespaces secrets.** Go to GitHub → *Settings* → *Codespaces* →
+   *Secrets* and add `ANTHROPIC_API_KEY` (and optionally `TAVILY_API_KEY`). Give the
+   secrets access to this repository. They become environment variables, so no `.env`
+   file is needed.
+2. **Optionally choose a region.** In the same settings page, set *Region* (US East, US
+   West, Europe West or Southeast Asia). Otherwise GitHub picks the region nearest to you.
+3. **Create the codespace.** On the repo page, click *Code* → *Codespaces* → *Create
+   codespace on main*. Wait for the setup to finish, then open a new terminal.
+4. **Run the commands as usual:**
+   ```bash
+   cre-monitor skills
+   cre-monitor brief --skills macro-economy     # cheap live check
+   cre-monitor ui                               # Streamlit opens on forwarded port 8501
+   ```
+   Reports are written inside the codespace under `reports/`. Download them from the VS
+   Code file explorer.
+
+Notes:
+* A codespace stops after about 30 minutes idle, so it suits interactive use and demos,
+  not the weekly scheduled brief. For unattended weekly runs, use a GitHub Actions
+  workflow or a server.
+* Personal accounts get free monthly Codespaces hours; beyond that it's billed per hour.
+* Anthropic's API is only available in supported regions, and that applies to the people
+  using it, not just where the code runs. Hosting it in Codespaces is appropriate when the
+  team running it is in a supported location, e.g. the London team.
+
 ### Run modes
 
 Two independent switches. Set them in `.env` or as CLI flags.

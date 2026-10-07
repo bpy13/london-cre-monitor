@@ -1,0 +1,43 @@
+// Dev container for GitHub Codespaces (and VS Code "Reopen in Container").
+//
+// Creates the same `london-cre` conda environment as local setup, from
+// environment.yml, so there is one source of truth for dependencies.
+// API keys come from Codespaces secrets (GitHub > Settings > Codespaces >
+// Secrets), which are injected as environment variables - no .env file needed.
+{
+  "name": "London CRE Monitor",
+  "image": "mcr.microsoft.com/devcontainers/miniconda:3",
+
+  // Builds the conda env, installs Chromium for PNG chart export, and makes
+  // `london-cre` the default env in every new terminal.
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  // Streamlit UI (`cre-monitor ui`). Codespaces forwards it privately to you.
+  "forwardPorts": [8501],
+  "portsAttributes": {
+    "8501": { "label": "Streamlit UI", "onAutoForward": "openBrowser" }
+  },
+
+  // Codespaces prompts for these when creating a codespace if they are not
+  // already set as user/repo secrets.
+  "secrets": {
+    "ANTHROPIC_API_KEY": {
+      "description": "Anthropic API key (console.anthropic.com). Without it the app runs in demo mode."
+    },
+    "TAVILY_API_KEY": {
+      "description": "Optional. Tavily search key (free tier at tavily.com) for broker research coverage."
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python"],
+      "settings": {
+        "python.defaultInterpreterPath": "/opt/conda/envs/london-cre/bin/python"
+      }
+    },
+    "codespaces": {
+      "openFiles": ["README.md"]
+    }
+  }
+}

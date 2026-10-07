@@ -20,7 +20,7 @@ from langgraph.types import Send
 
 from cre_monitor.config import get_settings
 from cre_monitor.graph.state import AgentState, Replace, SkillTask
-from cre_monitor.llm import get_llm
+from cre_monitor.llm import STRUCTURED, get_llm
 from cre_monitor.schemas import SkillSelection
 from cre_monitor.skills import get_registry
 
@@ -68,7 +68,7 @@ def keyword_route(question: str) -> list[str]:
 def llm_route(question: str) -> SkillSelection:
     """Ask the router LLM which skills to use (structured output)."""
     registry = get_registry()
-    router = get_llm("router").with_structured_output(SkillSelection)
+    router = get_llm("router").with_structured_output(SkillSelection, **STRUCTURED)
     result: SkillSelection = router.invoke(
         [SystemMessage(ROUTER_PROMPT.format(catalog=registry.planner_catalog())), HumanMessage(question)]
     )

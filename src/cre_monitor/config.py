@@ -47,8 +47,15 @@ class Settings(BaseSettings):
     model_router: str = "claude-haiku-4-5-20251001"
     model_skill: str = "claude-sonnet-5-5"
     model_synthesis: str = "claude-opus-5-5"
-    llm_temperature: float = 0.0
-    llm_max_tokens: int = 8000
+    # Reasoning effort per tier (low|medium|high|xhigh|max). This is the main
+    # cost/quality dial on current models - they don't accept a custom
+    # `temperature`, and thinking is on by default. Haiku 4.5 (router) does not
+    # support effort, so the router tier has none.
+    effort_skill: str = "medium"
+    effort_synthesis: str = "high"
+    #: Output cap per call. Thinking tokens count towards it, so keep it generous
+    #: (a truncated structured response fails validation and wastes the call).
+    llm_max_tokens: int = 16000
 
     # --- Run modes (see module docstring) ---------------------------------
     cre_offline: bool = False

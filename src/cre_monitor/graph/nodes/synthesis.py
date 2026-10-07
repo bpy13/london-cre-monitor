@@ -16,7 +16,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from cre_monitor.config import get_settings
 from cre_monitor.graph.nodes.skill_runner import finding_to_json
 from cre_monitor.graph.state import AgentState
-from cre_monitor.llm import get_llm
+from cre_monitor.llm import STRUCTURED, get_llm
 from cre_monitor.schemas import ExecutiveSynthesis, MetricDelta, Severity, Signal, SignalType, SkillFinding, ValidationIssue
 from cre_monitor.skills import get_registry
 
@@ -67,7 +67,7 @@ def llm_synthesis(findings: list[SkillFinding], deltas: list[MetricDelta], issue
         "changes_vs_previous_periods": [d.describe() for d in deltas if d.is_material],
         "data_quality_issues": [i.message for i in issues],
     }
-    model = get_llm(skill.meta.model_tier).with_structured_output(ExecutiveSynthesis)
+    model = get_llm(skill.meta.model_tier).with_structured_output(ExecutiveSynthesis, **STRUCTURED)
     return model.invoke(
         [SystemMessage(skill.instructions), HumanMessage(json.dumps(payload, ensure_ascii=False, default=str))]
     )

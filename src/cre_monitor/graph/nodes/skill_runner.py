@@ -36,7 +36,7 @@ from langgraph.prebuilt import ToolNode
 
 from cre_monitor.config import get_settings
 from cre_monitor.graph.state import SkillTask
-from cre_monitor.llm import get_llm
+from cre_monitor.llm import STRUCTURED, get_llm
 from cre_monitor.schemas import METRIC_KEYS, SUBMARKETS, SkillFinding
 from cre_monitor.skills import Skill, get_registry
 from cre_monitor.tools import get_tools
@@ -120,7 +120,7 @@ def build_skill_agent(skill_name: str):
         if isinstance(msgs[-1], AIMessage) and msgs[-1].tool_calls:
             msgs = msgs[:-1]
         question = next((m.content for m in msgs if isinstance(m, HumanMessage)), "")
-        structured = llm.with_structured_output(SkillFinding)
+        structured = llm.with_structured_output(SkillFinding, **STRUCTURED)
         finding: SkillFinding = structured.invoke(
             [system, *msgs, HumanMessage(RESPOND_PROMPT.format(question=question))]
         )

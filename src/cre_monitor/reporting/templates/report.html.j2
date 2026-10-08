@@ -17,6 +17,7 @@
     --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
     --hairline: #e1e0d9; --border: rgba(11,11,11,0.10); --accent: #2a78d6;
     --good: #006300; --critical: #d03b3b; --warning-ink: #8a5a00;
+    --critical-bg: #fdecec; --warning-bg: #fdf4e3; --code-bg: rgba(11,11,11,0.05);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -24,6 +25,7 @@
       --page: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
       --hairline: #2c2c2a; --border: rgba(255,255,255,0.10); --accent: #3987e5;
       --good: #0ca30c; --critical: #e66767; --warning-ink: #fab219;
+      --critical-bg: #2a1616; --warning-bg: #2a2212; --code-bg: rgba(255,255,255,0.08);
     }
   }
   * { box-sizing: border-box; }
@@ -63,6 +65,19 @@
   .issue-error { color: var(--critical); } .issue-warning { color: var(--warning-ink); }
   a { color: var(--accent); }
   details summary { cursor: pointer; color: var(--ink-2); margin-top: 8px; }
+  /* Problem panel (see cre_monitor.errors.Incident): red = no usable result, amber = partial. */
+  .incident { border-radius: 10px; padding: 16px 18px; margin-bottom: 24px; border: 1px solid; }
+  .incident.total { background: var(--critical-bg); border-color: var(--critical); }
+  .incident.partial { background: var(--warning-bg); border-color: var(--warning-ink); }
+  .incident .title { font-weight: 700; font-size: 16px; margin: 0 0 6px; }
+  .incident.total .title { color: var(--critical); } .incident.partial .title { color: var(--warning-ink); }
+  .incident p { margin: 6px 0; }
+  .incident .ref { margin-top: 10px; font-size: 14px; }
+  code.ref-id { font: 600 14px ui-monospace, Consolas, monospace; background: var(--code-bg);
+                padding: 2px 8px; border-radius: 6px; user-select: all; }
+  .skill-failed { color: var(--warning-ink); }
+  .tech pre { white-space: pre-wrap; word-break: break-word; font-size: 12px; background: var(--code-bg);
+              padding: 10px; border-radius: 8px; color: var(--ink-2); }
   footer { margin-top: 48px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--hairline); padding-top: 12px; }
   @media (max-width: 600px) { h1 { font-size: 22px; } .kpi .value { font-size: 22px; } table { font-size: 13px; } }
 </style>
@@ -77,6 +92,18 @@
       {% if offline %}<span class="badge">Offline data</span>{% endif %}
     </div>
   </header>
+
+  {% if incident %}
+  {% set cat = incident.category %}
+  <section class="incident {{ incident.scope }}" role="alert" aria-label="Problem with this brief">
+    <p class="title">{% if incident.scope == "total" %}&#128683;{% else %}&#9888;&#65039;{% endif %} {{ cat.title }}</p>
+    <p>{% if incident.scope == "total" %}This brief could not be produced from fresh research.{% else %}Part of the research failed ({{ incident.affected | join(", ") }}), so this brief is incomplete.{% endif %}
+       {{ cat.message }}</p>
+    <p><strong>What you can do</strong></p>
+    <ul>{% for a in cat.actions %}<li>{{ a }}</li>{% endfor %}</ul>
+    <p class="ref">Reference for support: <code class="ref-id">{{ incident.id }}</code> &nbsp;please send it to <strong>{{ support_contact }}</strong> so they can trace the problem.</p>
+  </section>
+  {% endif %}
 
   {% if kpis %}
   <section class="grid kpis" aria-label="Headline indicators">
@@ -132,7 +159,8 @@
   <section class="card skill" id="skill-{{ f.skill }}">
     <h3>{{ f.skill|replace("-", " ")|title }}</h3>
     {% if f.error %}
-      <p class="issue-error">This skill failed: {{ f.error }}</p>
+      <p class="skill-failed">&#9888;&#65039; <strong>Not available this time</strong>: {{ f.error | error_title }}.
+        {% if incident %}Reference <code class="ref-id">{{ incident.id }}</code> (details at the end of the report).{% endif %}</p>
     {% else %}
       <p class="headline">{{ f.headline }}</p>
       <p>{{ f.summary }}</p>
@@ -172,6 +200,14 @@
   <div class="card"><ol>
     {% for c in citations %}<li>{% if c.url %}<a href="{{ c.url }}" target="_blank" rel="noopener">{{ c.title }}</a>{% else %}{{ c.title }}{% endif %}{% if c.publisher %} - {{ c.publisher }}{% endif %}{% if c.published %}, {{ c.published }}{% endif %}</li>{% endfor %}
   </ol></div>
+
+  {% if incident %}
+  <details class="tech">
+    <summary>Technical details for engineers (reference {{ incident.id }})</summary>
+    <p class="conf">Category <code>{{ incident.category.code }}</code> · scope {{ incident.scope }} · affected: {{ incident.affected | join(", ") }} · run {{ incident.run_id or run_id }}{% if incident.log_file %} · log {{ incident.log_file }}{% endif %}</p>
+    <pre>{{ incident.details | join("\n") }}</pre>
+  </details>
+  {% endif %}
 
   <footer>
     Produced by the London CRE Market Monitor (LangGraph agent PoC, Nan Fung Group). Figures are taken from the cited

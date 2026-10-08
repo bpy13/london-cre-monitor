@@ -141,6 +141,16 @@ The panel is saved with the turn, so it reappears when the conversation is reope
 same information is printed in the terminal by `ask`, `chat` and `brief`.
 **Run full brief now** shows a compact version in the sidebar.
 
+**In briefs (HTML and Markdown)** the same treatment applies, and the reference ID matches
+the one shown in the terminal or UI:
+* a red or amber **problem panel** under the title, with the plain-English problem, what to
+  do, the reference and the support contact;
+* each failed topic section reads "⚠ Not available this time: \<problem\>. Reference ERR-…";
+* raw "Skill failed" lines are left out of the data-quality notes;
+* raw error text appears only in **Technical details for engineers**: collapsed at the end
+  of the HTML, and an appendix in the Markdown;
+* the findings JSON keeps the full audit trail, including the incident.
+
 **For engineers tracing a reference:**
 
 ```bash

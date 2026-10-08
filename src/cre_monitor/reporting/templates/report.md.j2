@@ -3,6 +3,20 @@
 
 _Generated {{ generated }} · run `{{ run_id }}`{% if demo_mode %} · **demo mode (canned research, no LLM)**{% endif %}{% if offline %} · offline data{% endif %}_
 
+{% if incident %}
+{% set cat = incident.category %}
+> {% if incident.scope == "total" %}🚫{% else %}⚠️{% endif %} **{{ cat.title }}**
+>
+> {% if incident.scope == "total" %}This brief could not be produced from fresh research.{% else %}Part of the research failed ({{ incident.affected | join(", ") }}), so this brief is incomplete.{% endif %} {{ cat.message }}
+>
+> **What you can do**
+{% for a in cat.actions %}
+> - {{ a }}
+{% endfor %}
+>
+> **Reference for support:** `{{ incident.id }}` (please send it to {{ support_contact }} so they can trace the problem)
+
+{% endif %}
 {% if kpis %}
 | Indicator | Value | Change | Period | Source |
 |---|---|---|---|---|
@@ -54,7 +68,8 @@ _Generated {{ generated }} · run `{{ run_id }}`{% if demo_mode %} · **demo mod
 ### {{ f.skill|replace("-", " ")|title }}
 
 {% if f.error %}
-> Skill failed: {{ f.error }}
+> ⚠️ **Not available this time**: {{ f.error | error_title }}.{% if incident %} Reference `{{ incident.id }}` (details at the end of the report).{% endif %}
+
 {% else %}
 **{{ f.headline }}**
 
@@ -98,5 +113,15 @@ _Confidence {{ "%.0f"|format(f.confidence * 100) }}%_
 {{ loop.index }}. {% if c.url %}[{{ c.title }}]({{ c.url }}){% else %}{{ c.title }}{% endif %}{% if c.publisher %} - {{ c.publisher }}{% endif %}{% if c.published %}, {{ c.published }}{% endif %}
 
 {% endfor %}
+{% if incident %}
+## Technical details for engineers
+
+_Reference `{{ incident.id }}` · category `{{ incident.category.code }}` · scope {{ incident.scope }} · affected: {{ incident.affected | join(", ") }} · run `{{ incident.run_id or run_id }}`_
+
+```text
+{{ incident.details | join("\n") }}
+```
+
+{% endif %}
 ---
 _Figures are from the cited third-party sources; brokers define metrics differently. Not investment advice._

@@ -16,6 +16,7 @@ from typing import Annotated, Literal, TypedDict
 from langchain_core.messages import AnyMessage
 from langgraph.graph.message import add_messages
 
+from cre_monitor.errors import Incident
 from cre_monitor.schemas import ExecutiveSynthesis, MetricDelta, SkillFinding, ValidationIssue
 
 Mode = Literal["brief", "chat"]
@@ -78,7 +79,9 @@ class AgentState(TypedDict, total=False):
         errors: Raw ``"step: error"`` strings from LLM steps that failed outside
             the skills (answer, synthesis). Skill failures live on
             ``SkillFinding.error``. Both are turned into one user-facing
-            ``Incident`` by ``builder`` (see ``cre_monitor.errors``).
+            ``Incident`` (see ``cre_monitor.errors.incident_from_state``).
+        incident: That Incident (or None). Set by ``report_writer`` for briefs
+            (so the report can show its reference) and by ``builder.ask`` for chat.
     """
 
     mode: Mode
@@ -99,6 +102,7 @@ class AgentState(TypedDict, total=False):
     report_paths: dict[str, str]
     answer: str
     errors: list[str]
+    incident: Incident | None
 
 
 class SkillTask(TypedDict):

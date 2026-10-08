@@ -140,6 +140,7 @@ def planner(state: AgentState) -> dict:
         "synthesis": None,
         "answer": "",
         "errors": [],
+        "incident": None,
     }
 
 

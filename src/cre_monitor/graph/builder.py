@@ -31,7 +31,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from cre_monitor.config import get_settings
-from cre_monitor.errors import Incident, make_incident
+from cre_monitor.errors import incident_from_state
 from cre_monitor.graph.nodes import (
     chat_answer, fan_out, persist, planner, report_writer, route_after_persist,
     skill_runner, synthesis, validator,
@@ -96,25 +96,10 @@ def run_brief(skills: list[str] | None = None) -> AgentState:
         ``state["incident"]`` an Incident if any step failed (else ``None``).
     """
     get_settings().ensure_dirs()
+    # The incident (if any) is created by the report_writer node, so the report shows its reference.
     state = build_graph().invoke({"mode": "brief", "messages": [], "skills_override": skills})
-    state["incident"] = incident_for(state)
+    state.setdefault("incident", None)
     return state
-
-
-def incident_for(state: AgentState, thread_id: str | None = None) -> Incident | None:
-    """Turn a run's failures (failed skills + failed LLM steps) into one logged Incident.
-
-    ``scope`` is "total" when nothing usable was produced (every skill failed,
-    or no research and the answer step failed), otherwise "partial".
-    Returns ``None`` when the run had no failures.
-    """
-    findings = state.get("findings") or []
-    failures = [(f.skill, f.error) for f in findings if f.error]
-    failures += [tuple(e.split(": ", 1)) if ": " in e else ("unknown", e) for e in state.get("errors") or []]
-    usable = any(not f.error for f in findings)
-    answer_failed = any(step == "answer" for step, _ in failures)
-    total = (bool(findings) and not usable) or (not findings and answer_failed)
-    return make_incident(failures, total=total, thread_id=thread_id, run_id=state.get("run_id"))
 
 
 def new_thread_id() -> str:
@@ -184,7 +169,7 @@ def ask(
                 stream_handler(node, update)
         state = graph.get_state(config).values
     state = dict(state)
-    state["incident"] = incident_for(state, thread_id)
+    state["incident"] = incident_from_state(state, thread_id)
     _record_turn(thread_id, question, state)
     return state
 

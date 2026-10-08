@@ -188,6 +188,23 @@ def make_incident(
     return incident
 
 
+def incident_from_state(state: dict, thread_id: str | None = None) -> Incident | None:
+    """Turn a run's failures (failed skills + failed LLM steps) into one logged Incident.
+
+    ``scope`` is "total" when nothing usable was produced (every skill failed,
+    or no research and the answer step failed), otherwise "partial".
+    Returns ``None`` when the run had no failures. Used by the report writer
+    (so the report can show the reference) and by chat turns.
+    """
+    findings = state.get("findings") or []
+    failures = [(f.skill, f.error) for f in findings if f.error]
+    failures += [tuple(e.split(": ", 1)) if ": " in e else ("unknown", e) for e in state.get("errors") or []]
+    usable = any(not f.error for f in findings)
+    answer_failed = any(step == "answer" for step, _ in failures)
+    total = (bool(findings) and not usable) or (not findings and answer_failed)
+    return make_incident(failures, total=total, thread_id=thread_id, run_id=state.get("run_id"))
+
+
 def incident_from_exception(exc: BaseException, *, step: str, thread_id: str | None = None) -> Incident:
     """Incident for an unexpected exception that aborted a whole operation (logs the traceback)."""
     logger.exception("Unhandled error in %s (thread=%s)", step, thread_id)

@@ -125,8 +125,11 @@ Periods sort as strings, which is what the delta and trend logic relies on.
 | `describe()` | One-line text used in reports and prompts |
 
 ### `Incident`: a user-facing failure report (`errors.py`)
-Created by `builder.incident_for` after a chat turn or brief whenever any step failed:
-failed skills (`SkillFinding.error`) plus failed LLM steps (`AgentState.errors`).
+Created by `errors.incident_from_state` whenever any step of a chat turn or brief failed:
+failed skills (`SkillFinding.error`) plus failed LLM steps (`AgentState.errors`). For
+briefs this happens in `report_writer`, so the report, the CLI and the UI show the same
+reference. It is stored in `findings_<run>.json` and, for chat turns, in
+`turns.incident_json`.
 
 | Field | Type | Notes |
 |---|---|---|
@@ -164,7 +167,7 @@ failed skills (`SkillFinding.error`) plus failed LLM steps (`AgentState.errors`)
 | `report_paths` | `report_writer` | `{"html", "markdown", "json"}` → path |
 | `answer` | `chat_answer` | Final chat text (never contains raw error text) |
 | `errors` | `chat_answer`, `synthesis` | Raw `"step: error"` strings from failed LLM steps outside the skills. Reset by the planner each run |
-| `incident` | `builder.ask` / `run_brief` (after the graph) | `Incident` or `None`: the user-facing summary of all failures in the run |
+| `incident` | `report_writer` (briefs, before rendering, so the report shows the reference) / `builder.ask` (chat) | `Incident` or `None`: the user-facing summary of all failures in the run, built by `errors.incident_from_state` |
 
 ### `SkillTask`: private input to one parallel skill run (via `Send`)
 `skill_name`, `mode`, `question` (the user's question, or the standard brief instruction).

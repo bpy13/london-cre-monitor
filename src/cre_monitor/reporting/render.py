@@ -24,6 +24,7 @@ from pathlib import Path
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from cre_monitor.config import get_settings
+from cre_monitor.errors import Incident, classify
 from cre_monitor.reporting.charts import build_charts
 from cre_monitor.schemas import Citation, ExecutiveSynthesis, MetricDelta, SkillFinding, ValidationIssue
 from cre_monitor.skills import get_registry
@@ -50,6 +51,8 @@ def _env() -> Environment:
         lstrip_blocks=True,
     )
     env.filters["label"] = lambda key: key.replace("_", " ")
+    # Raw exception text -> plain-English title, e.g. "The AI service refused the request".
+    env.filters["error_title"] = lambda text: classify(text or "").title
     return env
 
 
@@ -143,6 +146,7 @@ def write_report(
     deltas: list[MetricDelta],
     issues: list[ValidationIssue],
     out_dir: Path | None = None,
+    incident: Incident | None = None,
 ) -> dict[str, Path]:
     """Render and save the report files.
 
@@ -153,6 +157,9 @@ def write_report(
         deltas: Period-on-period changes.
         issues: Validation issues to disclose in the report.
         out_dir: Override output folder (defaults to ``reports/<today>``).
+        incident: Failures of this run, shown as a user-friendly problem panel
+            with a reference ID. Raw error text appears only in the collapsed
+            "Technical details" section (HTML) / appendix (Markdown).
 
     Returns:
         Mapping of output kind (``html``, ``markdown``, ``json``) to path.
@@ -190,7 +197,10 @@ def write_report(
         "findings": findings,
         "skills_meta": skills_meta,
         "deltas": [d.describe() for d in deltas if d.is_material],
-        "issues": issues,
+        # Skill failures are explained by the incident panel; don't repeat raw errors as data notes.
+        "issues": [i for i in issues if not (incident and i.message.startswith("Skill failed:"))],
+        "incident": incident,
+        "support_contact": s.support_contact,
         "charts": chart_html,
         "png_charts": png_paths,
         "citations": all_citations(findings),
@@ -211,7 +221,8 @@ def write_report(
                 "synthesis": synthesis.model_dump(mode="json"),
                 "findings": [f.model_dump(mode="json") for f in findings],
                 "deltas": [d.model_dump(mode="json") for d in deltas],
-                "issues": [i.model_dump(mode="json") for i in issues],
+                "issues": [i.model_dump(mode="json") for i in issues],   # unfiltered: full audit trail
+                "incident": incident.model_dump(mode="json") if incident else None,
             },
             indent=2, ensure_ascii=False,
         ),

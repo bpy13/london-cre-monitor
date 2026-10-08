@@ -89,6 +89,62 @@ def test_chat_with_refused_api_gives_clean_answer_and_incident(api_refuses):
     assert get_conversation_store().turns("blocked")[0].incident.id == incident.id
 
 
+REAL_400 = ("AnthropicInvalidRequestError: Error code: 400 - {'type': 'error', 'error': {'type': "
+            "'invalid_request_error', 'message': 'messages.1.content.4: Invalid `signature` in `thinking` block.'}}")
+
+
+def _report_texts(state):
+    from pathlib import Path
+
+    html = Path(state["report_paths"]["html"]).read_text(encoding="utf-8")
+    md = Path(state["report_paths"]["markdown"]).read_text(encoding="utf-8")
+    raw_json = Path(state["report_paths"]["json"]).read_text(encoding="utf-8")
+    return html, md, raw_json
+
+
+def test_report_shows_friendly_panel_for_partial_failure(monkeypatch):
+    """One skill fails (the real live 400), the other succeeds -> amber panel, no raw text for readers."""
+    from cre_monitor.graph.builder import run_brief
+
+    # importlib: graph/nodes/__init__ re-exports a *function* named skill_runner, shadowing the module.
+    sr = importlib.import_module("cre_monitor.graph.nodes.skill_runner")
+    real_demo = sr.demo_finding
+
+    def flaky_demo(name):
+        if name == "office-rents":
+            raise RuntimeError(REAL_400)
+        return real_demo(name)
+
+    monkeypatch.setattr(sr, "demo_finding", flaky_demo)
+    state = run_brief(["office-rents", "macro-economy"])
+    incident = state["incident"]
+    assert incident.scope == "partial" and incident.category.code == "app_error"
+
+    html, md, raw_json = _report_texts(state)
+    readable_html = html.split('<details class="tech">')[0]
+    readable_md = md.split("## Technical details for engineers")[0]
+    for readable in (readable_html, readable_md):
+        assert "The app sent a request the AI service rejected" in readable   # plain-English title
+        assert incident.id in readable                                       # same reference as CLI/UI
+        assert "Not available this time" in readable                         # per-skill line
+        assert "Error code" not in readable and "Skill failed:" not in readable   # no raw text for readers
+    assert 'class="incident partial"' in html
+    assert "the London engineering team" in readable_html                    # support contact
+    assert "Error code: 400" in html.split('<details class="tech">')[1]      # raw kept for engineers ...
+    assert "Error code: 400" in md.split("## Technical details for engineers")[1]
+    assert "Skill failed:" in raw_json and incident.id in raw_json           # ... and in the audit JSON
+
+
+def test_report_shows_red_panel_when_nothing_usable(api_refuses):
+    from cre_monitor.graph.builder import run_brief
+
+    state = run_brief(["macro-economy"])
+    html, md, _ = _report_texts(state)
+    assert 'class="incident total"' in html
+    assert "This brief could not be produced from fresh research." in html
+    assert "🚫" in md.split("## Executive summary")[0]
+
+
 def test_brief_with_refused_api_reports_incident(api_refuses):
     from cre_monitor.graph.builder import run_brief
 

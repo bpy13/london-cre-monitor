@@ -15,10 +15,15 @@ Schema::
 
     conversations(thread_id PK, title, created_at, updated_at)
     turns(thread_id, idx, created_at, question, answer, skills_json,
-          reasoning, issues_json, findings_json, PK(thread_id, idx))
+          reasoning, issues_json, findings_json, refs_json, PK(thread_id, idx))
 
 Turns are written by :func:`cre_monitor.graph.builder.ask`, so chats started from
 the UI *and* the CLI (``cre-monitor chat --thread X``) appear in the list.
+
+Cross-conversation references: a question can reference up to ``MAX_REFS``
+earlier conversations. :meth:`ConversationStore.context_pack` turns each into a
+short, dated summary that the router and the answer step see as *background*;
+the research skills never see it, so figures always come from fresh sources.
 """
 
 from __future__ import annotations
@@ -52,6 +57,7 @@ CREATE TABLE IF NOT EXISTS turns (
     reasoning     TEXT,
     issues_json   TEXT NOT NULL,
     findings_json TEXT NOT NULL,
+    refs_json     TEXT NOT NULL DEFAULT '[]',
     PRIMARY KEY (thread_id, idx)
 );
 CREATE INDEX IF NOT EXISTS ix_conversations_updated ON conversations(updated_at);
@@ -59,6 +65,17 @@ CREATE INDEX IF NOT EXISTS ix_conversations_updated ON conversations(updated_at)
 
 #: Max length of an auto-generated title (first question, truncated).
 TITLE_MAX = 60
+
+# --- Cross-conversation references (see context_pack) -----------------------
+#: Max earlier conversations that can be referenced in one question.
+MAX_REFS = 3
+#: Most recent turns of each referenced conversation included in its pack.
+PACK_MAX_TURNS = 5
+#: Per-answer excerpt length and max key figures per referenced conversation.
+PACK_ANSWER_CHARS = 400
+PACK_MAX_FIGURES = 12
+#: Hard cap on one conversation's pack, to bound prompt size and cost.
+PACK_MAX_CHARS = 4000
 
 
 class Conversation(BaseModel):
@@ -82,6 +99,7 @@ class Turn(BaseModel):
     reasoning: str | None = None
     issues: list[ValidationIssue]
     findings: list[SkillFinding]
+    refs: list[str] = []  # thread ids of earlier conversations referenced in this turn
 
 
 def make_title(question: str) -> str:
@@ -99,6 +117,10 @@ class ConversationStore:
         path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as conn:
             conn.executescript(_SCHEMA)
+            # Upgrade databases created before cross-conversation references existed.
+            cols = {r["name"] for r in conn.execute("PRAGMA table_info(turns)")}
+            if "refs_json" not in cols:
+                conn.execute("ALTER TABLE turns ADD COLUMN refs_json TEXT NOT NULL DEFAULT '[]'")
 
     @contextmanager
     def _conn(self) -> Iterator[sqlite3.Connection]:
@@ -121,8 +143,12 @@ class ConversationStore:
         reasoning: str | None = None,
         issues: list[ValidationIssue] | None = None,
         findings: list[SkillFinding] | None = None,
+        refs: list[str] | None = None,
     ) -> int:
         """Append a turn, creating the conversation on its first turn.
+
+        Args:
+            refs: Thread ids of earlier conversations referenced in this turn.
 
         Returns:
             The index (0-based) of the recorded turn.
@@ -138,13 +164,15 @@ class ConversationStore:
                 "SELECT COALESCE(MAX(idx) + 1, 0) FROM turns WHERE thread_id = ?", (thread_id,)
             ).fetchone()[0]
             conn.execute(
-                "INSERT INTO turns VALUES (?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO turns (thread_id, idx, created_at, question, answer, skills_json, "
+                "reasoning, issues_json, findings_json, refs_json) VALUES (?,?,?,?,?,?,?,?,?,?)",
                 (
                     thread_id, idx, now, question, answer,
                     json.dumps(skills or []),
                     reasoning,
                     json.dumps([i.model_dump(mode="json") for i in issues or []]),
                     json.dumps([f.model_dump(mode="json") for f in findings or []]),
+                    json.dumps(refs or []),
                 ),
             )
         return idx
@@ -195,9 +223,54 @@ class ConversationStore:
                 skills=json.loads(r["skills_json"]), reasoning=r["reasoning"],
                 issues=[ValidationIssue(**i) for i in json.loads(r["issues_json"])],
                 findings=[SkillFinding(**f) for f in json.loads(r["findings_json"])],
+                refs=json.loads(r["refs_json"] or "[]"),
             )
             for r in rows
         ]
+
+    # -- cross-conversation context ------------------------------------------
+    def context_pack(self, thread_id: str) -> str:
+        """Compact, dated summary of a conversation, for use as background context.
+
+        Built for the router and the chat answer step only - **never** for the
+        research skills, which must base figures on fresh sources. Contains the
+        conversation's title and date, its most recent questions with a short
+        excerpt of each answer, and the key figures it reported (with period,
+        source and date) so the model can tell when they may be superseded.
+
+        Returns:
+            The pack text, or ``""`` if the conversation doesn't exist.
+        """
+        conv = self.get(thread_id)
+        if conv is None:
+            return ""
+        turns = self.turns(thread_id)[-PACK_MAX_TURNS:]
+        lines = [
+            f'=== EARLIER CONVERSATION "{conv.title}" (id {thread_id}, last active {conv.updated_at:%Y-%m-%d}) ===',
+        ]
+        figures: dict[tuple, str] = {}
+        for t in turns:
+            answer = " ".join(t.answer.split())
+            if len(answer) > PACK_ANSWER_CHARS:
+                answer = answer[: PACK_ANSWER_CHARS - 1].rstrip() + "…"
+            lines.append(f"[{t.created_at:%Y-%m-%d}] Q: {t.question}")
+            lines.append(f"A (excerpt): {answer}")
+            for f in t.findings:
+                for m in f.metrics:
+                    k = (m.key, m.submarket, m.period, m.source)
+                    figures.setdefault(
+                        k, f"- {m.submarket} {m.key.replace('_', ' ')}: {m.value:,.4g} {m.unit} "
+                           f"({m.period}, {m.source}; recorded {t.created_at:%Y-%m-%d})",
+                    )
+        if figures:
+            lines.append("Key figures reported then (may be superseded by newer data):")
+            lines.extend(list(figures.values())[:PACK_MAX_FIGURES])
+        pack = "\n".join(lines)
+        return pack if len(pack) <= PACK_MAX_CHARS else pack[: PACK_MAX_CHARS - 1] + "…"
+
+    def context_packs(self, thread_ids: list[str]) -> str:
+        """Concatenated packs for several conversations (blank-line separated)."""
+        return "\n\n".join(p for p in (self.context_pack(t) for t in thread_ids) if p)
 
 
 def group_by_recency(conversations: list[Conversation], now: datetime | None = None) -> list[tuple[str, list[Conversation]]]:

@@ -46,6 +46,22 @@ def test_conversation_is_listed_and_can_be_reopened():
     assert "190" in _assistant_text(at)
 
 
+def test_reference_picker_adds_earlier_conversation_as_context():
+    at = AppTest.from_file(APP, default_timeout=60).run()
+    at.chat_input[0].set_value("What are prime rents in the West End?").run()
+    earlier = at.session_state["thread_id"]
+
+    at.button(key="new-chat").click().run()
+    picker = at.multiselect(key=f"refs-{at.session_state['thread_id']}")
+    # Options are shown via format_func as "<title>  ·  <date>"; the current chat is excluded.
+    assert len(picker.options) == 1 and picker.options[0].startswith("What are prime rents in the West End?")
+    picker.set_value([earlier]).run()
+    at.chat_input[0].set_value("How has that changed?").run()
+    assert not at.exception, at.exception
+    assert any(c.value.startswith("📎 Referenced: What are prime rents in the West End?") for c in at.caption)
+    assert "Referenced earlier conversations" in _assistant_text(at)
+
+
 def test_conversation_opens_from_url():
     first = AppTest.from_file(APP, default_timeout=60).run()
     first.chat_input[0].set_value("Bank Rate?").run()

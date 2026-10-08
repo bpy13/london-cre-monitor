@@ -13,7 +13,9 @@ Sidebar:
 Tabs:
 * **Chat**      - multi-turn Q&A. Each turn streams graph progress (planner ->
   skills -> validator -> answer), then shows the answer, the skills used,
-  data-quality notes and charts relevant to the findings.
+  data-quality notes and charts relevant to the findings. The "📎 Reference
+  earlier conversations" picker adds up to 3 past chats as dated background
+  for the next question (see :func:`reference_picker`).
 * **Briefs**    - view/download previously generated market briefs.
 * **Dashboard** - interactive time series from the metrics store.
 
@@ -71,24 +73,27 @@ def open_conversation(thread_id: str) -> None:
     history: list[dict] = []
     for t in get_conversation_store().turns(thread_id):
         history.append({"role": "user", "content": t.question})
-        history.append(assistant_turn(t.answer, t.skills, t.reasoning, t.issues, t.findings))
+        history.append(assistant_turn(t.answer, t.skills, t.reasoning, t.issues, t.findings, t.refs))
     st.session_state.thread_id = thread_id
     st.session_state.history = history
     st.query_params["thread"] = thread_id
 
 
-def assistant_turn(answer, skills, reasoning, issues, findings) -> dict:
+def assistant_turn(answer, skills, reasoning, issues, findings, refs=None) -> dict:
     """View model for one assistant message (used for live and reloaded turns alike)."""
     from cre_monitor.reporting.charts import build_charts
-    from cre_monitor.store import get_store
+    from cre_monitor.store import get_conversation_store, get_store
 
     # Charts only for metrics present in this turn's findings (plus history trends for them).
     figs = list(build_charts(findings, get_store()).values()) if findings else []
     keys = {m.key for f in findings for m in f.metrics}
     figs = [f for f in figs if _figure_relevant(f, keys)][:4]
+    store = get_conversation_store()
+    ref_titles = [(c.title if (c := store.get(r)) else "(deleted conversation)") for r in refs or []]
     return {
         "id": uuid.uuid4().hex[:6], "role": "assistant", "content": answer,
         "skills": skills, "reasoning": reasoning, "issues": issues or [], "charts": figs,
+        "ref_titles": ref_titles,
     }
 
 
@@ -178,6 +183,8 @@ def sidebar() -> None:
 
 def render_turn_details(turn: dict) -> None:
     """Supporting detail under an assistant answer."""
+    if turn.get("ref_titles"):
+        st.caption("📎 Referenced: " + " · ".join(turn["ref_titles"]))
     if turn.get("skills"):
         st.caption(f"Skills used: {', '.join(turn['skills'])} - {turn.get('reasoning', '')}")
     if turn.get("charts"):
@@ -209,6 +216,7 @@ def chat_tab() -> None:
             "*How do interest rates affect London office values right now?* · *Any major news this month?*"
         )
 
+    refs = reference_picker()
     question = st.chat_input("Ask about the London office market...")
     if not question:
         return
@@ -228,12 +236,12 @@ def chat_tab() -> None:
                     label += f": {update['findings'][0].skill}"
                 status.write(label)
 
-            state = ask(question, thread_id=st.session_state.thread_id, stream_handler=on_update)
+            state = ask(question, thread_id=st.session_state.thread_id, stream_handler=on_update, refs=refs)
             status.update(label="Done", state="complete", expanded=False)
 
         turn = assistant_turn(
             state.get("answer", ""), state.get("selected_skills"), state.get("planner_reasoning"),
-            state.get("validation_issues"), state.get("findings") or [],
+            state.get("validation_issues"), state.get("findings") or [], state.get("context_refs"),
         )
         st.markdown(turn["content"])
         render_turn_details(turn)
@@ -242,6 +250,37 @@ def chat_tab() -> None:
     # appears in the list (the sidebar was drawn before this turn ran).
     st.query_params["thread"] = st.session_state.thread_id
     st.rerun()
+
+
+def reference_picker() -> list[str]:
+    """Multiselect of earlier conversations to use as background for the next question.
+
+    The selection is remembered per conversation (widget key includes the thread
+    id) and stays until changed, so a run of follow-ups can keep the same context.
+    The research skills never see referenced conversations; only the router and
+    the answer step do, labelled as dated background.
+    """
+    from cre_monitor.store import get_conversation_store
+    from cre_monitor.store.conversations import MAX_REFS
+
+    current = st.session_state.thread_id
+    others = {c.thread_id: c for c in get_conversation_store().list() if c.thread_id != current}
+    if not others:
+        return []
+    key = f"refs-{current}"
+    # Drop selections whose conversation was deleted since they were picked.
+    if key in st.session_state:
+        st.session_state[key] = [r for r in st.session_state[key] if r in others]
+    return st.multiselect(
+        "📎 Reference earlier conversations",
+        options=list(others),
+        format_func=lambda tid: f"{others[tid].title}  ·  {others[tid].updated_at:%d %b}",
+        max_selections=MAX_REFS,
+        key=key,
+        placeholder=f"Optional: add up to {MAX_REFS} past chats as background",
+        help="The answer can build on what was discussed there (dated, as background). "
+             "Figures are always refreshed from current research.",
+    )
 
 
 def _figure_relevant(fig, keys: set[str]) -> bool:

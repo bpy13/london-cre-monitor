@@ -13,7 +13,8 @@ Public helpers:
 * :func:`build_graph` - compile the graph (optionally with a checkpointer).
 * :func:`run_brief`   - run the full market brief once (CLI / scheduler).
 * :func:`ask`         - one chat turn on a persistent thread (CLI / UI);
-  reusing a ``thread_id`` resumes that conversation.
+  reusing a ``thread_id`` resumes that conversation; ``refs`` adds earlier
+  conversations as background context.
 * :func:`new_thread_id` / :func:`delete_conversation` - conversation lifecycle.
 """
 
@@ -36,6 +37,7 @@ from cre_monitor.graph.nodes import (
 )
 from cre_monitor.graph.state import AgentState
 from cre_monitor.store import get_conversation_store
+from cre_monitor.store.conversations import MAX_REFS
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +102,33 @@ def new_thread_id() -> str:
     return uuid.uuid4().hex[:12]
 
 
-def ask(question: str, thread_id: str = "default", stream_handler=None) -> AgentState:
+def resolve_refs(thread_id: str, refs: list[str] | None) -> list[str]:
+    """Clean a list of referenced conversation ids for one turn.
+
+    Drops unknown ids, the current conversation itself and duplicates (keeping
+    order), then caps the list at ``MAX_REFS``. Invalid ids are logged, not
+    fatal, so a stale bookmark or typo never blocks the question.
+    """
+    store = get_conversation_store()
+    clean: list[str] = []
+    for ref in refs or []:
+        if ref == thread_id or ref in clean:
+            continue
+        if store.get(ref) is None:
+            logger.warning("Ignoring unknown referenced conversation %s", ref)
+            continue
+        clean.append(ref)
+    if len(clean) > MAX_REFS:
+        logger.warning("Only %d referenced conversations allowed; ignoring %s", MAX_REFS, clean[MAX_REFS:])
+    return clean[:MAX_REFS]
+
+
+def ask(
+    question: str,
+    thread_id: str = "default",
+    stream_handler=None,
+    refs: list[str] | None = None,
+) -> AgentState:
     """Ask one chat question on a persistent conversation thread.
 
     Reusing a ``thread_id`` resumes that conversation: the checkpointer gives the
@@ -112,13 +140,21 @@ def ask(question: str, thread_id: str = "default", stream_handler=None) -> Agent
         thread_id: Conversation id; reuse it for follow-up questions.
         stream_handler: Optional callable ``(node_name, update_dict)`` invoked
             as each node finishes - used by the UI to show progress.
+        refs: Ids of earlier conversations to use as background context for this
+            turn (max ``MAX_REFS``; see :func:`resolve_refs`). They inform the
+            router and the answer, never the research skills.
 
     Returns:
-        Final state; ``state["answer"]`` is the reply.
+        Final state; ``state["answer"]`` is the reply and ``state["context_refs"]``
+        the references actually used.
     """
     graph = get_chat_graph()
     config = {"configurable": {"thread_id": thread_id}}
-    inputs = {"mode": "chat", "messages": [HumanMessage(question)], "skills_override": None}
+    inputs = {
+        "mode": "chat", "messages": [HumanMessage(question)], "skills_override": None,
+        # Always set (even to []) so references from a previous turn don't carry over.
+        "context_refs": resolve_refs(thread_id, refs),
+    }
     if stream_handler is None:
         state = graph.invoke(inputs, config)
     else:
@@ -137,6 +173,7 @@ def _record_turn(thread_id: str, question: str, state: AgentState) -> None:
             thread_id, question, state.get("answer", ""),
             skills=state.get("selected_skills"), reasoning=state.get("planner_reasoning"),
             issues=state.get("validation_issues"), findings=state.get("findings"),
+            refs=state.get("context_refs"),
         )
     except Exception:  # noqa: BLE001 - history is a convenience; the answer matters more
         logger.exception("Could not record conversation turn for thread %s", thread_id)

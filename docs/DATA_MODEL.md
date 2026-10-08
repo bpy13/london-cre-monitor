@@ -139,6 +139,8 @@ Periods sort as strings, which is what the delta and trend logic relies on.
 | `mode` | caller | `brief` or `chat` |
 | `messages` | caller, `chat_answer` | Reducer `add_messages`, so history accumulates per chat thread |
 | `skills_override` | caller | Optional explicit skill list (`--skills`) |
+| `context_refs` | caller (`ask(..., refs=)`) | Ids of earlier conversations referenced in this chat turn, cleaned and capped by `builder.resolve_refs`. Always set per turn, so references never carry over |
+| `reference_context` | `planner` | Context packs of `context_refs` (see §6). Read by the router and `chat_answer` only, **never** by the research skills |
 | `run_id` | `planner` | `YYYYMMDDTHHMMSS-<6 hex>`. Keys the metrics rows and report files |
 | `selected_skills`, `planner_reasoning` | `planner` | Shown in the UI |
 | `findings` | `skill_runner` (append), `planner` / `validator` (replace) | Custom reducer `merge_findings`: plain lists append; `Replace([...])` overwrites (a sentinel first element, so it stays serialisable for checkpoints) |
@@ -235,10 +237,35 @@ They share the same `thread_id`. Deleting a conversation
 | `reasoning` | TEXT | The router's reason for choosing them |
 | `issues_json` | TEXT | JSON list of `ValidationIssue` |
 | `findings_json` | TEXT | JSON list of `SkillFinding`. Lets the UI rebuild the turn's charts on reopen |
+| `refs_json` | TEXT, default `'[]'` | JSON list of conversation ids referenced in this turn. Added later; older databases are upgraded automatically on open |
 
 In code these are read as `Conversation` (thread_id, title, created_at, updated_at,
 turn_count) and `Turn` (idx, created_at, question, answer, skills, reasoning,
-issues, findings) objects. `group_by_recency()` buckets conversations for the sidebar.
+issues, findings, refs) objects. `group_by_recency()` buckets conversations for the sidebar.
+
+### Context pack (cross-conversation references)
+
+`ConversationStore.context_pack(thread_id)` turns a stored conversation into background
+text for another conversation. It is not stored; it is rebuilt each turn from the tables
+above.
+
+```
+=== EARLIER CONVERSATION "<title>" (id <thread_id>, last active YYYY-MM-DD) ===
+[YYYY-MM-DD] Q: <question>
+A (excerpt): <first 400 chars of the answer…>
+… (most recent 5 turns)
+Key figures reported then (may be superseded by newer data):
+- <submarket> <metric>: <value> <unit> (<period>, <source>; recorded YYYY-MM-DD)   (max 12)
+```
+
+Limits (`store/conversations.py`):
+* `MAX_REFS = 3` conversations per question;
+* `PACK_MAX_TURNS = 5`;
+* `PACK_ANSWER_CHARS = 400`;
+* `PACK_MAX_FIGURES = 12`;
+* `PACK_MAX_CHARS = 4000` per conversation.
+
+The dates are there so the model can tell when an earlier figure may be out of date.
 
 ### Notes
 

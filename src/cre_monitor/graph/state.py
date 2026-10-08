@@ -59,11 +59,16 @@ class AgentState(TypedDict, total=False):
             the question. Merged with ``add_messages`` so the checkpointer
             accumulates multi-turn conversations per ``thread_id``.
         skills_override: Optional explicit list of skills to run (CLI ``--skills``).
+        context_refs: Thread ids of earlier conversations referenced in this
+            chat turn (validated and capped by ``builder.ask``).
 
     Produced by nodes:
         run_id: Unique id of this run (used as key in the metrics store).
         selected_skills: Skills chosen by the planner.
         planner_reasoning: Why those skills were chosen (shown in the UI).
+        reference_context: Context packs of the referenced conversations, built by
+            the planner. Read by the router and the answer step only - never
+            passed to research skills.
         findings: One ``SkillFinding`` per executed skill (parallel-merged).
         validation_issues: Data-quality warnings from the validator.
         deltas: Changes versus earlier periods from the metrics store.
@@ -75,10 +80,12 @@ class AgentState(TypedDict, total=False):
     mode: Mode
     messages: Annotated[list[AnyMessage], add_messages]
     skills_override: list[str] | None
+    context_refs: list[str]
 
     run_id: str
     selected_skills: list[str]
     planner_reasoning: str
+    reference_context: str
     # Parallel skill runners each append; planner/validator overwrite using
     # the ``Replace`` marker (see ``merge_findings``).
     findings: Annotated[list[SkillFinding], merge_findings]

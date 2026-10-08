@@ -128,10 +128,30 @@ def _resolve_thread(thread: str | None) -> str:
     return thread
 
 
+REF_HELP = ("Earlier conversation id to use as background context (repeatable, max 3; "
+            "see `cre-monitor conversations`). Figures are still refreshed from current research.")
+
+
+def _resolve_refs(thread: str, refs: list[str] | None) -> list[str]:
+    """Validate --ref values, warn about any that are ignored, and list the ones used."""
+    from cre_monitor.graph.builder import resolve_refs
+    from cre_monitor.store import get_conversation_store
+
+    used = resolve_refs(thread, refs)
+    ignored = [r for r in refs or [] if r not in used]
+    if ignored:
+        console.print(f"[yellow]Ignoring --ref {', '.join(ignored)} (unknown, current conversation, duplicate or over the limit of 3)[/yellow]")
+    store = get_conversation_store()
+    for r in used:
+        console.print(f"[dim]📎 Referencing '{store.get(r).title}' ({r})[/dim]")
+    return used
+
+
 @app.command()
 def ask(
     question: str,
     thread: str = typer.Option(None, help="Conversation id to continue (see `cre-monitor conversations`). Omit for a new one."),
+    ref: list[str] = typer.Option(None, "--ref", help=REF_HELP),
 ) -> None:
     """Ask one question about the London office market."""
     _setup_logging("chat", console_level=logging.WARNING)
@@ -139,8 +159,9 @@ def ask(
     from cre_monitor.graph.builder import ask as ask_graph
 
     thread = _resolve_thread(thread)
+    refs = _resolve_refs(thread, ref)
     with console.status("Researching..."):
-        state = ask_graph(question, thread_id=thread)
+        state = ask_graph(question, thread_id=thread, refs=refs)
     console.print(f"[dim]Skills used: {', '.join(state.get('selected_skills') or ['none'])}[/dim]")
     console.print(Markdown(state.get("answer", "")))
 
@@ -148,6 +169,7 @@ def ask(
 @app.command()
 def chat(
     thread: str = typer.Option(None, help="Conversation id to resume (see `cre-monitor conversations`). Omit for a new one."),
+    ref: list[str] = typer.Option(None, "--ref", help=REF_HELP + " Applies to every question in this session."),
 ) -> None:
     """Interactive terminal chat. Type 'exit' to quit."""
     _setup_logging("chat", console_level=logging.WARNING)
@@ -155,6 +177,7 @@ def chat(
     from cre_monitor.graph.builder import ask as ask_graph
 
     thread = _resolve_thread(thread)
+    refs = _resolve_refs(thread, ref)
     console.print("Ask about London offices (rents, vacancy, take-up, pipeline, submarkets, macro, ESG, news).")
     while True:
         try:
@@ -164,7 +187,7 @@ def chat(
         if question.lower() in {"exit", "quit", ""}:
             break
         with console.status("Researching..."):
-            state = ask_graph(question, thread_id=thread)
+            state = ask_graph(question, thread_id=thread, refs=refs)
         console.print(f"[dim]Skills: {', '.join(state.get('selected_skills') or ['none'])}[/dim]")
         console.print(Markdown(state.get("answer", "")))
 

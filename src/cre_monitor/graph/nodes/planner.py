@@ -6,6 +6,12 @@
   descriptions (progressive disclosure level 1) and picks the relevant ones.
   If the router is unavailable (demo mode) or fails, we fall back to the
   ``keywords`` declared in each SKILL.md.
+
+Referenced conversations: if the turn references earlier conversations
+(``context_refs``), the planner builds their context packs once, stores them in
+``reference_context`` for the answer step, and shows them to the router so a
+question like "how has that changed?" is routed sensibly. Research skills are
+not given this context.
 """
 
 from __future__ import annotations
@@ -23,6 +29,7 @@ from cre_monitor.graph.state import AgentState, Replace, SkillTask
 from cre_monitor.llm import STRUCTURED, get_llm
 from cre_monitor.schemas import SkillSelection
 from cre_monitor.skills import get_registry
+from cre_monitor.store import get_conversation_store
 
 logger = logging.getLogger(__name__)
 
@@ -34,10 +41,16 @@ BRIEF_TASK = (
 ROUTER_PROMPT = """You route questions about the London commercial real estate (office) market
 to research skills. Pick the MINIMUM set of skills needed to answer well (usually 1-3).
 If the question is small talk or can be answered purely from the earlier conversation,
-return an empty list.
+return an empty list. If it refers to an earlier conversation shown below (e.g. "has that
+changed?"), pick the skills needed to refresh those topics with current data.
 
 Available skills:
-{catalog}"""
+{catalog}{references}"""
+
+ROUTER_REFERENCES = """
+
+Earlier conversations the user referenced (background only):
+{packs}"""
 
 
 def last_question(state: AgentState) -> str:
@@ -65,12 +78,19 @@ def keyword_route(question: str) -> list[str]:
     return hits or [s.name for s in registry.research_skills()]
 
 
-def llm_route(question: str) -> SkillSelection:
-    """Ask the router LLM which skills to use (structured output)."""
+def llm_route(question: str, reference_context: str = "") -> SkillSelection:
+    """Ask the router LLM which skills to use (structured output).
+
+    Args:
+        question: The user's question.
+        reference_context: Context packs of referenced conversations, if any.
+    """
     registry = get_registry()
     router = get_llm("router").with_structured_output(SkillSelection, **STRUCTURED)
+    references = ROUTER_REFERENCES.format(packs=reference_context) if reference_context else ""
     result: SkillSelection = router.invoke(
-        [SystemMessage(ROUTER_PROMPT.format(catalog=registry.planner_catalog())), HumanMessage(question)]
+        [SystemMessage(ROUTER_PROMPT.format(catalog=registry.planner_catalog(), references=references)),
+         HumanMessage(question)]
     )
     # Never trust the LLM to spell names right - drop anything unknown.
     result.skills = [s for s in result.skills if s in registry and registry.get(s).meta.tools]
@@ -82,6 +102,8 @@ def planner(state: AgentState) -> dict:
     registry = get_registry()
     mode = state.get("mode", "chat")
     override = state.get("skills_override")
+    refs = (state.get("context_refs") or []) if mode == "chat" else []  # briefs never use references
+    reference_context = get_conversation_store().context_packs(refs) if refs else ""
 
     if override:
         unknown = [s for s in override if s not in registry]
@@ -97,7 +119,7 @@ def planner(state: AgentState) -> dict:
             selected, reasoning = keyword_route(question), "Demo mode: keyword routing."
         else:
             try:
-                sel = llm_route(question)
+                sel = llm_route(question, reference_context)
                 selected, reasoning = sel.skills, sel.reasoning
             except Exception as exc:  # noqa: BLE001 - routing must never kill a chat turn
                 logger.warning("LLM routing failed (%s); using keyword routing", exc)
@@ -109,6 +131,8 @@ def planner(state: AgentState) -> dict:
         "run_id": run_id,
         "selected_skills": selected,
         "planner_reasoning": reasoning,
+        # Rebuilt every turn: references apply to the turn that names them only.
+        "reference_context": reference_context,
         # Reset per-run outputs (state persists across chat turns).
         "findings": Replace([]),
         "validation_issues": [],

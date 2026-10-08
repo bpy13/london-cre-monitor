@@ -39,6 +39,7 @@ Example: `cre-monitor --offline --demo brief`.
 | `cre-monitor ask "question"` | One question in a **new** conversation; prints a cited answer, the skills used and the conversation id |
 | `cre-monitor ask "..." --thread ID` | Continues conversation `ID`, so follow-up questions have context |
 | `cre-monitor chat [--thread ID]` | Interactive multi-turn chat in the terminal: new conversation, or resume `ID`. Type `exit` to quit |
+| `cre-monitor ask "..." --ref ID [--ref ID2]` | Uses up to 3 **earlier conversations as background context**. Works with `chat` too, where it applies to the whole session. See [Referencing earlier conversations](#referencing-earlier-conversations) |
 | `cre-monitor conversations [--limit 20]` | Lists saved conversations (id, title, questions, last active), most recent first. The same list appears in the UI sidebar |
 | `cre-monitor ui [--port 8501]` | Streamlit web app (see [§2](#2-web-ui-cre-monitor-ui)) |
 | `cre-monitor schedule install --day MON --time 07:00` | Windows: registers a weekly brief in Task Scheduler. Linux, macOS and Codespaces: prints a crontab line instead |
@@ -74,6 +75,29 @@ The sidebar works like a modern chatbot.
 Conversations started in the terminal (`cre-monitor ask` / `chat`) appear in the same list.
 Research findings are never reused between turns: every question triggers fresh research,
 and only the conversation text carries over.
+
+### Referencing earlier conversations
+
+Above the chat box, **📎 Reference earlier conversations** lets you pick up to 3 past chats
+as background for your next question. Example: "How has that changed?" with last week's
+Canary Wharf conversation selected.
+
+* **What is shared.** A compact, dated summary of each referenced chat: its title and
+  date, its recent questions, a short excerpt of each answer, and the key figures it
+  reported (with period, source and date).
+* **Who sees it.** Only the step that chooses skills and the step that writes the
+  answer. The research skills never see it, so **figures always come from fresh
+  research**.
+* **How the answer uses it.** Current research takes precedence. The answer says when
+  it draws on an earlier chat and gives its date, and it describes changes rather than
+  repeating outdated figures.
+* **How the selection behaves.** It is remembered per conversation until you change it.
+  Each answer shows **📎 Referenced: …**, which is also redrawn when you reopen a
+  conversation. Deleted conversations drop out of the selection automatically.
+* **In the terminal:** `--ref ID`, repeatable.
+
+In demo mode no LLM reasons over the references. The answer simply lists which
+conversations would be used.
 
 ### Tabs
 

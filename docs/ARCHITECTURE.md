@@ -38,14 +38,23 @@ structures and storage, see [DATA_MODEL.md](DATA_MODEL.md). For tests, see
 
 | Node | Type | Responsibility |
 |---|---|---|
-| `planner` | logic (+ router LLM in chat) | Pick skills, reset per-run state, assign `run_id` |
+| `planner` | logic (+ router LLM in chat) | Pick skills, reset per-run state, assign `run_id`; build context packs for referenced conversations |
 | `fan_out` | conditional edge | Emit one `Send("skill_runner", SkillTask)` per skill → **parallel** execution |
 | `skill_runner` | sub-agent | Run one skill as its own compiled LangGraph (see below) → `SkillFinding` |
 | `validator` | deterministic | Range/unit/vocabulary/staleness/citation checks; flags cross-source conflicts; drops implausible metrics |
 | `persist` | deterministic | Seed history on first run, compute deltas vs earlier periods, append metrics |
 | `synthesis` | LLM (brief) | `market-synthesis` meta-skill → `ExecutiveSynthesis` |
 | `report_writer` | deterministic | Charts + HTML/Markdown/JSON |
-| `chat_answer` | LLM (chat) | Cited conversational answer, appended to `messages` |
+| `chat_answer` | LLM (chat) | Cited conversational answer, appended to `messages`; uses referenced conversations as dated background |
+
+### Referencing earlier conversations
+A chat turn can reference up to 3 earlier conversations (`ask(..., refs=[...])`, the UI picker
+or `--ref`). The planner turns each into a compact, dated **context pack**, which is shown
+to the router and to `chat_answer`. It is **deliberately withheld from the research skills**,
+so figures always come from fresh sources and an earlier mistake cannot propagate into
+new research. The answer prompt makes current findings take precedence and requires the
+answer to say when it relies on an earlier conversation. Format and limits:
+[DATA_MODEL.md](DATA_MODEL.md#context-pack-cross-conversation-references).
 
 ### State and reducers (`graph/state.py`)
 * `messages` uses `add_messages`. With the SQLite checkpointer, conversation history

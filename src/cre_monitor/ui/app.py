@@ -8,7 +8,9 @@ Sidebar:
   the agent resumes with the earlier messages as context. The "⋮" menu renames
   or deletes a conversation. The open conversation is also in the page URL
   (``?thread=<id>``), so a refresh or bookmark reopens it.
-* **Settings** (offline/demo toggles), **Use house style** and **Run full brief now**.
+* **Settings** (offline/demo toggles), **Use house style**, the **Skills in the
+  brief** tick boxes and **Run full brief now** (or "Run partial brief" when
+  only some skills are ticked).
 * **House style**: upload example reports, learn / view / clear the style the
   briefs imitate (see :mod:`cre_monitor.style`).
 * **Export data**: one zip with briefs, metrics history and conversations
@@ -190,8 +192,45 @@ def conversation_list() -> None:
                     st.rerun()
 
 
+def _set_all_brief_skills(names: list[str], value: bool) -> None:
+    """Button callback for All / None. Runs before the checkboxes are drawn, so setting
+    their session-state values here is allowed (Streamlit forbids it after drawing)."""
+    for name in names:
+        st.session_state[f"brief-skill-{name}"] = value
+
+
+def brief_skill_picker() -> tuple[list[str], int]:
+    """Tick boxes choosing which skills the next brief runs (UI version of ``brief --skills``).
+
+    All are ticked by default. A partial brief is cheaper and quicker in live mode
+    (e.g. only ``macro-economy`` to check the setup). The ticks are per browser
+    session, so they never affect other users.
+
+    Returns:
+        (ticked skill names in brief order, number of brief skills).
+    """
+    from cre_monitor.skills.registry import get_registry
+
+    skills = get_registry().brief_skills()
+    names = [sk.name for sk in skills]
+    col_label, col_all, col_none = st.columns([0.5, 0.25, 0.25], vertical_alignment="center")
+    col_label.markdown("**Skills in the brief**")
+    col_all.button("All", key="brief-skills-all", width="stretch",
+                   on_click=_set_all_brief_skills, args=(names, True))
+    col_none.button("None", key="brief-skills-none", width="stretch",
+                    on_click=_set_all_brief_skills, args=(names, False))
+    selected = []
+    for sk in skills:
+        key = f"brief-skill-{sk.name}"
+        # Default via session state (not value=) so the All / None callbacks can change it.
+        st.session_state.setdefault(key, True)
+        if st.checkbox(sk.name, key=key, help=sk.meta.description):
+            selected.append(sk.name)
+    return selected, len(names)
+
+
 def settings_panel() -> None:
-    """Run-mode toggles, model info and the manual brief trigger."""
+    """Run-mode toggles, model info, skill selection and the manual brief trigger."""
     s = get_settings()
     with st.sidebar.expander("⚙️ Settings & brief", expanded=False):
         offline = st.toggle("Offline data (fixtures)", value=s.cre_offline,
@@ -222,12 +261,17 @@ def settings_panel() -> None:
                   "No house style learned yet - see 🎨 House style below."
                   if s.report_style else "Disabled by REPORT_STYLE=0."),
         )
-        if st.button("Run full brief now", width="stretch", key="run-brief"):
+        selected, total = brief_skill_picker()
+        partial = len(selected) < total
+        label = f"Run partial brief ({len(selected)} of {total} skills)" if partial else "Run full brief now"
+        if st.button(label, width="stretch", key="run-brief", disabled=not selected,
+                     help="Tick at least one skill." if not selected else None):
             from cre_monitor.graph.builder import run_brief
 
-            with st.status("Running all skills...", expanded=False) as status:
+            with st.status(f"Running {len(selected)} skill(s)...", expanded=False) as status:
                 try:
-                    state = run_brief(use_style=use_style)
+                    # None = every brief skill (identical to the CLI's plain `cre-monitor brief`).
+                    state = run_brief(selected if partial else None, use_style=use_style)
                 except Exception as exc:  # noqa: BLE001 - show a reference, not a traceback
                     from cre_monitor.errors import incident_from_exception
 

@@ -164,6 +164,32 @@ def test_brief_from_ui_honours_house_style_toggle():
     assert "<h2>Executive summary</h2>" in latest_html() and "Key themes" not in latest_html()
 
 
+def test_partial_brief_runs_only_ticked_skills():
+    import json
+
+    from cre_monitor.config import get_settings
+    from cre_monitor.skills.registry import get_registry
+
+    total = len(get_registry().brief_skills())
+    at = AppTest.from_file(APP, default_timeout=60).run()
+    assert at.button(key="run-brief").label == "Run full brief now"     # all ticked by default
+
+    at.button(key="brief-skills-none").click().run()
+    assert at.button(key="run-brief").disabled                          # nothing to run
+    at.checkbox(key="brief-skill-office-rents").check().run()
+    at.checkbox(key="brief-skill-macro-economy").check().run()
+    assert at.button(key="run-brief").label == f"Run partial brief (2 of {total} skills)"
+
+    at.button(key="run-brief").click().run()
+    assert not at.exception, at.exception
+    findings = sorted(get_settings().reports_dir.rglob("findings_*.json"))[-1]
+    ran = {f["skill"] for f in json.loads(findings.read_text(encoding="utf-8"))["findings"]}
+    assert ran == {"office-rents", "macro-economy"}
+
+    at.button(key="brief-skills-all").click().run()
+    assert at.button(key="run-brief").label == "Run full brief now"
+
+
 def test_conversation_opens_from_url():
     first = AppTest.from_file(APP, default_timeout=60).run()
     first.chat_input[0].set_value("Bank Rate?").run()

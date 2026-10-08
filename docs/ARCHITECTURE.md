@@ -68,14 +68,20 @@ answer to say when it relies on an earlier conversation. Format and limits:
 
 ### Skill sub-agent (`graph/nodes/skill_runner.py`)
 ```
-START → agent ⇄ tools (ToolNode)   … until no more tool calls or step cap
-          └──► respond (structured output → SkillFinding) → END
+START → agent ⇄ tools (ToolNode)            research
+          ├─► nudge / wrap_up → agent        "please submit" (plain-text answer / step budget used)
+          └─► finish (submit_finding) → END  validated SkillFinding; invalid → error tool result → agent
 ```
 * **System prompt** = common research rules + the skill's `SKILL.md` body.
-* **Tools** = only those listed in the skill's frontmatter (least privilege).
-* **Two-phase output.** Research turns are free-form. A final `respond` call converts the
-  transcript into a schema-validated `SkillFinding`. Forcing JSON on every turn degrades
-  tool use, so research and output are kept separate.
+* **Tools** = those listed in the skill's frontmatter (least privilege) **plus `submit_finding`**,
+  whose input schema is the `SkillFinding` content. The agent delivers its result by calling it.
+* **One tool list, append-only conversation.** Claude 5.x models think between tool calls,
+  and each thinking block is bound to its conversation, **including the tool list**. So
+  every request in a skill uses the same bound tools, and messages are only ever appended:
+  reminders are new user messages, and validation errors come back as tool results.
+  A separate tools-less "convert to structured output" call (the original design) is
+  rejected by the API with HTTP 400. This was found in the first live run, and a regression
+  test checks append-only behaviour.
 * **Failure isolation.** Any exception becomes an *error finding*. The brief still
   completes, and the failure appears in the report's data-quality notes.
 

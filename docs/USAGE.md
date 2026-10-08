@@ -157,6 +157,7 @@ exact error. Logs: `ui_<date>.log` (web UI), `chat_<date>.log`, `brief_<date>.lo
 | `credit` | Credit balance exhausted | "AI usage credit has run out" |
 | `rate_limit` | HTTP 429 | "The AI service is busy" (retry) |
 | `service` | HTTP 5xx / 529 overloaded | "Temporarily unavailable" (retry) |
+| `app_error` | HTTP 400 `invalid_request_error`: the app sent a request the API rejected (an app bug) | "The app sent a request the AI service rejected" |
 | `network` | Connection, DNS, TLS or timeout errors | "Could not reach the AI service" |
 | `config` | Live mode without a key configured | "Not configured for live AI research" |
 | `unknown` | Anything else | "Something went wrong" |

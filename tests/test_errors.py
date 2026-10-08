@@ -24,6 +24,10 @@ REAL_403 = ("AnthropicPermissionDeniedError: Error code: 403 - "
     ("RateLimitError: Error code: 429 - rate_limit_error", "rate_limit"),
     ("InternalServerError: Error code: 529 - overloaded_error", "service"),
     ("APIConnectionError: Connection error. ConnectTimeout", "network"),
+    # The real 400 seen in the first live run (thinking-block signature / tool list mismatch).
+    ("AnthropicInvalidRequestError: Error code: 400 - {'type': 'error', 'error': {'type': "
+     "'invalid_request_error', 'message': 'messages.1.content.4: Invalid `signature` in `thinking` block.'}}",
+     "app_error"),
     ("RuntimeError: LLM requested while CRE_DEMO_MODE is on", "config"),
     ("ValueError: something odd", "unknown"),
 ])

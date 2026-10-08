@@ -18,7 +18,7 @@ from cre_monitor.config import get_settings
 from cre_monitor.graph.builder import ask, build_graph, run_brief
 from cre_monitor.graph.nodes.planner import keyword_route
 from cre_monitor.schemas import Citation, ExecutiveSynthesis, Metric, Severity, Signal, SignalType, SkillFinding, SkillSelection
-from tests.fake_llm import ScriptedChatModel, tool_call
+from tests.fake_llm import ScriptedChatModel, submit_call, tool_call
 
 # --------------------------------------------------------------------------
 # Demo mode (no LLM)
@@ -128,10 +128,11 @@ def fake_llm(monkeypatch):
                 tool_call("boe_series", {"name": "bank_rate"}, "c1"),
                 tool_call("ons_series", {"name": "cpih_yoy"}, "c2"),
             ]),
-            AIMessage("I have enough evidence."),
+            submit_call(macro),   # the skill delivers its result as a tool call
         ],
+        # No "SkillFinding" entry on purpose: skills must not use a separate structured-output
+        # call (it changes the tool list and breaks thinking-block signatures on the real API).
         structured={
-            "SkillFinding": macro,
             "SkillSelection": SkillSelection(skills=["macro-economy", "not-a-skill"], reasoning="rates question"),
             "ExecutiveSynthesis": ExecutiveSynthesis(
                 title="London Office Market Brief - Test", executive_summary="Summary.", key_takeaways=["One"],
@@ -143,6 +144,7 @@ def fake_llm(monkeypatch):
     for module in ("planner", "skill_runner", "synthesis", "chat_answer"):
         mod = importlib.import_module(f"cre_monitor.graph.nodes.{module}")
         monkeypatch.setattr(mod, "get_llm", lambda tier="skill": model)
+    model.__dict__["macro"] = macro  # handy for tests that script their own responses
     return model
 
 
@@ -159,6 +161,62 @@ def test_llm_skill_agent_calls_tools_and_returns_structured_finding(fake_llm):
     # The system prompt carried the skill instructions (progressive disclosure level 2).
     assert "SKILL INSTRUCTIONS: macro-economy" in fake_llm.calls[0][0].content
     assert state["synthesis"].title == "London Office Market Brief - Test"
+
+
+def test_skill_conversation_is_append_only_with_one_tool_list(fake_llm):
+    """Regression for the live 400 'Invalid signature in thinking block ... tools list differs'.
+
+    Every request in a skill must use the same tool list, and each request must
+    extend the previous one (never edit or drop earlier messages).
+    """
+    run_brief(["macro-economy"])
+    assert len(fake_llm.bound_tools) == 1 and fake_llm.bound_tools[0][-1] == "submit_finding"
+    assert not any(k == "structured:SkillFinding" for k in fake_llm.kinds)   # no separate output call
+    skill_calls = [c for c in fake_llm.calls if "SKILL INSTRUCTIONS" in str(c[0].content)]
+    assert len(skill_calls) == 2
+    for earlier, later in zip(skill_calls, skill_calls[1:]):
+        assert later[: len(earlier)] == earlier                               # strictly append-only
+
+
+def _skill_run(fake_llm, responses):
+    from cre_monitor.graph.nodes.skill_runner import run_skill
+
+    fake_llm.responses[:] = responses
+    return run_skill("macro-economy", "Where is Bank Rate?")
+
+
+def test_plain_text_answer_gets_a_nudge_then_submits(fake_llm):
+    from cre_monitor.graph.nodes.skill_runner import NUDGE_PROMPT
+
+    finding = _skill_run(fake_llm, [AIMessage("Bank Rate is 3.75%."), submit_call(fake_llm.macro)])
+    assert finding.error is None and finding.metrics[0].value == 3.75
+    assert fake_llm.calls[1][-1].content == NUDGE_PROMPT                      # appended, not replaced
+
+
+def test_invalid_submission_is_returned_as_tool_error_and_resubmitted(fake_llm):
+    bad = AIMessage("", tool_calls=[tool_call("submit_finding", {"headline": "missing summary"}, "s1")])
+    finding = _skill_run(fake_llm, [bad, submit_call(fake_llm.macro, "s2")])
+    assert finding.error is None
+    feedback = fake_llm.calls[1][-1]
+    assert isinstance(feedback, ToolMessage) and feedback.tool_call_id == "s1"
+    assert "Invalid submission" in feedback.content
+
+
+def test_budget_exhausted_asks_to_wrap_up(fake_llm, monkeypatch):
+    from cre_monitor.graph.nodes.skill_runner import WRAP_UP_PROMPT
+
+    monkeypatch.setenv("SKILL_MAX_STEPS", "1")
+    get_settings.cache_clear()
+    research = AIMessage("", tool_calls=[tool_call("boe_series", {"name": "bank_rate"}, "c1")])
+    finding = _skill_run(fake_llm, [research, submit_call(fake_llm.macro)])
+    assert finding.error is None
+    last_request = fake_llm.calls[1]
+    assert isinstance(last_request[-2], ToolMessage) and last_request[-1].content == WRAP_UP_PROMPT
+
+
+def test_agent_that_never_submits_becomes_error_finding(fake_llm):
+    finding = _skill_run(fake_llm, [AIMessage("text 1"), AIMessage("text 2"), AIMessage("text 3")])
+    assert finding.error and "did not submit" in finding.error
 
 
 def test_llm_references_reach_router_and_answer_but_never_skills(fake_llm):

@@ -82,6 +82,13 @@ _RULES: list[tuple[str, ErrorCategory]] = [
                  "If it persists, contact the engineering team with the reference below."],
         retryable=True,
     )),
+    (r"invalid_request_error|\b400\b|bad ?request", ErrorCategory(
+        code="app_error",
+        title="The app sent a request the AI service rejected",
+        message="This is a problem in the app itself (not your question or the data), so retrying won't help.",
+        actions=["Contact the engineering team with the reference below - they can see exactly what was rejected.",
+                 "Other parts of the answer or brief may still be usable."],
+    )),
     (r"connect|timed? ?out|timeout|network|name resolution|ssl|getaddrinfo", ErrorCategory(
         code="network",
         title="Could not reach the AI service",

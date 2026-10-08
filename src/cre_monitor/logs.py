@@ -51,4 +51,7 @@ def setup_logging(log_name: str, console_level: int = logging.INFO) -> Path:
         )
         for noisy in _NOISY:
             logging.getLogger(noisy).setLevel(logging.WARNING)
+        # pypdf warns about every embedded font it can't fully decode in broker PDFs
+        # (harmless - text extraction still works); keep only real errors.
+        logging.getLogger("pypdf").setLevel(logging.ERROR)
     return log_file

@@ -1,7 +1,8 @@
 # Architecture
 
 This document explains *why* the system is shaped the way it is. For setup, see the
-[README](../README.md). For writing skills, see [SKILLS.md](SKILLS.md).
+[README](../README.md). For commands and the UI, see [USAGE.md](USAGE.md). For
+writing skills, see [SKILLS.md](SKILLS.md).
 
 ## Design goals
 
@@ -100,6 +101,45 @@ Append-only SQLite table.
 
 On first use, the store is seeded from `fixtures/history.json`, so trend charts work
 from day one.
+
+## Persistence: what is stored where
+
+| Store | Written by | When | Contents |
+|---|---|---|---|
+| `data/metrics.sqlite` (table `metrics`) | `persist` node | Every brief **and** every chat turn, after validation | One append-only row per metric: `run_id, run_at, skill, key, submarket, value, unit, period, source, url, as_of, note`. Only validated metrics are written: out-of-range values and failed skills are excluded. The first run seeds `fixtures/history.json` as `run_id='seed'` |
+| `reports/<date>/brief_<run>.html`, `.md` | `report_writer` node | Brief only | The rendered report |
+| `reports/<date>/charts/*.png` | `report_writer` node | Brief only | Static charts for the Markdown report. File names are fixed per day, so a second brief on the same day overwrites them |
+| `reports/<date>/findings_<run>.json` | `report_writer` node | Brief only | Full structured output (synthesis, findings incl. narrative, signals and citations, deltas, validation issues): the audit trail |
+| `data/checkpoints.sqlite` | LangGraph `SqliteSaver` | Chat only (`ask()`; `run_brief()` has no checkpointer) | Graph state per `thread_id`, including the message history, which gives multi-turn memory |
+| `data/logs/*.log` | CLI | CLI runs | Run logs (INFO level) |
+
+Narrative content (headlines, insights, risks/opportunities) lives only in the findings JSON
+and the reports. The SQLite store holds numbers only. Everything under `data/` and
+`reports/` is git-ignored.
+
+## Testability
+
+"Testable" here means the agent's behaviour can be checked automatically,
+reproducibly and cheaply, with no network, API keys or LLM spend. The model-dependent
+behaviour that can't be checked that way is measured with evaluations instead.
+
+| Approach | Where |
+|---|---|
+| Deterministic logic kept out of the LLM (validation, deltas, charts, rendering are pure functions) | `test_validator`, `test_store`, `test_charts` |
+| Typed contracts: every skill returns a `SkillFinding`; every `SKILL.md` frontmatter is validated | `schemas.py`, `test_skills` |
+| Offline mode: every tool has a fixture path | `test_tools` |
+| Demo mode: canned findings replace the LLM, so the whole graph runs end to end deterministically (brief and chat) | `test_graph` |
+| Dependency injection: all models come from `get_llm()`, so a scripted fake model drives the **real** ReAct sub-agent, its tool calls and structured output | `tests/fake_llm.py`, `test_graph` |
+| Isolation: each test gets temporary data and report folders, and caches are reset | `tests/conftest.py` |
+| UI rendered and exercised headlessly | `test_ui` (Streamlit `AppTest`) |
+| Live smoke tests, kept separate | `pytest -m live` |
+| Evaluations: routing, grounding, citations (demo or live) | `evals/` |
+| Run audit trail: findings JSON, data-quality notes, logs | see Persistence |
+
+Known gaps:
+* the live Claude path has not been exercised end to end;
+* evals use string checks rather than an LLM judge;
+* there is no tracing (e.g. LangSmith) for live runs.
 
 ## Modes (`config.py`)
 * `CRE_OFFLINE`: tools read `fixtures/` instead of the network.

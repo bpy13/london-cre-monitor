@@ -148,8 +148,18 @@ Full table, column schema and reading rules:
 * A scripted fake LLM is injected through `get_llm()`.
 * The UI is tested headlessly, live smoke tests are opt-in, and an eval set covers
   model behaviour.
+* The **performance check** (`benchmark/`) measures the live agent against reference reports
+  users supply:
+  * an AI-built, analyst-moderated answer key;
+  * targeted, period-pinned skill runs scored in code, covering coverage, accuracy,
+    grounding against the run's own tool results, and citations;
+  * a rubric judge for briefs.
 
-Details, per-file coverage and how to add tests: [TESTING.md](TESTING.md).
+  `run_skill(..., trace=)` keeps the transcript for grounding and cost without changing
+  research behaviour.
+
+Details, per-file coverage and how to add tests: [TESTING.md](TESTING.md). Performance check:
+[EVALUATION.md](EVALUATION.md).
 
 ## Modes (`config.py`)
 * `CRE_OFFLINE`: tools read `fixtures/` instead of the network.

@@ -187,6 +187,27 @@ reference. It is stored in `findings_<run>.json` and, for chat turns, in
 `title`, `executive_summary`, `key_takeaways: list[str]`, `risks: list[Signal]`,
 `opportunities: list[Signal]`, `what_changed: list[str]`, `watch_list: list[str]`.
 
+### `AnswerKey` / `KeyEntry`: the performance check's right answers (`benchmark/answer_key.py`)
+`AnswerKey`: `report` (file in `style/reports/`), `title`, `publisher`, `period`, `built_at`,
+`themes` (5-8 key messages, in the model's own words) and `entries`.
+
+| `KeyEntry` field | Notes |
+|---|---|
+| `id` | Hash of key, submarket, period and source (stable across rebuilds) |
+| `key`, `submarket`, `period`, `value`, `unit` | The figure, in catalogue terms |
+| `source`, `citation` | Publisher of the figure; URL or reference the report gives |
+| `confidence` | The AI's own confidence (0-1) |
+| `status` | `pending` / `accepted` / `rejected`. Only `accepted` is scored |
+| `in_document`, `catalogue_match`, `period_ok` | Signals computed in code (never taken from the model). `safe` = all true and confidence ≥ 0.8 |
+
+### `RunRecord`: one performance-check run (`benchmark/store.py`)
+`run_id`, `kind` (`figures` / `judge`), `report`, `created_at`, `period`, `hints`, `skills`,
+`skipped_skills`, `brief_run_id`, `cost_usd` (estimate), `tokens_in`, `tokens_out`,
+`duration_s`, `figure` (coverage, accuracy, same/other-source accuracy, mean abs % error,
+unit correct, grounding), `entries` (expected vs found per figure), `citation` / `citations`
+(cited-page check), `readability_brief` / `readability_reference`, `judgement` (rubric +
+theme coverage) and `warnings`. Definitions: [EVALUATION.md](EVALUATION.md#metrics).
+
 ### `StyleProfile`: the learned house style (`style/profile.py`)
 Saved as `style/profile.json` (plus a readable `profile.md`). Learned by
 `cre-monitor style learn` from the examples in `style/reports/`; hand-editable.
@@ -268,6 +289,9 @@ Full authoring guide: [SKILLS.md](SKILLS.md).
 | `skills/.history/<name>/`, `catalog/.history/` | `versioned.py` | Before each UI save | `<timestamp>__<file>` copies of the previous version, last 50 kept. Git-ignored |
 | `skills/.trash/<name>__<timestamp>/` | `skills/editor.delete_skill` | On delete from the UI | Deleted skill folders, restorable. Git-ignored |
 | `style/profile.json`, `style/profile.md` | `cre-monitor style learn` | On request | The house style (`StyleProfile`, above). Committable so the team shares one style; read by `synthesis` and `report_writer` unless `REPORT_STYLE=0` |
+| `style/library.json` | `style.set_roles` (UI library ticks) | On change | `{file: {"style": bool, "benchmark": bool}}` for the reports in `style/reports/`. Missing entry = style yes, benchmark no. Git-ignored |
+| `style/benchmark/<file>.json` | `benchmark.answer_key.save_key` | Build / moderation | `AnswerKey` (below). Committable: numbers, links and short themes only. History in `style/benchmark/.history/` |
+| `data/benchmarks/<run_id>.json` | `benchmark.store.save_run` | Each performance run / judgement | `RunRecord` (below) |
 | `data/logs/<brief\|chat\|ui>_<date>.log` | `logs.setup_logging` (CLI and UI) | Every run | Run logs (INFO), including one `ERROR` record per `Incident`, searchable by its reference ID |
 
 ### `metrics` table schema (`store/metrics.py`)

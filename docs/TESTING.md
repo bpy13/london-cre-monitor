@@ -25,6 +25,9 @@ An LLM agent is testable when its behaviour can be checked:
 4. **With model-dependent behaviour measured, not assumed:** the parts that depend on
    Claude's judgement (routing, grounding, citing) are scored by an evaluation set that
    can also run against the real model.
+5. **Measured against reality:** the **performance check** scores the live agent's figures
+   and briefs against reference reports your team trusts. It covers coverage, accuracy,
+   grounding, citations and a brief-quality rubric. See [EVALUATION.md](EVALUATION.md).
 
 ## 2. Techniques that make it testable
 
@@ -54,7 +57,7 @@ An LLM agent is testable when its behaviour can be checked:
 
 ## 4. Test files
 
-`pytest` runs 172 offline tests in about 90 s. `pytest -m live` runs 7 more.
+`pytest` runs 191 offline tests in about 60-90 s. `pytest -m live` runs 7 more.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -76,6 +79,8 @@ An LLM agent is testable when its behaviour can be checked:
 | `test_skill_editor.py` | 8 | Every repo skill round-trips through the editor and validates; save keeps history, rebuilds the registry, **refuses stale saves**, and restoring a version works; validation messages are plain English (name, tools, unknown metrics, short instructions, ranges without metric, duplicate name); a new skill joins the brief and runs in demo mode ("No demo data"); delete → trash → restore, orphaned metrics, protected `market-synthesis`, restore name clash; **path tricks refused**; attach/detach a metric across skills; no git noise outside the repo |
 | `test_authoring.py` | 8 | Exact catalogue matches need no LLM (work in demo mode); unknown requests need live mode; **needs a skill change** → catalogue entry + skill update; **model answers re-validated** (unknown skill → not feasible, existing key → already collected, ghost key → not feasible); not feasible changes nothing; failed skill write **rolls back** the catalogue entry; test run reports whether the metric came back; skill drafts drop unknown tools/metrics and list missing metrics; review |
 | `test_ui_authoring.py` | 6 | Skills tab: edit + save (history kept); validation errors shown and nothing saved; create from blank template, opened after creation, delete and restore; protected skill has no delete button. Add a metric: existing name → Track it (demo mode), unknown name in demo → needs Claude; with the fake LLM, **nothing saved before approval**, the proposal is editable, approval updates catalogue and skill |
+| `test_benchmark.py` | 14 | Performance check: numbers found in any format ("2.6m sq ft", "£1.2bn", "6.3%"; period labels ignored); scoring (coverage, accuracy, same vs other source, missing, **grounding**, tolerances); readability ordering; answer-key **signals** (in document, catalogue, period, confidence → safe), stable ids, accept-safe, storage; library roles; AI key extraction (signals computed, duplicates dropped) and live-mode requirement; run planning (one skill covers several figures, not-collectable figures) and **tasks never reveal the expected values**; **full figure run with the fake LLM** (scores, grounding catches an invented figure, citation check against a fixture page, token cost, over-target warning, history); optional cap only when set; brief judgement free statistics in demo mode and the AI rubric; CLI `bench` commands |
+| `test_ui_reference.py` | 5 | 📚 Reference reports tab: house style moved from the sidebar, library role ticks saved; answer-key moderation tiles + Accept all safe, AI steps need live mode in demo; `apply_edits` (corrected value rechecked, invalid status refused); figure run scorecard tiles and cost warning; brief judgement in demo mode |
 | `test_cli.py` | 3 | `cre-monitor ui` passes `toolbarMode=viewer` by default, and `developer` with `--debug` or `CRE_UI_DEBUG=1` (Streamlit launch is captured, not run) |
 | `test_live.py` | 7 (opt-in) | BoE Bank Rate; ONS CPIH / unemployment / GDP; Nomis London employment; Google News + search; one real `macro-economy` skill run (needs `ANTHROPIC_API_KEY`) |
 

@@ -39,6 +39,10 @@ Example: `cre-monitor --offline --demo brief`.
 | `cre-monitor brief --no-style` | Ignores the learned house style for this brief (built-in layout and wording) |
 | `cre-monitor style learn [--from DIR] [--heuristic]` | Learns a **house style** from example reports in `style/reports/` (see [House style](#house-style-imitating-example-reports)) |
 | `cre-monitor style show` / `style clear` | Shows the learned style profile, or removes it (back to the built-in style) |
+| `cre-monitor bench key FILE [--accept-safe]` | Performance check: builds the answer key for a reference report in `style/reports/` (live) |
+| `cre-monitor bench run FILE [--no-hints] [--max-usd X]` | Runs the skills that collect the key's accepted figures and scores them (live). See [EVALUATION.md](EVALUATION.md) |
+| `cre-monitor bench judge FILE [--brief ID]` | Judges the latest (or a given) brief against the reference |
+| `cre-monitor bench history [FILE]` | Lists earlier performance-check runs |
 | `cre-monitor ask "question"` | One question in a **new** conversation; prints a cited answer, the skills used and the conversation id |
 | `cre-monitor ask "..." --thread ID` | Continues conversation `ID`, so follow-up questions have context |
 | `cre-monitor chat [--thread ID]` | Interactive multi-turn chat in the terminal: new conversation, or resume `ID`. Type `exit` to quit |
@@ -67,10 +71,12 @@ agency quarterly): voice and tone, section order and headings, headline and para
 style, number conventions ("£190 psf", "bp", "Q2 2026") and signature techniques
 ("compare with the long-term average").
 
-Each step can be done in the terminal (below) or in the web UI's **🎨 House style** sidebar
-panel (upload → **Learn style from these reports** → **Show learned profile**), with the
-**Use house style** toggle next to **Run full brief now**. The profile is shared by everyone
-using the same installation, whichever way it was learned.
+Each step can be done in the terminal (below) or in the web UI's **📚 Reference reports** tab:
+upload in **Library**, tick **Style**, then **🎨 House style** → **Learn style from these
+reports** → **Show learned profile**. The **Use house style** toggle sits next to **Run full
+brief now** in the sidebar. The profile is shared by everyone using the same installation,
+whichever way it was learned. In the UI library, only reports ticked **Style** are learned
+from; the CLI uses every file in the folder unless roles are set.
 
 1. Put up to 8 example reports in **`style/reports/`** (`.md`, `.txt`, `.html` or `.pdf`;
    the first ~6,000 characters of each are read). The folder is git-ignored except for its
@@ -133,7 +139,6 @@ The sidebar works like a modern chatbot.
 | Page URL `?thread=<id>` | The open conversation is kept in the URL, so a refresh, bookmark or shared link reopens it. Ids are also listed by `cre-monitor conversations` |
 | **📦 Export data** | Optional "since" date and "include logs". **Prepare export** builds the zip, then **⬇ Download** saves it (same as `cre-monitor export`) |
 | **⚙️ Settings & brief** | **Offline data** toggle (same as `--offline`). **Demo mode** toggle (same as `--demo`; locked on without `ANTHROPIC_API_KEY`). Current model and data source. **Use house style** toggle (on when a style is learned; off = same as `--no-style`, for that brief only). **Skills in the brief** tick boxes (all ticked by default; **All** / **None** shortcuts; hover a skill for its description). **Run full brief now** (same as `cre-monitor brief`); with only some skills ticked it becomes **Run partial brief (n of 8 skills)** (same as `brief --skills …`: cheaper and quicker in live mode). Ticks are per browser session. The result appears in the Briefs tab |
-| **🎨 House style** | Upload example reports, remove them (🗑), **Learn style from these reports** (tick **Quick analysis** for the free rule-based learner), **Show learned profile**, **Clear house style**. Same as `cre-monitor style learn / show / clear`; see [House style](#house-style-imitating-example-reports) |
 
 Conversations started in the terminal (`cre-monitor ask` / `chat`) appear in the same list.
 Research findings are never reused between turns: every question triggers fresh research,
@@ -169,7 +174,38 @@ conversations would be used.
 | **Chat** | Multi-turn Q&A. Shows live progress (which skills are running), then the answer with its sources, the skills used, any relevant charts and the data-quality notes |
 | **Briefs** | Browse past briefs (newest first), view them inline, and download the HTML or Markdown. **🗑 Delete brief** opens a confirmation that removes the brief's HTML, Markdown, findings JSON and charts. The **Also remove its figures from the metrics history** checkbox (off by default) also deletes that run's figures, which changes "what changed" deltas and Dashboard trends |
 | **Dashboard** | The metric history in `data/metrics.sqlite`, focused on the metrics you track, plus managing metrics and submarkets. See [Dashboard](#dashboard) |
+| **Reference reports** | Library of reports you supply, the house style, and the performance check. See [Reference reports tab](#reference-reports-tab) |
 | **Skills** | View, edit, add, delete and restore the research skills without touching files. See [Skills tab](#skills-tab) |
+
+### Reference reports tab
+
+* **📁 Library**: upload reports (`.md`, `.txt`, `.html`, `.pdf`) into `style/reports/`, which
+  is git-ignored, and remove them with 🗑. Tick what each report is for:
+  * **Style**: the brief imitates its writing;
+  * **Benchmark**: the agent is measured against its figures.
+
+  Roles are kept in `style/library.json`. New files default to Style.
+* **🎨 House style**: learn, show and clear the style from the reports ticked **Style**
+  (moved here from the sidebar; see [House style](#house-style-imitating-example-reports)).
+  Tick **Quick analysis** for the free rule-based learner.
+* **🎯 Performance check**: measures whether the agent's research is right against a
+  **Benchmark** report:
+  1. **Answer key.** **Build answer key with Claude** lists the figures and themes the
+     report states. Each figure has signals: *in the document*, *confidence*, *catalogue*
+     match and *period ok*. **Accept all safe** accepts the figures that pass every check.
+     You can edit status, value, period or submarket in the table, then **Save moderation**.
+     Only accepted figures are scored.
+  2. **Run performance check.** Only the skills that collect the accepted figures run, for
+     that period, optionally given the report's citations as leads. An estimate is shown
+     first. The scorecard shows coverage, accuracy (same and other source), grounding
+     (figures that appear in what the tools returned), citations that contain the figure,
+     the estimated cost, and a row per figure (expected vs found).
+  3. **Judge brief.** Pick an existing brief. You get readability next to the reference and
+     a citation check (both free), plus Claude's rubric (theme coverage, consistency,
+     so-what, structure, readability; live mode).
+  4. **History**: earlier runs with a trend chart, so changes can be compared.
+
+  Metric definitions, cost and how to read the results: [EVALUATION.md](EVALUATION.md).
 
 ### Dashboard
 
@@ -319,6 +355,7 @@ How the tests work and how to add them: [TESTING.md](TESTING.md).
 | `pytest -m live -k "not skill"` | Live data sources only, without Claude | Tavily only |
 | `python evals/run_evals.py` | 7 chat questions: correct routing, grounded and cited answers (demo mode) | Free |
 | `python evals/run_evals.py --live` | Same, against the real agent and live data | A few USD |
+| `cre-monitor --live bench run FILE` | **Performance check**: the real agent's figures vs a moderated answer key from a reference report ([EVALUATION.md](EVALUATION.md)) | Designed for under $1 |
 
 ---
 
@@ -364,6 +401,10 @@ The full template is in `.env.example`.
 | `CRE_OFFLINE`, `CRE_DEMO_MODE` | Default run modes |
 | `REPORT_PNG=0` | Skip PNG charts (needed if no Chrome/Chromium is installed) |
 | `REPORT_STYLE=0` | Ignore the learned house style (`style/profile.json`) in briefs |
+| `BENCHMARK_TARGET_USD` | Performance check: warn when a run's estimated cost exceeds this (default 1.00) |
+| `BENCHMARK_MAX_USD` | Performance check: optional cap - start no further skill once reached (off by default) |
+| `BENCHMARK_TOL_PP` / `BENCHMARK_TOL_REL` | Accuracy tolerance: percentage points for rates (0.1), relative otherwise (0.02) |
+| `MODEL_PRICES` | JSON `{"model": [in, out]}` USD per million tokens, for cost estimates |
 | `STYLE_DIR` | Where the style profile and `reports/` examples live (default `style/`) |
 | `STALE_AFTER_DAYS` | When the validator flags data as stale |
 | `SUPPORT_CONTACT` | Who users should send error reference IDs to (shown in error panels) |
@@ -388,6 +429,9 @@ The full template is in `.env.example`.
 | `skills/<name>/SKILL.md` | The research skills (committed; editable in the Skills tab) |
 | `skills/.history/`, `catalog/.history/`, `skills/.trash/` | Earlier versions and deleted skills from UI edits (git-ignored, local safety net) |
 | `style/profile.json` / `profile.md` | The learned house style (committable) and its readable summary |
+| `style/library.json` | Which library reports are style examples / benchmarks (git-ignored) |
+| `style/benchmark/<file>.json` | Moderated answer keys (committable: numbers, links, short themes) |
+| `data/benchmarks/<run>.json` | Performance-check run history (scores, per-figure results, estimated cost) |
 
 * **Reset history:** delete `data/`. The metrics history is re-seeded from fixtures on the
   next run. Note that this also deletes all saved conversations.

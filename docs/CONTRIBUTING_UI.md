@@ -38,6 +38,15 @@ then tick them in the skill.
 
 **Add a submarket**: Dashboard → 📍 Submarkets → Add, with aliases (other spellings brokers use).
 
+**Check whether a change made the agent better**: 📚 Reference reports → upload a report you
+trust and tick **Benchmark** → 🎯 Performance check:
+1. **Build answer key**, review the figures (riskiest first), then **Accept all safe** or
+   fix rows.
+2. **Run performance check** and note coverage, accuracy and grounding.
+3. Change the skill (🧩 Skills), run again, and compare in **History**.
+
+See [EVALUATION.md](EVALUATION.md).
+
 ## Writing good skill instructions
 
 * **The description decides when the skill runs.** The router reads only the description,
@@ -81,3 +90,4 @@ git add skills catalog && git commit -m "Add average lease length metric"
 | Check feasibility / Draft with Claude / Check with Claude | One call to the strongest model (roughly 5-20 US cents; it reads the whole catalogue and skill list) |
 | Test now / Test run | One research run (a few cents to ~$0.50 in live mode) |
 | Every skill in the brief | Runs on every scheduled brief, so a new skill adds its research cost each time |
+| Performance check | Answer key: one call (a few cents). Figure run: only the skills that collect the figures (designed for under $1; estimate shown first). Brief judgement: one call; readability and citation checks are free |

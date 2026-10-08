@@ -45,6 +45,7 @@ conda env automatically. Add the keys as Codespaces secrets.
 | House style: briefs imitate the voice, layout, number conventions and techniques of example reports you supply (facts are never changed) | Add examples to `style/reports/`, then `cre-monitor style learn` ([how](docs/USAGE.md#house-style-imitating-example-reports)) |
 | Dashboard of tracked metrics: headline cards, comparison across all submarkets, trends on a real time axis | `cre-monitor ui` → 📈 Dashboard |
 | No-code contributions: edit/add/delete research skills (Claude can draft them), add metrics (Claude checks they can be collected), manage submarkets | `cre-monitor ui` → 🧩 Skills, Dashboard → ⚙️ Metrics / 📍 Submarkets ([guide](docs/CONTRIBUTING_UI.md)) |
+| Performance check: is the research right? Scores the live agent's figures (coverage, accuracy, made-up numbers, citations) and briefs (themes, readability) against reference reports you supply | `cre-monitor ui` → 📚 Reference reports → 🎯 Performance check, or `cre-monitor bench` ([how](docs/EVALUATION.md)) |
 | Scheduled weekly brief | `cre-monitor schedule install` (Windows Task Scheduler; prints a crontab line elsewhere) |
 | Chat assistant with saved conversations: reopen and resume past chats from the sidebar, and reference earlier chats as background | `cre-monitor ui` (Streamlit) or `cre-monitor chat` (terminal) |
 | Data export: briefs, metrics history and conversations as one zip (Excel, CSV, Markdown, JSON) | `cre-monitor export` or **📦 Export data** in the UI |
@@ -79,6 +80,7 @@ START ─► planner ─Send─► skill_runner × N ─► validator ─► per
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Design goals, graph and nodes, skills mechanism, house style, extension points |
 | [style/reports/README.md](style/reports/README.md) | Supplying example reports for the house style (and the licence caveat) |
 | [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Every data structure (models, graph state, skill metadata), persistence and SQLite schema, fixture formats |
+| [docs/EVALUATION.md](docs/EVALUATION.md) | The performance check: answer keys, metrics, cost, reading the scorecard, limits |
 | [docs/TESTING.md](docs/TESTING.md) | What "testable" means here, techniques, per-file test coverage, fake LLM, evals, adding tests |
 | [docs/SKILLS.md](docs/SKILLS.md) | Writing and adding skills; refreshing fixtures |
 | [docs/CONTRIBUTING_UI.md](docs/CONTRIBUTING_UI.md) | For non-developers: changing skills, metrics and submarkets in the web UI |

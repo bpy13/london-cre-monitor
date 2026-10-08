@@ -301,7 +301,10 @@ def merge(
     source: Path = typer.Argument(..., help="Other installation's project folder (with data/) or its data/ folder."),
     no_reports: bool = typer.Option(False, "--no-reports", help="Don't merge brief files from reports/."),
     dry_run: bool = typer.Option(False, "--dry-run", help="Only show what would change."),
-    no_backup: bool = typer.Option(False, "--no-backup", help="Skip the automatic backup (not recommended)."),
+    no_backup: bool = typer.Option(
+        False, "--no-backup",
+        help="Skip the automatic backup. Not recommended: it also disables automatic restore if the merge fails.",
+    ),
     yes: bool = typer.Option(False, "--yes", "-y", help="Don't preview/ask for confirmation."),
 ) -> None:
     """Merge another installation's data (metrics, conversations, agent memory, briefs) into this one.
@@ -310,7 +313,8 @@ def merge(
     Stop both apps first.
     """
     _setup_logging("merge", console_level=logging.WARNING)
-    from cre_monitor.store.merge import merge_installation
+    from cre_monitor.errors import incident_from_exception
+    from cre_monitor.store.merge import MergeError, merge_installation
 
     kwargs = {"include_reports": not no_reports}
     try:
@@ -324,6 +328,14 @@ def merge(
         result = merge_installation(source, backup=not no_backup, **kwargs)
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1)
+    except MergeError as exc:
+        incident = incident_from_exception(exc, step="merge")
+        outcome = ("Your data was restored to its pre-merge state." if exc.restored
+                   else "Nothing was changed.")
+        console.print(Panel(f"[bold]The merge did not complete.[/bold] {outcome}\n\n{exc}\n\n"
+                            f"Reference for support: [bold]{incident.id}[/bold]",
+                            title="Merge failed", border_style="red"))
         raise typer.Exit(code=1)
     console.print("[green]Merged.[/green]" + (f" Backup of the previous data: {result.backup}" if result.backup else ""))
     if yes:

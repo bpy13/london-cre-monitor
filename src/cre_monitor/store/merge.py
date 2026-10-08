@@ -31,18 +31,29 @@ nothing) and to **never overwrite** existing target data:
 * **Briefs** (``reports/``, optional): files missing from the target are copied;
   differing files with the same path are left alone and reported as conflicts.
 
-Safety:
+All-or-nothing - a real merge runs in phases:
 
-* the source is opened **read-only**;
-* the target databases are backed up (SQLite backup API) to
-  ``data/backups/pre-merge_<timestamp>/`` first;
-* each target database is changed in one transaction (rolled back on error);
-* ``dry_run=True`` performs the *same* merge on in-memory copies of the target
-  and discards them, so the reported numbers are exactly what a real merge
-  would do - and nothing is written.
+1. **Rehearse**: the full merge runs on in-memory copies of the target (the same
+   code as ``dry_run``). Data problems or bugs fail here, before any write.
+2. **Lock**: a write lock (``BEGIN IMMEDIATE``) is taken on all three target
+   databases. If another process is writing (e.g. the app finishing a chat), the
+   merge stops with :class:`MergeError` and nothing has changed. While locked,
+   nothing else can write, so no concurrent change can be lost.
+3. **Back up** the target databases (SQLite backup API) to
+   ``data/backups/pre-merge_<timestamp>/``.
+4. **Apply and commit**, then copy brief files.
+5. **On any failure after writing started**: all three databases are restored
+   from the backup, brief files copied by this run are deleted, and databases
+   the merge created are removed - the target is exactly as before.
 
-Stop both apps before merging so no database is mid-write. This is a
-SQLite-specific tool; a future move to Postgres would use its own migration.
+A single cross-file SQLite transaction is deliberately *not* relied on:
+LangGraph keeps ``checkpoints.sqlite`` in WAL mode, where SQLite does not
+guarantee atomic commits across attached files.
+
+Other guarantees: the source is opened **read-only**; ``dry_run=True`` only
+rehearses (step 1) and reports, writing nothing. Stopping both apps before a
+merge is still recommended. This is a SQLite-specific tool; a future move to
+Postgres would use its own migration.
 """
 
 from __future__ import annotations
@@ -54,7 +65,7 @@ import shutil
 import sqlite3
 import uuid
 from collections.abc import Callable, Iterator
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from datetime import datetime
 from pathlib import Path
 
@@ -70,6 +81,20 @@ METRIC_COLS = ("run_id", "run_at", "skill", "key", "submarket", "value", "unit",
                "period", "source", "url", "as_of", "note")
 _TURN_COLS = ("thread_id", "idx", "created_at", "question", "answer", "skills_json",
               "reasoning", "issues_json", "findings_json", "refs_json", "incident_json")
+
+
+#: Seconds to wait for another process's write lock before giving up.
+LOCK_TIMEOUT_S = 5.0
+
+
+class MergeError(RuntimeError):
+    """A merge that could not complete. ``restored`` tells whether the target
+    was rolled back from the pre-merge backup (False = nothing had been written)."""
+
+    def __init__(self, message: str, *, restored: bool, backup: Path | None = None) -> None:
+        super().__init__(message)
+        self.restored = restored
+        self.backup = backup
 
 
 class MergeReport(BaseModel):
@@ -135,7 +160,9 @@ def _target(path: Path, dry_run: bool, ensure: Callable[[sqlite3.Connection], No
     if dry_run:
         conn = sqlite3.connect(":memory:", check_same_thread=False)
         if path.exists():
-            with sqlite3.connect(path) as disk:
+            # closing(): `with sqlite3.connect()` only commits - it does NOT close, and an
+            # open handle on Windows blocks later restore/delete of the file.
+            with closing(sqlite3.connect(path)) as disk:
                 disk.backup(conn)
     else:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -322,7 +349,9 @@ def _ensure_checkpoints(conn: sqlite3.Connection) -> None:
 # Briefs (report files)
 # --------------------------------------------------------------------------
 
-def _merge_reports(src_reports: Path, dst_reports: Path, report: MergeReport, dry_run: bool) -> None:
+def _merge_reports(src_reports: Path, dst_reports: Path, report: MergeReport, dry_run: bool,
+                   copied: list[Path] | None = None) -> None:
+    """Copy missing brief files; record each copied path in ``copied`` (for rollback)."""
     for src_file in src_reports.rglob("*"):
         if not src_file.is_file():
             continue
@@ -336,6 +365,53 @@ def _merge_reports(src_reports: Path, dst_reports: Path, report: MergeReport, dr
         if not dry_run:
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src_file, target)
+            if copied is not None:
+                copied.append(target)
+
+
+# --------------------------------------------------------------------------
+# Transaction helpers (all-or-nothing)
+# --------------------------------------------------------------------------
+
+def _lock(path: Path) -> sqlite3.Connection:
+    """Open the target in manual-transaction mode and take its write lock.
+
+    Raises:
+        MergeError: Another process is writing (lock not obtained in time).
+    """
+    conn = sqlite3.connect(path, timeout=LOCK_TIMEOUT_S, isolation_level=None, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+    except sqlite3.OperationalError as exc:
+        conn.close()
+        raise MergeError(
+            f"{path.name} is in use by another process (is the app running?). Stop it and try again. ({exc})",
+            restored=False,
+        ) from exc
+    return conn
+
+
+def _commit(conn: sqlite3.Connection) -> None:
+    """Commit one target database (a separate function so tests can inject failures)."""
+    conn.execute("COMMIT")
+
+
+def _restore(backup: Path | None, data_dir: Path, created: list[Path], copied: list[Path]) -> None:
+    """Put the target back exactly as it was before the merge."""
+    if backup is not None:
+        for saved in backup.glob("*.sqlite"):
+            src, dst = sqlite3.connect(saved), sqlite3.connect(data_dir / saved.name)
+            try:
+                src.backup(dst)
+            finally:
+                src.close()
+                dst.close()
+    for path in created:  # databases that didn't exist before this merge
+        for p in (path, path.with_name(path.name + "-wal"), path.with_name(path.name + "-shm")):
+            p.unlink(missing_ok=True)
+    for path in copied:
+        path.unlink(missing_ok=True)
 
 
 # --------------------------------------------------------------------------
@@ -350,48 +426,130 @@ def merge_installation(
     backup: bool = True,
     now: datetime | None = None,
 ) -> MergeReport:
-    """Merge another installation's data (and briefs) into this one.
+    """Merge another installation's data (and briefs) into this one - all or nothing.
 
     Args:
         source: Project root of the other installation, or its ``data/`` folder.
         include_reports: Also merge brief files when the source has ``reports/``.
-        dry_run: Run the merge on in-memory copies and report; write nothing.
-        backup: Back up the target databases first (recommended).
+        dry_run: Rehearse on in-memory copies and report; write nothing.
+        backup: Back up the target first. Needed for automatic restore, so
+            disabling it also disables rollback across databases (not recommended).
         now: Timestamp override (tests).
 
     Raises:
         ValueError: Source has no data, or is this installation's own data folder.
+        MergeError: The merge could not complete; ``restored`` says whether the
+            target was rolled back (True) or never touched (False).
     """
-    from cre_monitor.store.conversations import ensure_schema as ensure_conversations
-    from cre_monitor.store.metrics import ensure_schema as ensure_metrics
-
     s = get_settings()
     now = now or datetime.now()
     src_data, src_reports = resolve_source(source)
     if src_data == s.data_dir.resolve():
         raise ValueError("The source is this installation's own data folder")
     src_reports = src_reports if include_reports else None
-    report = MergeReport(source_data=src_data, source_reports=src_reports, dry_run=dry_run)
-    if backup and not dry_run:
-        report.backup = backup_target(s.data_dir, now)
 
-    m_src, c_src, k_src = (_open_source(src_data / f) for f in DB_FILES)
+    sources = [_open_source(src_data / f) for f in DB_FILES]
     try:
-        if m_src is not None and "metrics" in _tables(m_src):
-            with _target(s.metrics_db_path, dry_run, ensure_metrics) as dst:
-                _merge_metrics(m_src, dst, report)
-        thread_map: dict[str, str] = {}
-        if c_src is not None and "conversations" in _tables(c_src):
-            with _target(s.conversations_db_path, dry_run, ensure_conversations) as dst:
-                thread_map = _merge_conversations(c_src, dst, report)
-        if k_src is not None:
-            with _target(s.checkpoint_db_path, dry_run, _ensure_checkpoints) as dst:
-                _merge_checkpoints(k_src, dst, thread_map, report)
+        # 1) Rehearse on in-memory copies (this *is* the dry run).
+        try:
+            rehearsal = _run(sources, s, src_data, src_reports, dry_run=True)
+        except Exception as exc:
+            raise MergeError(f"Merge failed while preparing - nothing was changed. ({exc})", restored=False) from exc
+        if dry_run:
+            logger.info("Merge dry run from %s: %s", src_data, rehearsal.summary())
+            return rehearsal
+        # 2-5) Lock, back up, apply, commit - restoring on any failure.
+        report = _apply(sources, s, src_data, src_reports, backup=backup, now=now)
     finally:
-        for conn in (m_src, c_src, k_src):
+        for conn in sources:
             if conn is not None:
                 conn.close()
-    if src_reports is not None:
-        _merge_reports(src_reports, s.reports_dir, report, dry_run)
-    logger.info("Merge from %s%s: %s", src_data, " (dry run)" if dry_run else "", report.summary())
+    logger.info("Merge from %s: %s", src_data, report.summary())
     return report
+
+
+def _run(sources, s, src_data: Path, src_reports: Path | None, *, dry_run: bool) -> MergeReport:
+    """Rehearsal: the merge against in-memory copies of the target."""
+    from cre_monitor.store.conversations import ensure_schema as ensure_conversations
+    from cre_monitor.store.metrics import ensure_schema as ensure_metrics
+
+    m_src, c_src, k_src = sources
+    report = MergeReport(source_data=src_data, source_reports=src_reports, dry_run=True)
+    thread_map: dict[str, str] = {}
+    if m_src is not None and "metrics" in _tables(m_src):
+        with _target(s.metrics_db_path, True, ensure_metrics) as dst:
+            _merge_metrics(m_src, dst, report)
+    if c_src is not None and "conversations" in _tables(c_src):
+        with _target(s.conversations_db_path, True, ensure_conversations) as dst:
+            thread_map = _merge_conversations(c_src, dst, report)
+    if k_src is not None:
+        with _target(s.checkpoint_db_path, True, _ensure_checkpoints) as dst:
+            _merge_checkpoints(k_src, dst, thread_map, report)
+    if src_reports is not None:
+        _merge_reports(src_reports, s.reports_dir, report, dry_run=True)
+    return report
+
+
+def _apply(sources, s, src_data: Path, src_reports: Path | None, *, backup: bool, now: datetime) -> MergeReport:
+    """The real merge: lock all targets, back up, apply, commit; restore on failure."""
+    from cre_monitor.store.conversations import ensure_schema as ensure_conversations
+    from cre_monitor.store.metrics import ensure_schema as ensure_metrics
+
+    m_src, c_src, k_src = sources
+    report = MergeReport(source_data=src_data, source_reports=src_reports, dry_run=False)
+    s.data_dir.mkdir(parents=True, exist_ok=True)
+    targets = [  # (source conn, target path, schema setup) for databases the source actually has
+        (src, path, ensure) for src, path, ensure, table in [
+            (m_src, s.metrics_db_path, ensure_metrics, "metrics"),
+            (c_src, s.conversations_db_path, ensure_conversations, "conversations"),
+            (k_src, s.checkpoint_db_path, _ensure_checkpoints, None),
+        ] if src is not None and (table is None or table in _tables(src))
+    ]
+
+    created = [path for _, path, _ in targets if not path.exists()]
+    for _, path, ensure in targets:  # schema setup commits on its own, so do it before locking
+        with closing(sqlite3.connect(path)) as conn:
+            ensure(conn)
+            conn.commit()
+
+    locks: dict[Path, sqlite3.Connection] = {}
+    copied: list[Path] = []
+    writing = False
+    try:
+        for _, path, _ in targets:
+            locks[path] = _lock(path)          # MergeError here = nothing written
+        if backup:
+            report.backup = backup_target(s.data_dir, now)
+        writing = True
+        thread_map: dict[str, str] = {}
+        if s.metrics_db_path in locks:
+            _merge_metrics(m_src, locks[s.metrics_db_path], report)
+        if s.conversations_db_path in locks:
+            thread_map = _merge_conversations(c_src, locks[s.conversations_db_path], report)
+        if s.checkpoint_db_path in locks:
+            _merge_checkpoints(k_src, locks[s.checkpoint_db_path], thread_map, report)
+        for conn in locks.values():
+            _commit(conn)
+        if src_reports is not None:
+            _merge_reports(src_reports, s.reports_dir, report, dry_run=False, copied=copied)
+        return report
+    except Exception as exc:
+        for conn in locks.values():
+            if conn.in_transaction:
+                conn.execute("ROLLBACK")
+            conn.close()
+        locks.clear()
+        if not writing:
+            _restore(None, s.data_dir, created, copied)
+            if isinstance(exc, MergeError):
+                raise
+            raise MergeError(f"Merge failed before writing - nothing was changed. ({exc})", restored=False) from exc
+        if report.backup is None:
+            raise MergeError(f"Merge failed and no backup was taken (--no-backup); data may be partially merged. ({exc})",
+                             restored=False) from exc
+        _restore(report.backup, s.data_dir, created, copied)
+        raise MergeError(f"Merge failed - your data was restored to its pre-merge state from {report.backup}. ({exc})",
+                         restored=True, backup=report.backup) from exc
+    finally:
+        for conn in locks.values():
+            conn.close()

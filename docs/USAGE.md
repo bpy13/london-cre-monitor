@@ -296,8 +296,21 @@ cre-monitor merge /path/to/other --dry-run              # preview only
 | Briefs | Missing files are copied. If the same file exists with different content, this installation's copy is kept and listed as a conflict |
 
 * **Safe to re-run:** existing data is never overwritten, and already-merged data is skipped.
+* **All or nothing:** the merge either completes fully or leaves your data exactly as it
+  was.
+  * It first rehearses on in-memory copies, so data problems stop it before anything is
+    written.
+  * It then locks the databases. If something is writing to them (e.g. the app finishing
+    a chat), it stops with "in use … Nothing was changed".
+  * If anything fails after writing has begun (disk full, interruption, …), all databases
+    are restored automatically from the backup, and brief files copied by that run are
+    removed. The message says "restored to its pre-merge state" and gives an `ERR-`
+    reference.
 * **Backup first:** the current databases are copied to `data/backups/pre-merge_<timestamp>/`
-  before anything changes. To undo, stop the app and copy those files back into `data/`.
+  before anything changes. To undo a *successful* merge, stop the app and copy those files
+  back into `data/`. `--no-backup` also disables the automatic restore, so avoid it.
+* An app that is open but idle can't be detected. Stop it anyway: while a merge runs, the
+  app can't save, and it won't show merged conversations until it is restarted.
 * The other installation is only read, never modified.
 * This merges SQLite data between installations of this app. It does not import the
   export zip.

@@ -204,6 +204,130 @@ def test_report_conflicts_keep_target_file(two_installs):
     assert target_file.read_text(encoding="utf-8") == "target"
 
 
+# ---------------------------------------------------------------------------
+# All-or-nothing: failures leave the target exactly as before
+# ---------------------------------------------------------------------------
+
+def _snapshot() -> dict:
+    """Full contents of every target database (and the list of report files)."""
+    s = get_settings()
+    snap = {"files": sorted(str(p.relative_to(s.reports_dir)) for p in s.reports_dir.rglob("*") if p.is_file())
+            if s.reports_dir.exists() else []}
+    for name in ("metrics.sqlite", "conversations.sqlite", "checkpoints.sqlite"):
+        path = s.data_dir / name
+        if not path.exists():
+            snap[name] = None
+            continue
+        with sqlite3.connect(path) as c:
+            tables = [r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
+            snap[name] = {t: sorted(map(repr, c.execute(f"SELECT * FROM {t}"))) for t in tables}
+    return snap
+
+
+@pytest.fixture
+def merge_ready(two_installs):
+    """Source with a brief + chats; target with its own chat. Returns (source, pre-merge snapshot)."""
+    source, use = two_installs
+    use("source")
+    from cre_monitor.graph.builder import run_brief
+    run_brief(["office-rents"])
+    _ask("What are prime rents in the West End?", "t-src")
+    use("target")
+    _ask("Bank Rate?", "t-own")
+    return source, _snapshot()
+
+
+def test_failure_during_commit_restores_everything(merge_ready, monkeypatch):
+    """Worst case: metrics already committed when the next commit fails."""
+    import cre_monitor.store.merge as merge
+    source, before = merge_ready
+    real_commit, calls = merge._commit, []
+
+    def flaky_commit(conn):
+        calls.append(conn)
+        if len(calls) == 2:
+            raise sqlite3.OperationalError("disk I/O error (simulated)")
+        real_commit(conn)
+
+    monkeypatch.setattr(merge, "_commit", flaky_commit)
+    with pytest.raises(merge.MergeError, match="restored") as err:
+        merge_installation(source)
+    assert err.value.restored and err.value.backup is not None
+    assert _snapshot() == before                                          # byte-for-byte as before
+    assert len(_messages("t-own")) == 2                                   # own chat still resumable
+
+
+def test_failure_while_copying_briefs_restores_and_removes_copies(merge_ready, monkeypatch):
+    import cre_monitor.store.merge as merge
+    source, before = merge_ready
+    real_copy, copies = merge.shutil.copy2, []
+
+    def flaky_copy(src, dst):
+        if copies:
+            raise OSError("No space left on device (simulated)")
+        copies.append(dst)
+        return real_copy(src, dst)
+
+    monkeypatch.setattr(merge.shutil, "copy2", flaky_copy)
+    with pytest.raises(merge.MergeError) as err:
+        merge_installation(source)
+    assert err.value.restored
+    assert _snapshot() == before                                          # DBs restored AND copied brief removed
+
+
+def test_failure_while_preparing_changes_nothing(merge_ready, monkeypatch):
+    import cre_monitor.store.merge as merge
+    source, before = merge_ready
+
+    def broken(*args, **kwargs):
+        raise KeyError("unexpected data (simulated)")
+
+    monkeypatch.setattr(merge, "_merge_conversations", broken)
+    with pytest.raises(merge.MergeError, match="nothing was changed") as err:
+        merge_installation(source)
+    assert not err.value.restored
+    assert _snapshot() == before
+    assert not (get_settings().data_dir / "backups").exists()             # failed before even backing up
+
+
+def test_data_in_use_is_detected_and_nothing_changes(merge_ready, monkeypatch):
+    import cre_monitor.store.merge as merge
+    source, before = merge_ready
+    monkeypatch.setattr(merge, "LOCK_TIMEOUT_S", 0.2)
+    other = sqlite3.connect(get_settings().conversations_db_path, isolation_level=None)
+    other.execute("BEGIN IMMEDIATE")                                      # e.g. the app mid-write
+    try:
+        with pytest.raises(merge.MergeError, match="in use") as err:
+            merge_installation(source)
+    finally:
+        other.execute("ROLLBACK")
+        other.close()
+    assert not err.value.restored
+    assert _snapshot() == before
+
+
+def test_failure_on_fresh_target_leaves_no_files(two_installs, monkeypatch):
+    import cre_monitor.store.merge as merge
+    source, use = two_installs
+    use("source")
+    _ask("Bank Rate?", "t1")
+    use("target")                                                          # target has no databases yet
+    monkeypatch.setattr(merge, "_commit", lambda conn: (_ for _ in ()).throw(sqlite3.OperationalError("simulated")))
+    with pytest.raises(merge.MergeError):
+        merge_installation(source)
+    assert not list(get_settings().data_dir.glob("*.sqlite*"))           # created databases removed
+
+
+def test_cli_reports_failed_merge(merge_ready, monkeypatch):
+    import cre_monitor.store.merge as merge
+    source, before = merge_ready
+    monkeypatch.setattr(merge, "_commit", lambda conn: (_ for _ in ()).throw(sqlite3.OperationalError("simulated")))
+    result = CliRunner().invoke(cli.app, ["merge", str(source), "--yes"])
+    assert result.exit_code == 1
+    assert "Merge failed" in result.output and "restored" in result.output and "ERR-" in result.output
+    assert _snapshot() == before
+
+
 def test_cli_merge(two_installs):
     source, use = two_installs
     use("source")

@@ -43,6 +43,7 @@ Example: `cre-monitor --offline --demo brief`.
 | `cre-monitor conversations [--limit 20]` | Lists saved conversations (id, title, questions, last active), most recent first. The same list appears in the UI sidebar |
 | `cre-monitor ui [--port 8501] [--debug]` | Streamlit web app (see [§2](#2-web-ui-cre-monitor-ui)). `--debug` shows Streamlit's developer toolbar (Rerun, Clear cache) |
 | `cre-monitor export [--since YYYY-MM-DD] [--include-logs] [--out DIR]` | Exports briefs, the metrics history and conversations as one zip in `exports/` (see [§7](#exporting-data)) |
+| `cre-monitor merge PATH [--dry-run] [--no-reports] [--no-backup] [--yes]` | Merges another installation's data (metrics, conversations, agent memory, briefs) into this one. Shows a preview first. See [Merging installations](#merging-installations) |
 | `cre-monitor briefs list [--limit 20]` | Lists generated briefs (id, created, HTML path), newest first |
 | `cre-monitor briefs delete ID [--with-metrics] [--yes]` | Deletes a brief's files; asks for confirmation unless `--yes` is given. `--with-metrics` also removes its figures from the metrics history |
 | `cre-monitor schedule install --day MON --time 07:00` | Windows: registers a weekly brief in Task Scheduler. Linux, macOS and Codespaces: prints a crontab line instead |
@@ -243,6 +244,7 @@ The full template is in `.env.example`.
 | `data/conversations.sqlite` | Conversation list: titles and per-turn details for the sidebar |
 | `data/logs/` | `brief_<date>.log`, `chat_<date>.log` (CLI), `ui_<date>.log` (web UI). Error references (`ERR-…`) are logged here |
 | `exports/` | Export zips from `cre-monitor export` / the sidebar (git-ignored) |
+| `data/backups/pre-merge_<timestamp>/` | Automatic database backups taken before each `cre-monitor merge` |
 
 * **Reset history:** delete `data/`. The metrics history is re-seeded from fixtures on the
   next run. Note that this also deletes all saved conversations.
@@ -269,6 +271,36 @@ The full template is in `.env.example`.
   is stopped. The export is for people and analysis; the folders are the complete backup.
 * Figures come from third-party sources. Exports are for internal use; check licensing
   before sharing them externally.
+
+### Merging installations
+
+Use this to combine data from another copy of the app, for example a colleague's machine
+or a Codespace, into this one:
+
+```bash
+cre-monitor merge /path/to/other/london-cre-monitor      # or .../data; shows a preview, then asks
+cre-monitor merge /path/to/other --dry-run              # preview only
+```
+
+1. **Stop both apps first**, so no database is mid-write.
+2. Copy the other installation's `data/` folder (and `reports/` if you want its briefs) to
+   somewhere this machine can read. In Codespaces, download the folders from the file
+   explorer.
+3. Run the merge and review the preview table.
+
+| Data | What happens |
+|---|---|
+| Metrics | Rows not already present are added. The other copy's starter (seed) history is skipped if this one has its own |
+| Conversations | **Added** if new. **Already present** ones are skipped. **Extended** if the conversation continued on the other machine (only the new questions are added). **Renamed** (`<id>-xxxx`) if the same id holds a different history; references to it are updated |
+| Agent memory | Copied with its conversations, so merged chats can be resumed |
+| Briefs | Missing files are copied. If the same file exists with different content, this installation's copy is kept and listed as a conflict |
+
+* **Safe to re-run:** existing data is never overwritten, and already-merged data is skipped.
+* **Backup first:** the current databases are copied to `data/backups/pre-merge_<timestamp>/`
+  before anything changes. To undo, stop the app and copy those files back into `data/`.
+* The other installation is only read, never modified.
+* This merges SQLite data between installations of this app. It does not import the
+  export zip.
 
 * **Delete one brief:** Briefs tab → 🗑 Delete brief, or `cre-monitor briefs delete <id>`.
   Same-day briefs are unaffected, and an empty date folder is removed.

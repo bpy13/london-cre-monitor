@@ -8,6 +8,7 @@ Commands
 ``briefs``    List generated briefs, or delete one (``briefs delete <id>``).
 ``conversations``  List saved chat conversations.
 ``export``    Export briefs, metrics and conversations as one zip (CSV/Excel/Markdown/JSON).
+``merge``     Merge another installation's data/ (and reports/) into this one.
 ``skills``    List loaded skills (and any invalid SKILL.md files).
 ``schedule``  Install / remove / show the weekly scheduled brief (Windows
               Task Scheduler; prints a cron line for Linux/macOS).
@@ -277,6 +278,56 @@ def export(
     console.print(f"[green]Exported[/green] {result.path}")
     console.print(f"  {c['metric_rows']} metric rows · {c['briefs']} briefs · "
                   f"{c['conversations']} conversations ({c['turns']} questions) · {c['log_files']} log files")
+
+
+def _print_merge(report) -> None:
+    c = report.conversations
+    table = Table("Data", "Result")
+    table.add_row("Metrics", f"+{report.metrics_added} rows ({report.metrics_skipped} already present / seed)")
+    table.add_row("Conversations", f"{len(c['added'])} added · {len(c['extended'])} extended · "
+                                   f"{len(c['renamed'])} renamed · {len(c['skipped'])} already present "
+                                   f"(+{report.turns_added} questions)")
+    table.add_row("Agent memory", f"{report.checkpoint_threads_copied} threads ({report.checkpoint_rows_copied} rows)")
+    table.add_row("Brief files", "not merged" if report.source_reports is None else
+                  f"+{report.report_files_copied}" + (f" · {len(report.report_conflicts)} conflicts (kept target's)"
+                                                       if report.report_conflicts else ""))
+    console.print(table)
+    for entry in c["renamed"]:
+        console.print(f"[yellow]Renamed (same id, different history): {entry}[/yellow]")
+
+
+@app.command("merge")
+def merge(
+    source: Path = typer.Argument(..., help="Other installation's project folder (with data/) or its data/ folder."),
+    no_reports: bool = typer.Option(False, "--no-reports", help="Don't merge brief files from reports/."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Only show what would change."),
+    no_backup: bool = typer.Option(False, "--no-backup", help="Skip the automatic backup (not recommended)."),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Don't preview/ask for confirmation."),
+) -> None:
+    """Merge another installation's data (metrics, conversations, agent memory, briefs) into this one.
+
+    Safe to re-run: existing data is never overwritten and already-merged data is skipped.
+    Stop both apps first.
+    """
+    _setup_logging("merge", console_level=logging.WARNING)
+    from cre_monitor.store.merge import merge_installation
+
+    kwargs = {"include_reports": not no_reports}
+    try:
+        if dry_run or not yes:
+            preview = merge_installation(source, dry_run=True, **kwargs)
+            console.print(f"[bold]{'Dry run' if dry_run else 'Preview'}:[/bold] merge {preview.source_data} → "
+                          f"{get_settings().data_dir}")
+            _print_merge(preview)
+            if dry_run or not typer.confirm("Apply this merge?"):
+                raise typer.Exit()
+        result = merge_installation(source, backup=not no_backup, **kwargs)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1)
+    console.print("[green]Merged.[/green]" + (f" Backup of the previous data: {result.backup}" if result.backup else ""))
+    if yes:
+        _print_merge(result)
 
 
 @app.command("skills")

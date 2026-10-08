@@ -81,6 +81,18 @@ PACK_MAX_FIGURES = 12
 PACK_MAX_CHARS = 4000
 
 
+def ensure_schema(conn: sqlite3.Connection) -> None:
+    """Create the tables, and upgrade databases created by earlier versions
+    (columns added over time). Works on any connection, including in-memory
+    copies used by dry-run merges."""
+    conn.executescript(_SCHEMA)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(turns)")}
+    if "refs_json" not in cols:
+        conn.execute("ALTER TABLE turns ADD COLUMN refs_json TEXT NOT NULL DEFAULT '[]'")
+    if "incident_json" not in cols:
+        conn.execute("ALTER TABLE turns ADD COLUMN incident_json TEXT")
+
+
 class Conversation(BaseModel):
     """One row of the sidebar list."""
 
@@ -120,13 +132,7 @@ class ConversationStore:
         self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as conn:
-            conn.executescript(_SCHEMA)
-            # Upgrade databases created by earlier versions (columns added over time).
-            cols = {r["name"] for r in conn.execute("PRAGMA table_info(turns)")}
-            if "refs_json" not in cols:
-                conn.execute("ALTER TABLE turns ADD COLUMN refs_json TEXT NOT NULL DEFAULT '[]'")
-            if "incident_json" not in cols:
-                conn.execute("ALTER TABLE turns ADD COLUMN incident_json TEXT")
+            ensure_schema(conn)
 
     @contextmanager
     def _conn(self) -> Iterator[sqlite3.Connection]:

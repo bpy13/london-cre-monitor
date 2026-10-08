@@ -56,6 +56,11 @@ CREATE INDEX IF NOT EXISTS ix_metrics_key ON metrics(key, submarket, period);
 """
 
 
+def ensure_schema(conn: sqlite3.Connection) -> None:
+    """Create the metrics table/index on any connection (incl. in-memory copies)."""
+    conn.executescript(_SCHEMA)
+
+
 class MetricsStore:
     """Thin wrapper around a SQLite file holding metric history."""
 
@@ -64,7 +69,7 @@ class MetricsStore:
         self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as conn:
-            conn.executescript(_SCHEMA)
+            ensure_schema(conn)
 
     @contextmanager
     def _conn(self) -> Iterator[sqlite3.Connection]:

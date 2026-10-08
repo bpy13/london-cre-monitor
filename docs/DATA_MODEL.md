@@ -302,6 +302,24 @@ in the findings JSON, the reports, and, for chat turns, `turns.findings_json`.
 `data/` and `reports/` are git-ignored. To reset, delete `data/`: metrics are re-seeded on
 the next run, but saved conversations are lost.
 
+### Merge (`store/merge.py`)
+`merge_installation()` merges another installation's SQLite databases and report files
+into this one. It is SQLite-specific, unlike the export.
+
+| Database | Identity used for matching | Rule |
+|---|---|---|
+| `metrics` | The whole row (all 12 columns) | Insert rows not already present; source `seed` rows are skipped if the target has seed rows |
+| `conversations` / `turns` | `thread_id`; turns by `(created_at, question)` | added / skipped (source turns ⊆ target) / extended (target is a prefix of source: append, re-index) / renamed (`<id>-<4 hex>`, with `refs_json` and the incident `thread_id` remapped) |
+| LangGraph `checkpoints`, `writes` | `(thread_id, checkpoint_ns, checkpoint_id[, task_id, idx])` | For added/extended/renamed threads (and memory-only threads absent from the target): `INSERT OR IGNORE`, with the thread id rewritten for renames. Any table with a `thread_id` column is handled, so new LangGraph tables are covered |
+
+How it runs:
+* the source is opened read-only (`mode=ro`);
+* the target is backed up via the SQLite backup API;
+* each target database is changed in one transaction;
+* a dry run applies the same logic to in-memory copies of the target.
+
+Older source schemas (e.g. without `refs_json` or `incident_json`) are read with defaults.
+
 ### Export (`export.py`)
 `export_data()` reads **through the store classes** (`MetricsStore.frame`,
 `ConversationStore.list/turns`, `list_briefs`), never the SQLite files directly, so it is

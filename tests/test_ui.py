@@ -155,7 +155,7 @@ def test_brief_from_ui_honours_house_style_toggle():
     at = AppTest.from_file(APP, default_timeout=60).run()
 
     def latest_html() -> str:
-        return sorted(get_settings().reports_dir.rglob("brief_*.html"))[-1].read_text(encoding="utf-8")
+        return max(get_settings().reports_dir.rglob("brief_*.html"), key=lambda p: p.stat().st_mtime_ns).read_text(encoding="utf-8")
 
     at.button(key="run-brief").click().run()
     assert not at.exception, at.exception

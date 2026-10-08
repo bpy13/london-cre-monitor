@@ -240,12 +240,16 @@ def demo_finding(skill_name: str) -> SkillFinding:
         )
 
 
-def run_skill(skill_name: str, question: str) -> SkillFinding:
+def run_skill(skill_name: str, question: str, trace: list | None = None) -> SkillFinding:
     """Run a skill end to end and return its finding (never raises).
 
     Args:
         skill_name: Registered skill name.
         question: Task for the skill (brief instruction or user question).
+        trace: Optional list that receives the sub-agent's full message transcript
+            (AI turns with token usage, tool results). Used by the performance check
+            to verify figures against what the tools returned and to estimate cost.
+            Research behaviour is identical with or without it.
     """
     try:
         if get_settings().cre_demo_mode:
@@ -254,6 +258,8 @@ def run_skill(skill_name: str, question: str) -> SkillFinding:
         # Each step = one LLM turn + one tool turn; headroom for reminders and resubmissions.
         limit = 2 * get_settings().skill_max_steps + 4 * (MAX_NUDGES + MAX_SUBMIT_RETRIES) + 5
         out = agent.invoke({"messages": [HumanMessage(question)]}, {"recursion_limit": limit})
+        if trace is not None:
+            trace.extend(out["messages"])
         return out["finding"]
     except Exception as exc:  # noqa: BLE001 - isolate failures per skill
         logger.exception("Skill %s failed", skill_name)

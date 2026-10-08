@@ -16,6 +16,9 @@ merge-in/*
 # The learned style/profile.json (a description, no copied text) IS committed for the team.
 style/reports/*
 !style/reports/README.md
+# Which local reports are style examples / benchmarks (describes git-ignored files).
+# Answer keys in style/benchmark/*.json are committed: numbers, links and short themes only.
+style/library.json
 
 # Version history and trash of UI edits to skills/ and catalog/ (local safety net;
 # the files themselves are committed as usual).

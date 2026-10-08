@@ -241,11 +241,66 @@ def save_example(name: str, data: bytes) -> Path:
 
 
 def delete_example(name: str) -> bool:
-    """Delete one example report by file name. True if it existed."""
+    """Delete one example report by file name (and its library roles). True if it existed."""
     path = _safe_example_path(name)
     existed = path.exists()
     path.unlink(missing_ok=True)
+    roles = _read_roles()
+    if roles.pop(path.name, None) is not None:
+        _write_roles(roles)
     return existed
+
+
+# --------------------------------------------------------------------------
+# Library roles: is a report a house-style example, a benchmark reference, or both?
+# --------------------------------------------------------------------------
+# style/reports/ is the "reference report library". An in-house newsletter may be a
+# good style model with few hard figures; a broker data update may be the opposite.
+# Roles are stored in style/library.json (git-ignored, like the reports themselves).
+# Files without an entry default to: style example = yes, benchmark = no.
+
+ROLES = ("style", "benchmark")
+
+
+def library_path() -> Path:
+    return style_dir() / "library.json"
+
+
+def _read_roles() -> dict[str, dict[str, bool]]:
+    try:
+        return json.loads(library_path().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _write_roles(roles: dict[str, dict[str, bool]]) -> None:
+    library_path().parent.mkdir(parents=True, exist_ok=True)
+    library_path().write_text(json.dumps(roles, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def file_roles(name: str) -> dict[str, bool]:
+    """``{"style": bool, "benchmark": bool}`` for a library file."""
+    return {"style": True, "benchmark": False} | _read_roles().get(Path(name).name, {})
+
+
+def set_roles(name: str, *, style: bool | None = None, benchmark: bool | None = None) -> dict[str, bool]:
+    """Set a library file's roles (unspecified roles keep their value)."""
+    path = _safe_example_path(name)
+    if not path.exists():
+        raise ValueError(f"No report called '{path.name}' in the library.")
+    roles = _read_roles()
+    current = file_roles(path.name)
+    current.update({k: v for k, v in {"style": style, "benchmark": benchmark}.items() if v is not None})
+    roles[path.name] = current
+    _write_roles(roles)
+    return current
+
+
+def examples_with_role(role: str) -> list[Path]:
+    """Library files that have ``role`` ("style" or "benchmark")."""
+    if role not in ROLES:
+        raise ValueError(f"role must be one of {ROLES}")
+    return [p for p in list_examples() if file_roles(p.name)[role]]
 
 
 # --------------------------------------------------------------------------
@@ -365,9 +420,11 @@ def learn_profile(folder: Path | None = None, *, use_llm: bool | None = None) ->
     Raises:
         ValueError: No supported example reports found.
     """
-    files = list_examples(folder)[:MAX_FILES]
+    # The library honours per-file roles; an explicit folder (CLI --from) uses every file in it.
+    files = (list_examples(folder) if folder else examples_with_role("style"))[:MAX_FILES]
     if not files:
-        raise ValueError(f"No example reports (.md/.txt/.html/.pdf) found in {folder or examples_dir()}")
+        raise ValueError(f"No example reports (.md/.txt/.html/.pdf) found in {folder or examples_dir()}"
+                         + ("" if folder else " that are marked as house-style examples"))
     texts = {p.name: read_example(p) for p in files}
     texts = {k: v for k, v in texts.items() if v.strip()}
     if not texts:

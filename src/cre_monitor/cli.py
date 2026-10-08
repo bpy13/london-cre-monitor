@@ -10,6 +10,8 @@ Commands
 ``export``    Export briefs, metrics and conversations as one zip (CSV/Excel/Markdown/JSON).
 ``merge``     Merge another installation's data/ (and reports/) into this one.
 ``style``     House style: ``learn`` from example reports, ``show``, ``clear``.
+``bench``     Performance check against reference reports: ``key``, ``run``,
+              ``judge``, ``history`` (see docs/EVALUATION.md).
 ``skills``    List loaded skills (and any invalid SKILL.md files).
 ``schedule``  Install / remove / show the weekly scheduled brief (Windows
               Task Scheduler; prints a cron line for Linux/macOS).
@@ -44,6 +46,8 @@ briefs_app = typer.Typer(help="List or delete generated briefs.")
 app.add_typer(briefs_app, name="briefs")
 style_app = typer.Typer(help="House style: learn from example reports and apply it to briefs.")
 app.add_typer(style_app, name="style")
+bench_app = typer.Typer(help="Performance check: score the agent against reference reports (docs/EVALUATION.md).")
+app.add_typer(bench_app, name="bench")
 console = Console()
 
 TASK_NAME = "LondonCREMonitorBrief"
@@ -267,6 +271,121 @@ def style_clear() -> None:
     from cre_monitor.style import clear_profile
 
     console.print("Profile removed." if clear_profile() else "No profile to remove.")
+
+
+def _load_key_or_exit(report: str):
+    from cre_monitor.benchmark.answer_key import load_key
+
+    key = load_key(report)
+    if key is None:
+        console.print(f"[red]No answer key for '{report}'. Run `cre-monitor bench key {report}` first.[/red]")
+        raise typer.Exit(code=1)
+    return key
+
+
+def _print_warnings(warnings: list[str]) -> None:
+    for w in warnings:
+        console.print(f"[yellow]⚠ {w}[/yellow]")
+
+
+@bench_app.command("key")
+def bench_key(
+    report: str = typer.Argument(..., help="File name in style/reports/, e.g. bnp_q1_2026.html."),
+    accept_safe: bool = typer.Option(False, "--accept-safe", help="Accept every entry whose signals all pass."),
+) -> None:
+    """Build an answer key from a reference report with Claude (live) and save it for moderation."""
+    _setup_logging("bench", console_level=logging.WARNING)
+    from cre_monitor.authoring import NeedsLiveMode
+    from cre_monitor.benchmark.answer_key import build_key, key_path, save_key
+
+    try:
+        with console.status(f"Extracting figures from {report}..."):
+            key = build_key(report)
+    except (NeedsLiveMode, ValueError) as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1)
+    if accept_safe:
+        key.accept_safe()
+    save_key(key)
+    table = Table("Metric", "Submarket", "Period", "Value", "Source", "In doc", "Conf.", "Safe", "Status")
+    for e in key.entries:
+        table.add_row(e.key, e.submarket, e.period, f"{e.value:g} {e.unit}", e.source, "✓" if e.in_document else "✗",
+                      f"{e.confidence:.2f}", "✓" if e.safe else "", e.status)
+    console.print(table)
+    st = key.stats()
+    console.print(f"{st['total']} figures, {st['safe']} safe, {st['accepted']} accepted. Saved to {key_path(report)}. "
+                  "Moderate in the UI (📚 Reference reports > 🎯 Performance check) or edit the JSON.")
+
+
+@bench_app.command("run")
+def bench_run(
+    report: str = typer.Argument(..., help="File name in style/reports/ with a moderated answer key."),
+    hints: bool = typer.Option(True, "--hints/--no-hints", help="Give the agent the report's citations as leads."),
+    max_usd: float = typer.Option(None, "--max-usd", help="Optional cap: start no further skill once reached."),
+) -> None:
+    """Run the skills that collect the key's accepted figures and score them (live)."""
+    _setup_logging("bench", console_level=logging.WARNING)
+    from cre_monitor.authoring import NeedsLiveMode
+    from cre_monitor.benchmark.runner import plan_run, run_figures
+
+    key = _load_key_or_exit(report)
+    plan = plan_run(key)
+    console.print(f"Skills: {', '.join(plan.groups) or 'none'} · estimated ~${plan.estimate_usd:.2f}")
+    try:
+        with console.status("Running skills..."):
+            rec = run_figures(key, hints=hints, max_usd=max_usd)
+    except (NeedsLiveMode, ValueError) as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1)
+    f, c = rec.figure, rec.citation
+    console.print(f"[bold]Coverage[/bold] {f['coverage']}% · [bold]accuracy[/bold] {f['accuracy']}% "
+                  f"(same source {f['accuracy_same_source']}%, other {f['accuracy_other_source']}%) · "
+                  f"[bold]grounding[/bold] {f['grounding']}% · [bold]citations[/bold] {c['pct_contains']}% contain "
+                  f"the figure ({c['unverifiable']} unverifiable) · est. ${rec.cost_usd:.2f} · {rec.duration_s:.0f}s")
+    _print_warnings(rec.warnings)
+
+
+@bench_app.command("judge")
+def bench_judge(
+    report: str = typer.Argument(..., help="Reference report (with an answer key)."),
+    brief: str = typer.Option(None, "--brief", help="Brief id (default: the latest brief)."),
+) -> None:
+    """Judge an existing brief against the reference (readability + citations free; rubric needs live)."""
+    _setup_logging("bench", console_level=logging.WARNING)
+    from cre_monitor.benchmark.runner import run_judge
+
+    key = _load_key_or_exit(report)
+    try:
+        rec = run_judge(key, brief)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1)
+    rb, rr = rec.readability_brief, rec.readability_reference
+    console.print(f"Brief {rec.brief_run_id}: Flesch {rb.get('flesch')} (reference {rr.get('flesch')}), "
+                  f"avg sentence {rb.get('avg_sentence_words')} words (reference {rr.get('avg_sentence_words')})")
+    if (j := rec.judgement) is not None:
+        console.print(f"Theme coverage {j['theme_coverage']}% · consistency {j['consistency']['score']}/5 · "
+                      f"so-what {j['so_what']['score']}/5 · structure {j['structure']['score']}/5 · "
+                      f"readability {j['readability']['score']}/5\n{j['summary']}")
+    _print_warnings(rec.warnings)
+
+
+@bench_app.command("history")
+def bench_history(report: str = typer.Argument(None, help="Only runs for this report.")) -> None:
+    """List earlier performance-check runs, newest first."""
+    from cre_monitor.benchmark.store import list_runs
+
+    runs = list_runs(report)
+    if not runs:
+        console.print("No performance-check runs yet.")
+        return
+    table = Table("Run", "Kind", "Report", "Coverage", "Accuracy", "Grounding", "Citations", "Themes", "Est. $")
+    for r in runs:
+        j = r.judgement or {}
+        table.add_row(r.run_id[:15], r.kind, r.report, str(r.figure.get("coverage", "")),
+                      str(r.figure.get("accuracy", "")), str(r.figure.get("grounding", "")),
+                      str(r.citation.get("pct_contains", "")), str(j.get("theme_coverage", "")), f"{r.cost_usd:.2f}")
+    console.print(table)
 
 
 @briefs_app.command("list")

@@ -91,6 +91,23 @@ class Settings(BaseSettings):
     #: summary and topic wording. No effect until `cre-monitor style learn` has run.
     report_style: bool = True
 
+    # --- Performance check (benchmark against reference reports) ----------
+    #: A run is designed to cost less than this; the scorecard warns if it went over.
+    benchmark_target_usd: float = 1.00
+    #: Optional hard cap: stop starting further skills once spent. Off (None) by default.
+    benchmark_max_usd: float | None = None
+    #: Tolerance for "accurate": absolute for % metrics (percentage points), relative otherwise.
+    benchmark_tol_pp: float = 0.1
+    benchmark_tol_rel: float = 0.02
+    #: USD per million tokens (input, output) per model, used for cost ESTIMATES only.
+    #: Verify against https://www.anthropic.com/pricing and override via env as JSON, e.g.
+    #: MODEL_PRICES='{"claude-sonnet-5-5": [3, 15]}'. Unknown models use the skill price.
+    model_prices: dict[str, tuple[float, float]] = {
+        "claude-haiku-4-5-20251001": (1.0, 5.0),
+        "claude-sonnet-5-5": (3.0, 15.0),
+        "claude-opus-5-5": (5.0, 25.0),
+    }
+
     # --- Paths -------------------------------------------------------------
     skills_dir: Path = PROJECT_ROOT / "skills"
     #: Metric + submarket vocabularies (metrics.yaml, submarkets.yaml), editable from the UI.

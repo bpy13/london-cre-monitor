@@ -233,5 +233,5 @@ def test_cli_brief_no_style(examples):
     learn_profile()
     result = CliRunner().invoke(cli.app, ["brief", "--skills", "office-rents", "--no-style"])
     assert result.exit_code == 0
-    html = sorted(get_settings().reports_dir.rglob("brief_*.html"))[-1].read_text(encoding="utf-8")
+    html = max(get_settings().reports_dir.rglob("brief_*.html"), key=lambda p: p.stat().st_mtime_ns).read_text(encoding="utf-8")
     assert "<h2>Executive summary</h2>" in html and "Key themes" not in html

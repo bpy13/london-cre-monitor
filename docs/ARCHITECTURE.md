@@ -105,6 +105,9 @@ from day one.
 * Briefs write HTML, Markdown, per-run PNG charts and a findings JSON audit trail to
   `reports/<date>/`.
 * Chat memory lives in LangGraph's checkpointer (`data/checkpoints.sqlite`) per thread.
+  A separate conversation index (`data/conversations.sqlite`) records titles and per-turn
+  details. That powers the sidebar history, where past chats can be reopened and
+  resumed, and `cre-monitor conversations`.
 
 Full table, column schema and reading rules:
 [DATA_MODEL.md §6](DATA_MODEL.md#6-persistence-what-is-stored-where).

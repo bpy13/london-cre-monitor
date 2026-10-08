@@ -2,8 +2,8 @@
 
 Every data structure in the system, how they relate, and what is stored where. The
 source of truth is the code: `src/cre_monitor/schemas.py` (domain models),
-`graph/state.py` (graph state), `skills/registry.py` (skill metadata) and
-`store/metrics.py` (SQLite schema).
+`graph/state.py` (graph state), `skills/registry.py` (skill metadata),
+`store/metrics.py` and `store/conversations.py` (SQLite schemas).
 
 - [1. Overview](#1-overview)
 - [2. Controlled vocabularies](#2-controlled-vocabularies)
@@ -182,7 +182,8 @@ Full authoring guide: [SKILLS.md](SKILLS.md).
 | `reports/<date>/brief_<run_id>.html`, `.md` | `report_writer` | Brief only | The rendered report |
 | `reports/<date>/charts/<run_id>/*.png` | `report_writer` | Brief only, if `REPORT_PNG` | Static charts for the Markdown, one folder per run |
 | `reports/<date>/findings_<run_id>.json` | `report_writer` | Brief only | Audit trail: `{run_id, synthesis, findings[], deltas[], issues[]}`, each item the JSON form of the models above |
-| `data/checkpoints.sqlite` | LangGraph `SqliteSaver` | Chat only (`ask()`; `run_brief()` has no checkpointer) | Serialised `AgentState` per `thread_id` and step, including the message history (multi-turn memory). Managed by LangGraph; don't edit by hand |
+| `data/checkpoints.sqlite` | LangGraph `SqliteSaver` | Chat only (`ask()`; `run_brief()` has no checkpointer) | Serialised `AgentState` per `thread_id` and step, including the message history. This is the **agent's memory** that makes a resumed conversation continue with context. Managed by LangGraph; don't edit by hand |
+| `data/conversations.sqlite` (tables `conversations`, `turns`) | `ask()` → `ConversationStore.record_turn` | Every chat turn (UI and CLI) | The **conversation list** for the sidebar and `cre-monitor conversations`: title and timestamps per thread, plus each turn's question, answer, skills, issues and findings, so a reopened conversation can be redrawn with its charts (schema below) |
 | `data/logs/<brief\|chat>_<date>.log` | CLI | CLI runs | Run logs (INFO) |
 
 ### `metrics` table schema (`store/metrics.py`)
@@ -205,9 +206,46 @@ Reading rules:
 * `deltas()` compares different periods only, prefers same-source history, and labels
   cross-source changes.
 
-Narrative content (headlines, insights, signals) is **not** in SQLite. It lives in the
-findings JSON and the reports. `data/` and `reports/` are git-ignored. To reset, delete
-`data/` (it is re-seeded on the next run).
+### Conversation tables (`store/conversations.py`)
+
+Why two chat stores?
+* The checkpointer holds the agent's memory in an opaque, LangGraph-managed format.
+* The conversation store holds what the **UI** needs (titles, per-turn details) in simple
+  documented tables.
+
+They share the same `thread_id`. Deleting a conversation
+(`builder.delete_conversation`) removes it from both.
+
+`conversations`: one row per thread
+
+| Column | Type | Notes |
+|---|---|---|
+| `thread_id` | TEXT PK | `new_thread_id()`: 12 hex chars. Also the `?thread=` URL value and the `--thread` CLI value |
+| `title` | TEXT | First question, single line, max 60 chars; can be renamed |
+| `created_at`, `updated_at` | TEXT | ISO timestamps; `updated_at` drives ordering and the Today/Yesterday/… grouping |
+
+`turns`: one row per question/answer, PK `(thread_id, idx)`
+
+| Column | Type | Notes |
+|---|---|---|
+| `thread_id`, `idx` | TEXT, INTEGER | `idx` is 0-based within the conversation |
+| `created_at` | TEXT | ISO timestamp |
+| `question`, `answer` | TEXT | As shown in the chat |
+| `skills_json` | TEXT | JSON list of skills used |
+| `reasoning` | TEXT | The router's reason for choosing them |
+| `issues_json` | TEXT | JSON list of `ValidationIssue` |
+| `findings_json` | TEXT | JSON list of `SkillFinding`. Lets the UI rebuild the turn's charts on reopen |
+
+In code these are read as `Conversation` (thread_id, title, created_at, updated_at,
+turn_count) and `Turn` (idx, created_at, question, answer, skills, reasoning,
+issues, findings) objects. `group_by_recency()` buckets conversations for the sidebar.
+
+### Notes
+
+Narrative content (headlines, insights, signals) is **not** in the metrics table. It lives
+in the findings JSON, the reports, and, for chat turns, `turns.findings_json`.
+`data/` and `reports/` are git-ignored. To reset, delete `data/`: metrics are re-seeded on
+the next run, but saved conversations are lost.
 
 ## 7. Fixture formats (`fixtures/`)
 

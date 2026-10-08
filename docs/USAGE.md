@@ -36,9 +36,10 @@ Example: `cre-monitor --offline --demo brief`.
 | `cre-monitor brief` | Full market brief, written to `reports/<date>/` (HTML, Markdown, JSON, PNG charts). Log goes to `data/logs/` |
 | `cre-monitor brief --skills office-rents,macro-economy` | Runs only those skills (cheaper; good for testing) |
 | `cre-monitor brief --open` | Opens the HTML report when done (local machine only) |
-| `cre-monitor ask "question"` | One question; prints a cited answer and the skills used |
-| `cre-monitor ask "..." --thread NAME` | Same, but on a named thread so follow-up questions have context |
-| `cre-monitor chat [--thread NAME]` | Interactive multi-turn chat in the terminal. Type `exit` to quit |
+| `cre-monitor ask "question"` | One question in a **new** conversation; prints a cited answer, the skills used and the conversation id |
+| `cre-monitor ask "..." --thread ID` | Continues conversation `ID`, so follow-up questions have context |
+| `cre-monitor chat [--thread ID]` | Interactive multi-turn chat in the terminal: new conversation, or resume `ID`. Type `exit` to quit |
+| `cre-monitor conversations [--limit 20]` | Lists saved conversations (id, title, questions, last active), most recent first. The same list appears in the UI sidebar |
 | `cre-monitor ui [--port 8501]` | Streamlit web app (see [§2](#2-web-ui-cre-monitor-ui)) |
 | `cre-monitor schedule install --day MON --time 07:00` | Windows: registers a weekly brief in Task Scheduler. Linux, macOS and Codespaces: prints a crontab line instead |
 | `cre-monitor schedule show` / `schedule remove` | Shows or removes the Windows scheduled task |
@@ -59,12 +60,20 @@ Opens on port 8501: `http://localhost:8501` locally, or as a forwarded port in C
 
 ### Sidebar
 
+The sidebar works like a modern chatbot.
+
 | Control | Purpose |
 |---|---|
-| **Offline data** toggle | Same as `--offline`: tools use fixtures |
-| **Demo mode** toggle | Same as `--demo`. Locked on when no `ANTHROPIC_API_KEY` is set |
-| **New conversation** | Starts a fresh chat **thread**, with a new thread ID and an empty chat. The agent remembers the conversation per thread, so follow-ups like "and the City?" have context; starting a new thread drops that memory. Use it when you change topic. Old threads stay saved in `data/checkpoints.sqlite`, but the UI cannot reopen them. Research findings are never carried over between turns; every question triggers fresh research |
-| **Run full brief now** | Runs the same brief as `cre-monitor brief`. The result appears in the Briefs tab |
+| **➕ New chat** | Starts a fresh conversation. It appears in the list after its first question, titled by that question |
+| **Conversation list** | Every saved conversation, newest first, grouped **Today / Yesterday / Previous 7 days / Older**. The open one is highlighted. Hover to see the question count and when it was last active |
+| Click a conversation | Reopens it: questions, answers, skills used, charts and data-quality notes are redrawn. **Ask again to resume it**: the agent continues with the earlier messages as context, so follow-ups like "and the City?" work |
+| **⌄** menu on a row | **Rename** the conversation, or **Delete** it. Delete removes both the list entry and the agent's memory of that thread |
+| Page URL `?thread=<id>` | The open conversation is kept in the URL, so a refresh, bookmark or shared link reopens it. Ids are also listed by `cre-monitor conversations` |
+| **⚙️ Settings & brief** | **Offline data** toggle (same as `--offline`). **Demo mode** toggle (same as `--demo`; locked on without `ANTHROPIC_API_KEY`). Current model and data source. **Run full brief now** (same as `cre-monitor brief`; the result appears in the Briefs tab) |
+
+Conversations started in the terminal (`cre-monitor ask` / `chat`) appear in the same list.
+Research findings are never reused between turns: every question triggers fresh research,
+and only the conversation text carries over.
 
 ### Tabs
 
@@ -151,10 +160,12 @@ The full template is in `.env.example`.
 |---|---|
 | `reports/<date>/` | `brief_<run>.html`, `brief_<run>.md`, `charts/<run>/*.png`, `findings_<run>.json` |
 | `data/metrics.sqlite` | Metric history used by deltas, charts and the Dashboard |
-| `data/checkpoints.sqlite` | Chat memory per thread |
+| `data/checkpoints.sqlite` | Agent chat memory per thread (LangGraph) |
+| `data/conversations.sqlite` | Conversation list: titles and per-turn details for the sidebar |
 | `data/logs/` | `brief_<date>.log`, `chat_<date>.log` |
 
-* **Reset history:** delete `data/`. It is re-seeded from fixtures on the next run.
+* **Reset history:** delete `data/`. The metrics history is re-seeded from fixtures on the
+  next run. Note that this also deletes all saved conversations.
 * **Clear old reports:** delete `reports/`.
 * Both folders are git-ignored. What is stored, when, and the table schema are covered in
   [DATA_MODEL.md §6](DATA_MODEL.md#6-persistence-what-is-stored-where).

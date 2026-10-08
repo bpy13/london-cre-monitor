@@ -109,6 +109,11 @@ class Settings(BaseSettings):
         """SQLite file used by LangGraph's checkpointer (chat memory)."""
         return self.data_dir / "checkpoints.sqlite"
 
+    @property
+    def conversations_db_path(self) -> Path:
+        """SQLite file indexing chat conversations and their turns (sidebar history)."""
+        return self.data_dir / "conversations.sqlite"
+
     def ensure_dirs(self) -> None:
         """Create writable directories if they do not exist yet."""
         self.data_dir.mkdir(parents=True, exist_ok=True)

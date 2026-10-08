@@ -12,12 +12,16 @@ Public helpers:
 
 * :func:`build_graph` - compile the graph (optionally with a checkpointer).
 * :func:`run_brief`   - run the full market brief once (CLI / scheduler).
-* :func:`ask`         - one chat turn on a persistent thread (CLI / UI).
+* :func:`ask`         - one chat turn on a persistent thread (CLI / UI);
+  reusing a ``thread_id`` resumes that conversation.
+* :func:`new_thread_id` / :func:`delete_conversation` - conversation lifecycle.
 """
 
 from __future__ import annotations
 
+import logging
 import sqlite3
+import uuid
 from functools import lru_cache
 
 from langchain_core.messages import HumanMessage
@@ -31,6 +35,9 @@ from cre_monitor.graph.nodes import (
     skill_runner, synthesis, validator,
 )
 from cre_monitor.graph.state import AgentState
+from cre_monitor.store import get_conversation_store
+
+logger = logging.getLogger(__name__)
 
 
 def build_graph(checkpointer: BaseCheckpointSaver | None = None) -> CompiledStateGraph:
@@ -88,8 +95,17 @@ def run_brief(skills: list[str] | None = None) -> AgentState:
     return build_graph().invoke({"mode": "brief", "messages": [], "skills_override": skills})
 
 
+def new_thread_id() -> str:
+    """A fresh, unique conversation id."""
+    return uuid.uuid4().hex[:12]
+
+
 def ask(question: str, thread_id: str = "default", stream_handler=None) -> AgentState:
     """Ask one chat question on a persistent conversation thread.
+
+    Reusing a ``thread_id`` resumes that conversation: the checkpointer gives the
+    agent the earlier messages. Every turn is also recorded in the conversation
+    index (:mod:`cre_monitor.store.conversations`) so it can be listed and redrawn.
 
     Args:
         question: The user's question.
@@ -104,15 +120,36 @@ def ask(question: str, thread_id: str = "default", stream_handler=None) -> Agent
     config = {"configurable": {"thread_id": thread_id}}
     inputs = {"mode": "chat", "messages": [HumanMessage(question)], "skills_override": None}
     if stream_handler is None:
-        return graph.invoke(inputs, config)
-    for chunk in graph.stream(inputs, config, stream_mode="updates"):
-        for node, update in chunk.items():
-            stream_handler(node, update)
-    return graph.get_state(config).values
+        state = graph.invoke(inputs, config)
+    else:
+        for chunk in graph.stream(inputs, config, stream_mode="updates"):
+            for node, update in chunk.items():
+                stream_handler(node, update)
+        state = graph.get_state(config).values
+    _record_turn(thread_id, question, state)
+    return state
+
+
+def _record_turn(thread_id: str, question: str, state: AgentState) -> None:
+    """Save the turn to the conversation index. Never fails the chat turn itself."""
+    try:
+        get_conversation_store().record_turn(
+            thread_id, question, state.get("answer", ""),
+            skills=state.get("selected_skills"), reasoning=state.get("planner_reasoning"),
+            issues=state.get("validation_issues"), findings=state.get("findings"),
+        )
+    except Exception:  # noqa: BLE001 - history is a convenience; the answer matters more
+        logger.exception("Could not record conversation turn for thread %s", thread_id)
+
+
+def delete_conversation(thread_id: str) -> None:
+    """Delete a conversation everywhere: the sidebar index and the agent's memory."""
+    get_conversation_store().delete(thread_id)
+    get_chat_graph().checkpointer.delete_thread(thread_id)
 
 
 #: Module-level graph for LangGraph Studio / ``langgraph dev`` (see langgraph.json).
 #: Compiling is cheap and side-effect free, so doing it at import is fine.
 graph = build_graph()
 
-__all__ = ["build_graph", "get_chat_graph", "run_brief", "ask", "graph"]
+__all__ = ["build_graph", "get_chat_graph", "run_brief", "ask", "new_thread_id", "delete_conversation", "graph"]

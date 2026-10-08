@@ -113,13 +113,32 @@ def brief(
         webbrowser.open(Path(paths["html"]).as_uri())
 
 
+def _resolve_thread(thread: str | None) -> str:
+    """Return the thread to use: the given one (announcing a resume) or a new one."""
+    from cre_monitor.graph.builder import new_thread_id
+    from cre_monitor.store import get_conversation_store
+
+    if thread:
+        existing = get_conversation_store().get(thread)
+        if existing:
+            console.print(f"[dim]Resuming '{existing.title}' ({existing.turn_count} earlier question(s))[/dim]")
+        return thread
+    thread = new_thread_id()
+    console.print(f"[dim]New conversation {thread} - continue later with --thread {thread}[/dim]")
+    return thread
+
+
 @app.command()
-def ask(question: str, thread: str = typer.Option("cli", help="Conversation id for follow-ups.")) -> None:
+def ask(
+    question: str,
+    thread: str = typer.Option(None, help="Conversation id to continue (see `cre-monitor conversations`). Omit for a new one."),
+) -> None:
     """Ask one question about the London office market."""
     _setup_logging("chat", console_level=logging.WARNING)
     _mode_banner()
     from cre_monitor.graph.builder import ask as ask_graph
 
+    thread = _resolve_thread(thread)
     with console.status("Researching..."):
         state = ask_graph(question, thread_id=thread)
     console.print(f"[dim]Skills used: {', '.join(state.get('selected_skills') or ['none'])}[/dim]")
@@ -127,12 +146,15 @@ def ask(question: str, thread: str = typer.Option("cli", help="Conversation id f
 
 
 @app.command()
-def chat(thread: str = typer.Option("cli-chat", help="Conversation id (reuse to continue).")) -> None:
+def chat(
+    thread: str = typer.Option(None, help="Conversation id to resume (see `cre-monitor conversations`). Omit for a new one."),
+) -> None:
     """Interactive terminal chat. Type 'exit' to quit."""
     _setup_logging("chat", console_level=logging.WARNING)
     _mode_banner()
     from cre_monitor.graph.builder import ask as ask_graph
 
+    thread = _resolve_thread(thread)
     console.print("Ask about London offices (rents, vacancy, take-up, pipeline, submarkets, macro, ESG, news).")
     while True:
         try:
@@ -145,6 +167,22 @@ def chat(thread: str = typer.Option("cli-chat", help="Conversation id (reuse to 
             state = ask_graph(question, thread_id=thread)
         console.print(f"[dim]Skills: {', '.join(state.get('selected_skills') or ['none'])}[/dim]")
         console.print(Markdown(state.get("answer", "")))
+
+
+@app.command("conversations")
+def list_conversations(limit: int = typer.Option(20, help="How many to show (most recent first).")) -> None:
+    """List saved chat conversations (resume one with `cre-monitor chat --thread <id>`)."""
+    from cre_monitor.store import get_conversation_store
+
+    conversations = get_conversation_store().list(limit=limit)
+    if not conversations:
+        console.print("No conversations yet.")
+        return
+    table = Table("Thread", "Title", "Questions", "Last active")
+    for c in conversations:
+        table.add_row(c.thread_id, c.title, str(c.turn_count), f"{c.updated_at:%Y-%m-%d %H:%M}")
+    console.print(table)
+    console.print("[dim]Resume: cre-monitor chat --thread <Thread>   ·   UI: open ?thread=<Thread>[/dim]")
 
 
 @app.command("skills")

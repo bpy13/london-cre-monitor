@@ -43,7 +43,7 @@ An LLM agent is testable when its behaviour can be checked:
 
 | Layer | What runs | Where |
 |---|---|---|
-| Unit | Pure functions (validator rules, deltas, chart selection, focus-text trimming) | `test_validator`, `test_store`, `test_charts`, `test_tools` |
+| Unit | Pure functions (validator rules, deltas, chart selection, focus-text trimming, conversation grouping) | `test_validator`, `test_store`, `test_charts`, `test_tools`, `test_conversations` |
 | Contract | Every skill loads and conforms; invalid skills are rejected, not crashed | `test_skills` |
 | Integration (tools) | Each LangChain tool via its public interface, on fixtures | `test_tools` |
 | End to end (demo) | Full graph: brief and multi-turn chat, report files, PNGs, same-day runs | `test_graph` |
@@ -54,7 +54,7 @@ An LLM agent is testable when its behaviour can be checked:
 
 ## 4. Test files
 
-`pytest` runs 39 offline tests in about 10 s. `pytest -m live` runs 7 more.
+`pytest` runs 46 offline tests in about 10 s. `pytest -m live` runs 7 more.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -64,7 +64,8 @@ An LLM agent is testable when its behaviour can be checked:
 | `test_store.py` | 5 | Latest run wins per period; deltas only across periods; same-source preference and cross-source labelling; readable number formatting; seeding |
 | `test_charts.py` | 5 | Single-source preference for trends; mixed-source fallback flagged and dashed; consistent source in bar charts; full chart set built from history |
 | `test_graph.py` | 9 | Demo brief end to end (HTML/MD sections, PNGs, no HTML escaping in Markdown); deltas vs seeded history; skill subset; unknown skill rejected; keyword routing; multi-turn chat resets findings but keeps messages; same-day briefs keep their own charts; **fake-LLM**: real sub-agent calls tools and returns a structured finding; router drops unknown skills |
-| `test_ui.py` | 2 | App renders all tabs without exceptions; a chat turn returns an answer and shows the skills used |
+| `test_conversations.py` | 5 | Conversation store: record, list, redraw turns (with findings/issues), rename, delete; title generation; Today/Yesterday/Previous 7 days/Older grouping; `ask()` records turns and a resumed thread keeps agent memory; delete removes both the index and the checkpointed memory |
+| `test_ui.py` | 4 | App renders all tabs; a chat turn returns an answer with skills shown; a conversation is listed in the sidebar (titled, in the URL), New chat clears it and clicking it restores it; a fresh session opens a conversation from `?thread=` |
 | `test_live.py` | 7 (opt-in) | BoE Bank Rate; ONS CPIH / unemployment / GDP; Nomis London employment; Google News + search; one real `macro-economy` skill run (needs `ANTHROPIC_API_KEY`) |
 
 ## 5. The fake LLM (`tests/fake_llm.py`)

@@ -9,6 +9,8 @@ Sidebar:
   or deletes a conversation. The open conversation is also in the page URL
   (``?thread=<id>``), so a refresh or bookmark reopens it.
 * **Settings** (offline/demo toggles) and **Run full brief now**.
+* **Export data**: one zip with briefs, metrics history and conversations
+  (see :mod:`cre_monitor.export`).
 
 Tabs:
 * **Chat**      - multi-turn Q&A. Each turn streams graph progress (planner ->
@@ -227,6 +229,33 @@ def settings_panel() -> None:
             st.session_state.last_brief = state.get("report_paths", {}).get("html")
 
 
+def export_panel() -> None:
+    """Sidebar export: build the zip on request, then offer it for download."""
+    with st.sidebar.expander("📦 Export data", expanded=False):
+        st.caption("Briefs, metrics history and conversations as one zip (Excel, CSV, Markdown, JSON).")
+        since = st.date_input("Only data since (optional)", value=None, key="export-since", format="YYYY-MM-DD")
+        include_logs = st.checkbox("Include logs (for engineers)", key="export-logs")
+        if st.button("Prepare export", width="stretch", key="export-run"):
+            from cre_monitor.export import export_data
+
+            try:
+                with st.spinner("Exporting..."):
+                    st.session_state.export_result = export_data(since=since, include_logs=include_logs)
+            except Exception as exc:  # noqa: BLE001 - show a reference, not a traceback
+                from cre_monitor.errors import incident_from_exception
+
+                st.session_state.pop("export_result", None)
+                render_incident(incident_from_exception(exc, step="export"), compact=True)
+        result = st.session_state.get("export_result")
+        if result is not None and result.path.exists():
+            c = result.counts
+            st.caption(f"{c['metric_rows']} metric rows · {c['briefs']} briefs · {c['conversations']} conversations")
+            st.download_button(
+                f"⬇ Download {result.path.name}", result.path.read_bytes(), file_name=result.path.name,
+                mime="application/zip", width="stretch", key="export-download",
+            )
+
+
 def sidebar() -> None:
     st.sidebar.title("London CRE Monitor")
     st.sidebar.caption("LangGraph agent PoC · Nan Fung Group London")
@@ -236,6 +265,7 @@ def sidebar() -> None:
     conversation_list()
     st.sidebar.divider()
     settings_panel()
+    export_panel()
 
 
 # --------------------------------------------------------------------------

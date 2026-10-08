@@ -93,6 +93,8 @@ class Settings(BaseSettings):
     fixtures_dir: Path = PROJECT_ROOT / "fixtures"
     data_dir: Path = PROJECT_ROOT / "data"
     reports_dir: Path = PROJECT_ROOT / "reports"
+    #: Where `cre-monitor export` writes its zip files (git-ignored).
+    exports_dir: Path = PROJECT_ROOT / "exports"
 
     # --- HTTP --------------------------------------------------------------
     http_timeout_s: float = 30.0

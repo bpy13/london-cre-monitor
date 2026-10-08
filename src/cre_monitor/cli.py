@@ -7,6 +7,7 @@ Commands
 ``chat``      Interactive multi-turn chat in the terminal.
 ``briefs``    List generated briefs, or delete one (``briefs delete <id>``).
 ``conversations``  List saved chat conversations.
+``export``    Export briefs, metrics and conversations as one zip (CSV/Excel/Markdown/JSON).
 ``skills``    List loaded skills (and any invalid SKILL.md files).
 ``schedule``  Install / remove / show the weekly scheduled brief (Windows
               Task Scheduler; prints a cron line for Linux/macOS).
@@ -250,6 +251,32 @@ def briefs_delete(
         raise typer.Exit()
     removed = delete_brief(run_id, with_metrics=with_metrics)
     console.print(f"[green]Deleted[/green] {what} {run_id} ({len(removed)} files/folders).")
+
+
+@app.command("export")
+def export(
+    out: Path = typer.Option(None, "--out", help="Folder for the zip (default: exports/)."),
+    since: str = typer.Option(None, "--since", help="Only data from this date on, YYYY-MM-DD."),
+    include_logs: bool = typer.Option(False, "--include-logs", help="Also include data/logs (for engineers)."),
+) -> None:
+    """Export briefs, metrics history and conversations as one zip (with an Excel workbook)."""
+    from datetime import date as _date
+
+    from cre_monitor.export import export_data
+
+    since_date = None
+    if since:
+        try:
+            since_date = _date.fromisoformat(since)
+        except ValueError:
+            console.print(f"[red]--since must be YYYY-MM-DD, got {since!r}[/red]")
+            raise typer.Exit(code=2)
+    with console.status("Exporting..."):
+        result = export_data(out_dir=out, since=since_date, include_logs=include_logs)
+    c = result.counts
+    console.print(f"[green]Exported[/green] {result.path}")
+    console.print(f"  {c['metric_rows']} metric rows · {c['briefs']} briefs · "
+                  f"{c['conversations']} conversations ({c['turns']} questions) · {c['log_files']} log files")
 
 
 @app.command("skills")

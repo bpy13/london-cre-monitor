@@ -44,6 +44,7 @@ conda env automatically. Add the keys as Codespaces secrets.
 | Market brief: executive summary, KPIs, what changed, risk/opportunity matrix, charts, per-topic sections, sources | `cre-monitor brief` writes HTML, Markdown and JSON to `reports/<date>/` |
 | Scheduled weekly brief | `cre-monitor schedule install` (Windows Task Scheduler; prints a crontab line elsewhere) |
 | Chat assistant with saved conversations: reopen and resume past chats from the sidebar, and reference earlier chats as background | `cre-monitor ui` (Streamlit) or `cre-monitor chat` (terminal) |
+| Data export: briefs, metrics history and conversations as one zip (Excel, CSV, Markdown, JSON) | `cre-monitor export` or **📦 Export data** in the UI |
 
 ## How it works
 

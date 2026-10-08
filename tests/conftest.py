@@ -42,6 +42,7 @@ def offline_env(tmp_path, monkeypatch, request):
     monkeypatch.setenv("REPORT_PNG", "0")  # PNG export launches Chrome; one test opts back in
     monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("REPORTS_DIR", str(tmp_path / "reports"))
+    monkeypatch.setenv("EXPORTS_DIR", str(tmp_path / "exports"))
     _clear_caches()
     yield
     _clear_caches()

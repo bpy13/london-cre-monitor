@@ -302,6 +302,15 @@ in the findings JSON, the reports, and, for chat turns, `turns.findings_json`.
 `data/` and `reports/` are git-ignored. To reset, delete `data/`: metrics are re-seeded on
 the next run, but saved conversations are lost.
 
+### Export (`export.py`)
+`export_data()` reads **through the store classes** (`MetricsStore.frame`,
+`ConversationStore.list/turns`, `list_briefs`), never the SQLite files directly, so it is
+unaffected by a future storage change. Layout and file formats:
+[USAGE.md → Exporting data](USAGE.md#exporting-data). `conversations.json` is a list of
+`{thread_id, title, created_at, updated_at, turns: [{idx, created_at, question, answer,
+skills, reasoning, references, incident, data_quality_issues, findings}]}`, using the JSON
+form of the models in §3.
+
 ## 7. Fixture formats (`fixtures/`)
 
 | File | Shape | Used by |

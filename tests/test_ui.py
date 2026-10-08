@@ -104,6 +104,16 @@ def test_delete_brief_from_briefs_tab():
     assert any("No briefs yet" in i.value for i in at.info)
 
 
+def test_export_from_sidebar():
+    at = AppTest.from_file(APP, default_timeout=60).run()
+    at.chat_input[0].set_value("Bank Rate?").run()
+    at.button(key="export-run").click().run()
+    assert not at.exception, at.exception
+    result = at.session_state["export_result"]
+    assert result.path.exists() and result.counts["conversations"] == 1
+    assert at.get("download_button")                        # zip offered for download
+
+
 def test_conversation_opens_from_url():
     first = AppTest.from_file(APP, default_timeout=60).run()
     first.chat_input[0].set_value("Bank Rate?").run()

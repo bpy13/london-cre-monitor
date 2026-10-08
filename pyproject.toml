@@ -33,6 +33,7 @@ dependencies = [
     "kaleido>=1.0",  # PNG export; uses a local Chrome/Chromium (run `plotly_get_chrome` if none)
     "jinja2>=3.1",
     "markdown>=3.6",
+    "openpyxl>=3.1",  # Excel workbook in `cre-monitor export`
     # --- Interfaces --------------------------------------------------------
     "typer>=0.12",
     "rich>=13.7",

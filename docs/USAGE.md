@@ -42,6 +42,7 @@ Example: `cre-monitor --offline --demo brief`.
 | `cre-monitor ask "..." --ref ID [--ref ID2]` | Uses up to 3 **earlier conversations as background context**. Works with `chat` too, where it applies to the whole session. See [Referencing earlier conversations](#referencing-earlier-conversations) |
 | `cre-monitor conversations [--limit 20]` | Lists saved conversations (id, title, questions, last active), most recent first. The same list appears in the UI sidebar |
 | `cre-monitor ui [--port 8501] [--debug]` | Streamlit web app (see [§2](#2-web-ui-cre-monitor-ui)). `--debug` shows Streamlit's developer toolbar (Rerun, Clear cache) |
+| `cre-monitor export [--since YYYY-MM-DD] [--include-logs] [--out DIR]` | Exports briefs, the metrics history and conversations as one zip in `exports/` (see [§7](#exporting-data)) |
 | `cre-monitor briefs list [--limit 20]` | Lists generated briefs (id, created, HTML path), newest first |
 | `cre-monitor briefs delete ID [--with-metrics] [--yes]` | Deletes a brief's files; asks for confirmation unless `--yes` is given. `--with-metrics` also removes its figures from the metrics history |
 | `cre-monitor schedule install --day MON --time 07:00` | Windows: registers a weekly brief in Task Scheduler. Linux, macOS and Codespaces: prints a crontab line instead |
@@ -84,6 +85,7 @@ The sidebar works like a modern chatbot.
 | Click a conversation | Reopens it: questions, answers, skills used, charts and data-quality notes are redrawn. **Ask again to resume it**: the agent continues with the earlier messages as context, so follow-ups like "and the City?" work |
 | **⌄** menu on a row | **Rename** the conversation, or **Delete** it. Delete removes both the list entry and the agent's memory of that thread |
 | Page URL `?thread=<id>` | The open conversation is kept in the URL, so a refresh, bookmark or shared link reopens it. Ids are also listed by `cre-monitor conversations` |
+| **📦 Export data** | Optional "since" date and "include logs". **Prepare export** builds the zip, then **⬇ Download** saves it (same as `cre-monitor export`) |
 | **⚙️ Settings & brief** | **Offline data** toggle (same as `--offline`). **Demo mode** toggle (same as `--demo`; locked on without `ANTHROPIC_API_KEY`). Current model and data source. **Run full brief now** (same as `cre-monitor brief`; the result appears in the Briefs tab) |
 
 Conversations started in the terminal (`cre-monitor ask` / `chat`) appear in the same list.
@@ -240,9 +242,34 @@ The full template is in `.env.example`.
 | `data/checkpoints.sqlite` | Agent chat memory per thread (LangGraph) |
 | `data/conversations.sqlite` | Conversation list: titles and per-turn details for the sidebar |
 | `data/logs/` | `brief_<date>.log`, `chat_<date>.log` (CLI), `ui_<date>.log` (web UI). Error references (`ERR-…`) are logged here |
+| `exports/` | Export zips from `cre-monitor export` / the sidebar (git-ignored) |
 
 * **Reset history:** delete `data/`. The metrics history is re-seeded from fixtures on the
   next run. Note that this also deletes all saved conversations.
+### Exporting data
+
+`cre-monitor export`, or **📦 Export data** in the sidebar, writes
+`exports/cre-export_<YYYYMMDD-HHMMSS>.zip`:
+
+| File | For | Contents |
+|---|---|---|
+| `cre-export.xlsx` | Business users / Excel / Power BI | Sheets **Metrics** (every figure with source), **Briefs** (index), **Conversations** (one row per question/answer, with error references) |
+| `metrics.csv` | Analysis | Full metric history: key, submarket, period, value, unit, source, URL, publication date, notes, run |
+| `briefs/<date>/` + `briefs_index.csv` | Sharing | Each brief's HTML (opens in a browser), Markdown, findings JSON and charts |
+| `conversations/*.md` | Reading | One transcript per conversation, with skills used, references and error references |
+| `conversations.json` | Engineers / re-use | The same in structured form, including findings and incidents |
+| `manifest.json`, `README.md` | Recipients | Export time, version, filters and counts, plus a guide to the files |
+| `logs/` | Engineers | Only with `--include-logs` |
+
+* `--since` filters metrics by run date, briefs by creation date and conversations by last
+  activity. The seeded starter history is only included in full exports.
+* Agent memory (LangGraph checkpoints) is not exported; it is an internal format.
+  API keys are never part of the data.
+* **Full backup or a move to another machine:** copy `data/` and `reports/` while the app
+  is stopped. The export is for people and analysis; the folders are the complete backup.
+* Figures come from third-party sources. Exports are for internal use; check licensing
+  before sharing them externally.
+
 * **Delete one brief:** Briefs tab → 🗑 Delete brief, or `cre-monitor briefs delete <id>`.
   Same-day briefs are unaffected, and an empty date folder is removed.
 * **Clear all old reports:** delete `reports/`.

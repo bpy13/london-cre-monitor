@@ -44,6 +44,8 @@ from pathlib import Path
 import streamlit as st
 
 from cre_monitor.config import get_settings
+from cre_monitor.ui.components import render_incident
+from cre_monitor.ui.dashboard import dashboard_tab
 
 st.set_page_config(page_title="London CRE Monitor", page_icon="🏢", layout="wide")
 
@@ -105,47 +107,6 @@ def assistant_turn(answer, skills, reasoning, issues, findings, refs=None, incid
         "skills": skills, "reasoning": reasoning, "issues": issues, "charts": figs,
         "ref_titles": ref_titles, "incident": incident,
     }
-
-
-def render_incident(incident, where=st, compact: bool = False) -> None:
-    """User-friendly error panel with a reference ID engineers can trace in the logs.
-
-    Shows what happened in plain English, what the user can do, and the
-    reference to quote (with a copy button). Raw technical details are tucked
-    into a collapsed "for engineers" section.
-
-    Args:
-        incident: The :class:`~cre_monitor.errors.Incident` to show.
-        where: Streamlit container to render into.
-        compact: Narrow version for the sidebar (no columns or nested expander,
-            which Streamlit doesn't allow inside the settings expander).
-    """
-    cat = incident.category
-    total = incident.scope == "total"
-    contact = get_settings().support_contact
-    box = where.error if total else where.warning
-    lead = "We couldn't answer this question." if total else "Part of the research failed - this answer may be incomplete."
-    actions = "\n".join(f"- {a}" for a in cat.actions)
-    box(
-        f"**{cat.title}**\n\n{lead} {cat.message}\n\n**What you can do**\n{actions}",
-        icon="🚫" if total else "⚠️",
-    )
-    if compact:
-        where.caption(f"Reference for support - send to {contact}:")
-        where.code(incident.id, language=None)
-        return
-    c1, c2 = where.columns([0.55, 0.45], vertical_alignment="center")
-    c1.markdown(f"**Reference for support:** please send this ID to **{contact}** so they can trace the problem.")
-    c2.code(incident.id, language=None)  # st.code has a built-in copy button
-    details = where.expander("Technical details (for engineers)")
-    details.markdown(
-        f"- **Reference:** `{incident.id}` · **time:** {incident.created_at:%Y-%m-%d %H:%M:%S}\n"
-        f"- **Category:** `{cat.code}` · **scope:** {incident.scope} · **retryable:** {'yes' if cat.retryable else 'no'}\n"
-        f"- **Affected steps:** {', '.join(incident.affected)}\n"
-        f"- **Conversation:** `{incident.thread_id or '-'}` · **run:** `{incident.run_id or '-'}`\n"
-        f"- **Log file:** `{incident.log_file or 'not configured'}`  →  search for the reference ID"
-    )
-    details.code("\n".join(incident.details)[:4000], language=None)
 
 
 # --------------------------------------------------------------------------
@@ -630,38 +591,6 @@ def delete_brief_dialog(brief) -> None:
             return
         st.session_state.pop("brief-select", None)  # the deleted label no longer exists
         st.rerun()
-
-
-# --------------------------------------------------------------------------
-# Dashboard tab
-# --------------------------------------------------------------------------
-
-def dashboard_tab() -> None:
-    from cre_monitor.reporting.charts import TREND_SUBMARKETS, trend_chart
-    from cre_monitor.catalog import metric_units
-    from cre_monitor.store import get_store
-
-    METRIC_KEYS = metric_units()
-
-    store = get_store()
-    if store.is_empty():
-        store.seed_from_fixture()
-    df = store.frame()
-    keys = [k for k in METRIC_KEYS if k in set(df["key"])]
-    c1, c2 = st.columns([1, 2])
-    key = c1.selectbox("Metric", keys, index=keys.index("prime_rent") if "prime_rent" in keys else 0,
-                       format_func=lambda k: k.replace("_", " "))
-    series = store.series(key)
-    available = sorted(series["submarket"].unique())
-    default = [s for s in TREND_SUBMARKETS if s in available] or available[:4]
-    chosen = c2.multiselect("Submarkets (max 4 for readability)", available, default=default, max_selections=4)
-    fig = trend_chart(series, key.replace("_", " ").capitalize(), METRIC_KEYS.get(key, ""), chosen)
-    if fig is not None:
-        st.plotly_chart(fig)
-    else:
-        st.info("Not enough history for a trend line yet (needs 2+ periods).")
-    with st.expander("Data table"):
-        st.dataframe(series[series["submarket"].isin(chosen)] if chosen else series)
 
 
 # --------------------------------------------------------------------------

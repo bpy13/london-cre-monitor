@@ -17,7 +17,9 @@ def _assistant_text(at: AppTest) -> str:
 def test_app_renders_all_tabs_without_errors():
     at = AppTest.from_file(APP, default_timeout=60).run()
     assert not at.exception, at.exception
-    assert [t.label for t in at.tabs] == ["💬 Chat", "📄 Briefs", "📈 Dashboard"]
+    labels = [t.label for t in at.tabs]
+    assert labels[:3] == ["💬 Chat", "📄 Briefs", "📈 Dashboard"]
+    assert {"📊 Overview", "⚙️ Metrics", "📍 Submarkets"} <= set(labels)     # Dashboard sub-tabs
 
 
 def test_chat_turn_produces_answer_and_skill_caption():

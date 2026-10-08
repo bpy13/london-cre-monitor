@@ -33,6 +33,7 @@ from typing import Iterator
 import pandas as pd
 
 from cre_monitor.config import get_settings
+from cre_monitor.periods import parse_period, period_sort_key
 from cre_monitor.schemas import Metric, MetricDelta, SkillFinding
 
 logger = logging.getLogger(__name__)
@@ -160,7 +161,8 @@ class MetricsStore:
         if df.empty:
             return df
         df = df.sort_values("run_at").drop_duplicates(["submarket", "period", "source"], keep="last")
-        return df.sort_values("period")[["submarket", "period", "value", "unit", "source"]].reset_index(drop=True)
+        df = df.sort_values("period", key=lambda col: col.map(period_sort_key))  # true time order
+        return df[["submarket", "period", "value", "unit", "source"]].reset_index(drop=True)
 
     def deltas(self, current: list[SkillFinding], exclude_run_id: str) -> list[MetricDelta]:
         """Compare this run's metrics against the latest *earlier period* on record.
@@ -174,6 +176,10 @@ class MetricsStore:
           take-up etc. differently, so "BNP 8.4% -> Avison Young 6.3%" is not
           a 2.1pp fall. A cross-source delta is only used when no same-source
           history exists, and it is labelled (``MetricDelta.same_source``).
+        * **Same period length only, in true time order** (see
+          :mod:`cre_monitor.periods`): a half-year total is never compared with a
+          quarterly one, and 2026-Q1 counts as later than 2025-H2 (text order would
+          get "2026-H1" vs "2026-Q1" wrong).
         * One delta per (key, submarket).
 
         Args:
@@ -185,11 +191,20 @@ class MetricsStore:
         best: dict[tuple[str, str], MetricDelta] = {}
         for f in current:
             for m in f.metrics:
-                prior = hist[(hist["key"] == m.key) & (hist["submarket"] == m.submarket) & (hist["period"] < m.period)]
+                cur = parse_period(m.period)
+                if cur is None:
+                    continue  # unrecognised period label: can't tell what is "earlier"
+                prior = hist[(hist["key"] == m.key) & (hist["submarket"] == m.submarket)].copy()
                 if prior.empty:
                     continue
+                prior["_p"] = prior["period"].map(parse_period)
+                earlier = prior["_p"].map(lambda p: p is not None and p.freq == cur.freq and p.end < cur.end)
+                prior = prior[earlier.astype(bool)]  # explicit bool: an empty object Series would select columns
+                if prior.empty:
+                    continue
+                prior = prior.assign(_end=prior["_p"].map(lambda p: p.end))
                 same = prior[prior["source"] == m.source]
-                prev = (same if not same.empty else prior).sort_values(["period", "run_at"]).iloc[-1]
+                prev = (same if not same.empty else prior).sort_values(["_end", "run_at"]).iloc[-1]
                 delta = MetricDelta(
                     key=m.key, submarket=m.submarket, previous=float(prev["value"]),
                     current=m.value, previous_period=str(prev["period"]),

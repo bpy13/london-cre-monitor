@@ -168,7 +168,85 @@ conversations would be used.
 |---|---|
 | **Chat** | Multi-turn Q&A. Shows live progress (which skills are running), then the answer with its sources, the skills used, any relevant charts and the data-quality notes |
 | **Briefs** | Browse past briefs (newest first), view them inline, and download the HTML or Markdown. **🗑 Delete brief** opens a confirmation that removes the brief's HTML, Markdown, findings JSON and charts. The **Also remove its figures from the metrics history** checkbox (off by default) also deletes that run's figures, which changes "what changed" deltas and Dashboard trends |
-| **Dashboard** | Explore the metric history in `data/metrics.sqlite`. Pick a metric (e.g. prime rent, vacancy rate, Bank Rate, CPIH) and up to 4 submarkets to see a trend chart and its data table. Each line follows one source; dashed lines mix sources and are not like-for-like. History starts from the seeded fixtures and grows with every brief and chat. It is read-only: no research and no cost |
+| **Dashboard** | The metric history in `data/metrics.sqlite`, focused on the metrics you track, plus managing metrics and submarkets. See [Dashboard](#dashboard) |
+| **Skills** | View, edit, add, delete and restore the research skills without touching files. See [Skills tab](#skills-tab) |
+
+### Dashboard
+
+Three sub-tabs.
+
+**📊 Overview**
+* **Headline cards** for each *tracked* metric (by default: prime rent, vacancy rate,
+  take-up, under construction, prime yield, Bank Rate, 10-year gilt yield). Each card shows
+  the latest figure for Central London (UK for economic series), its period and source, and
+  the change since the previous period **from the same source and period length**. Hover for
+  the definition.
+* **Explore a metric** shows one tracked metric in detail:
+  * **Source**: *automatic* (for each submarket, the broker with the most data) or one broker.
+  * **Submarkets**: every place with data is selected; there is no cap.
+  * **Latest by submarket**: bars comparing the latest period, from one consistent source
+    where possible. This works even when only one period has been recorded.
+  * **Trend**: on a real time axis, with one source and one period length per line (a
+    half-year figure is never joined to quarterly ones). Up to 4 submarkets share one chart;
+    more are drawn as one small panel each, on the same scale. A dashed line means no single
+    source had 2+ points, so periods from different sources were stitched together.
+  * The caption under the chart says which source each line uses and how many figures were
+    left out. **How to read this** explains the rules, and **Data table** shows exactly what
+    is drawn (or every figure).
+
+**⚙️ Metrics**: every metric in the catalogue, grouped by topic.
+* Tick a metric to **track** it (it appears in the Overview). Unticking only hides it; the
+  history is kept.
+* **🗑** removes a metric from the catalogue. Recorded figures stay in the database, and the
+  metric is also removed from any skill that collects it. 🔒 metrics are used by the report or
+  the data tools and can't be removed.
+* **➕ Add a metric**:
+  1. Describe it in plain English, e.g. "average lease length for new City lettings".
+  2. **Check feasibility.** Claude compares the request with the catalogue, the skills and
+     the tools, then gives a verdict:
+     * **Already collected:** offers **Track it**.
+     * **Can be collected:** proposes a name, key, unit, definition and plausible range, the
+       skill that should collect it, the guidance to add to that skill, and preferred
+       websites. All of it can be edited. **What will change** lists both files affected.
+       **Approve and apply** saves them, with version history.
+     * **Not possible with the current tools** (e.g. only in paid databases): explains what
+       a developer would need to add. Nothing changes.
+  3. After applying, **🧪 Test now** runs the skill once (live mode, a few cents to ~$0.50)
+     and shows whether the figure came back.
+
+  Exact names of existing metrics work in demo mode. Anything new needs live mode.
+
+**📍 Submarkets**: the places figures are recorded against.
+* **Add a submarket** with optional **aliases** (other spellings brokers use). Research
+  skills use the new name from the next run, and the validator converts aliases, e.g.
+  Docklands → Canary Wharf.
+* **✏️** edits aliases and the description. **🗑** removes a place; its recorded figures
+  stay. 🔒 Central London, UK and London are used by the report and can't be removed.
+* A name that is already an alias elsewhere is refused (figures would be filed in two
+  places). Remove the alias from that submarket first.
+
+Metric and submarket changes are saved to `catalog/metrics.yaml` / `catalog/submarkets.yaml`
+and apply to **everyone using this installation**. Commit them to git to share them with
+the team (see [Skills tab](#skills-tab)).
+
+### Skills tab
+
+Skills are the research topics; each has plain-English instructions, the tools it may use
+and the metrics it records. Guide for non-technical contributors:
+[CONTRIBUTING_UI.md](CONTRIBUTING_UI.md).
+
+| Action | How |
+|---|---|
+| **View / edit** | Pick a skill. The form shows the description (the router reads only this), tools, metrics, plausible ranges, preferred websites, trigger words, *include in the brief*, position in the report, model, and the instructions. **✅ Validate** runs the same checks as app startup. **🔍 Check with Claude** reviews clarity, overlap and metric guidance (live mode). **💾 Save** writes `skills/<name>/SKILL.md` |
+| **Add** | **➕ New skill** → name + what it should research → **✨ Draft with Claude** (live; uses only existing tools and catalogue metrics and lists any metrics that are missing) or **Start from a blank template** → review → **💾 Create skill** |
+| **Test** | **🧪 Test run** runs the skill once, as in a brief, and shows its finding (live mode: one research run; demo mode: the canned finding, or "No demo data" for new skills) |
+| **Undo** | **🕘 Earlier versions** → **Restore** (each save keeps the previous file in `skills/.history/`) |
+| **Delete** | **🗑 Delete** moves it to **Deleted skills** (restorable). It warns which metrics no other skill collects. `market-synthesis` can be edited but not deleted |
+
+Safety: if someone else saved the same skill after you opened it, your save is refused and
+**Reload** shows their version. Skills that fail to load are listed in red. A blue banner
+lists skill and catalogue changes **not yet committed to git**; colleagues only see them
+after they are committed. New data sources (tools) still need a developer.
 
 ### When something goes wrong
 
@@ -306,6 +384,9 @@ The full template is in `.env.example`.
 | `data/backups/pre-merge_<timestamp>/` | Automatic database backups taken before each `cre-monitor merge` |
 | `merge-in/<name>/` | Data from other installations waiting to be merged (git-ignored, except its README) |
 | `style/reports/` | Example reports for the house style (git-ignored, except its README) |
+| `catalog/metrics.yaml`, `catalog/submarkets.yaml` | Metric and submarket vocabularies (committed; editable in Dashboard → Metrics / Submarkets) |
+| `skills/<name>/SKILL.md` | The research skills (committed; editable in the Skills tab) |
+| `skills/.history/`, `catalog/.history/`, `skills/.trash/` | Earlier versions and deleted skills from UI edits (git-ignored, local safety net) |
 | `style/profile.json` / `profile.md` | The learned house style (committable) and its readable summary |
 
 * **Reset history:** delete `data/`. The metrics history is re-seeded from fixtures on the

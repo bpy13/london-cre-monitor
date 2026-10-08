@@ -24,7 +24,11 @@ Tabs:
   for the next question (see :func:`reference_picker`).
 * **Briefs**    - view/download previously generated market briefs, and delete
   them (optionally with their figures in the metrics history).
-* **Dashboard** - interactive time series from the metrics store.
+* **Dashboard** - tracked metrics, comparison across submarkets and trends;
+  manage which metrics are tracked, add metrics (Claude checks feasibility)
+  and manage submarkets (see :mod:`cre_monitor.ui.dashboard`).
+* **Skills**    - view, edit, add (Claude can draft), delete and restore the
+  research skills (see :mod:`cre_monitor.ui.skills_tab`).
 
 Where conversations live: the agent's memory per thread is in LangGraph's
 checkpointer (``data/checkpoints.sqlite``); titles and per-turn details for
@@ -46,6 +50,7 @@ import streamlit as st
 from cre_monitor.config import get_settings
 from cre_monitor.ui.components import render_incident
 from cre_monitor.ui.dashboard import dashboard_tab
+from cre_monitor.ui.skills_tab import skills_tab
 
 st.set_page_config(page_title="London CRE Monitor", page_icon="🏢", layout="wide")
 
@@ -613,13 +618,15 @@ def main() -> None:
         else:
             start_new_chat()
     sidebar()
-    chat, briefs, dash = st.tabs(["💬 Chat", "📄 Briefs", "📈 Dashboard"])
+    chat, briefs, dash, skills = st.tabs(["💬 Chat", "📄 Briefs", "📈 Dashboard", "🧩 Skills"])
     with chat:
         chat_tab()
     with briefs:
         briefs_tab()
     with dash:
         dashboard_tab()
+    with skills:
+        skills_tab()
 
 
 main()

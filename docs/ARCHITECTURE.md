@@ -168,6 +168,44 @@ The Jinja2 templates render HTML (interactive) and Markdown (with PNGs via kalei
 PNG export failure is non-fatal). Both loop over a `layout` list of `(section, heading)`
 pairs, so section order and headings are data, not template code.
 
+**Periods** (`periods.py`) turn labels such as `2026-Q2`, `2026-H1`, `2026-08`, `2027` and
+`week ending …` into dates and a frequency. The Dashboard uses them for a real time axis,
+and "what changed" uses them so it only compares periods of the same length, in true time
+order. As text, "2026-H1" would sort before "2026-Q1".
+
+**Dashboard** (`reporting/dashboard.py`, pure functions; UI in `ui/dashboard.py`):
+* headline: latest value with its change versus the same source and period length;
+* bars: latest value per submarket, from a consistent source;
+* trends: one source and one period length per line. Up to 4 lines are overlaid; more are
+  drawn as small multiples, so any number of submarkets stays readable.
+
+## Authoring from the UI (`catalog.py`, `skills/editor.py`, `authoring.py`)
+Skills, metrics and submarkets are files (`skills/*/SKILL.md`, `catalog/*.yaml`) that the UI
+can edit:
+
+```
+UI (🧩 Skills, Dashboard → Metrics/Submarkets)
+   │  propose ──► authoring.py (Claude: draft skill, review skill, assess metric) ──► re-validated in code
+   │  approve ──► skills/editor.py · catalog.py ──► versioned.py (history + conflict check + atomic write)
+   ▼
+skills/*.md, catalog/*.yaml  ──► caches cleared ──► next brief / question uses them
+```
+
+* **The model proposes, the code decides.** Every Claude answer is re-checked: unknown
+  tools, metrics and skills are dropped or the verdict is downgraded. Nothing is written
+  without an explicit approve or save.
+* **Validation:** the editor reuses the registry's own frontmatter schema, so a skill that
+  saves will also load. Protected items (`market-synthesis`, metrics and places referenced
+  by code) can't be removed.
+* **Safety:** previous versions are kept in `.history/` (git-ignored), deleted skills go to
+  `skills/.trash/`, and stale saves are refused (`ConflictError`). Changes apply to the
+  installation at once, and the team shares them by committing to git (the UI lists
+  uncommitted changes).
+* **Adding a metric** has three verdicts (already collected / needs a skill change / not
+  feasible). An approved skill change adds the catalogue entry and appends guidance to the
+  chosen skill, under "Additional metrics"; if the skill write fails, the catalogue entry is
+  rolled back.
+
 ### House style (`style/`)
 The brief can imitate a set of example reports (`style/reports/`):
 
@@ -204,6 +242,7 @@ style/reports/*.md|html|pdf ──► style learn ──► style/profile.json (
 | Add a metric | Add it to `catalog/metrics.yaml`; reference it in a skill's `metrics` / `sanity_ranges` |
 | Add a submarket | Add it to `catalog/submarkets.yaml` (with aliases) |
 | Add a chart | New function in `reporting/charts.py`, register in `build_charts` |
+| Let non-developers change skills / metrics / submarkets | Already possible in the UI: 🧩 Skills tab, Dashboard → Metrics / Submarkets ([guide](CONTRIBUTING_UI.md)) |
 | Change the report's writing style | Put examples in `style/reports/`, run `cre-monitor style learn`, review/edit `style/profile.json` |
 | Change models | `.env`: `MODEL_ROUTER`, `MODEL_SKILL`, `MODEL_SYNTHESIS` |
 | Deliver reports elsewhere | Add a node after `report_writer` (e.g. email/Teams) |

@@ -173,8 +173,21 @@ def metric_detail(store, m: MetricDef) -> None:
 # Metrics management
 # --------------------------------------------------------------------------
 
+def _toggle_tracked(key: str, label: str, version: str) -> None:
+    """Checkbox callback (runs before the rerun): save the new tracked state."""
+    from cre_monitor.catalog import set_tracked
+    from cre_monitor.versioned import ConflictError
+
+    tracked = st.session_state[f"track-{key}"]
+    try:
+        set_tracked(key, tracked, expected_version=version)
+        _flash("success", f"{label} {'is now tracked' if tracked else 'is no longer tracked'}.")
+    except (ValueError, ConflictError) as exc:
+        _flash("error", str(exc))
+
+
 def metrics_manager(store) -> None:
-    from cre_monitor.catalog import remove_metric, set_tracked, skills_using_metric
+    from cre_monitor.catalog import remove_metric, skills_using_metric
 
     cat = get_catalog()
     counts = store.frame().groupby("key").size().to_dict() if not store.is_empty() else {}
@@ -187,11 +200,12 @@ def metrics_manager(store) -> None:
         with st.expander(f"{group} ({n_tracked} of {len(members)} tracked)", expanded=False):
             for m in members:
                 c_track, c_info, c_del = st.columns([0.07, 0.83, 0.10], vertical_alignment="center")
-                ticked = c_track.checkbox("Track", value=m.tracked, key=f"track-{m.key}",
-                                          label_visibility="collapsed", help=f"Show {m.label} in the Overview")
-                if ticked != m.tracked:
-                    _guarded(lambda m=m, t=ticked: set_tracked(m.key, t, expected_version=cat.version),
-                             f"{m.label} {'is now tracked' if ticked else 'is no longer tracked'}.")
+                # The catalogue is the source of truth: re-sync the box on every run (it may have
+                # changed elsewhere, e.g. "Track it" in Add a metric), and save a click in the callback.
+                st.session_state[f"track-{m.key}"] = m.tracked
+                c_track.checkbox("Track", key=f"track-{m.key}", label_visibility="collapsed",
+                                 help=f"Show {m.label} in the Overview",
+                                 on_change=_toggle_tracked, args=(m.key, m.label, cat.version))
                 users = skills_using_metric(m.key)
                 c_info.markdown(
                     f"**{m.label}** ({m.unit}){' 🔒' if m.protected else ''}  \n"
@@ -216,7 +230,7 @@ def metrics_manager(store) -> None:
 
 
 def add_metric_panel() -> None:
-    """Placeholder until the add-metric assessment is wired in (see metrics_admin)."""
+    """Describe a metric -> Claude checks feasibility -> approve (see :mod:`cre_monitor.ui.add_metric`)."""
     from cre_monitor.ui.add_metric import add_metric_panel as panel
 
     panel()

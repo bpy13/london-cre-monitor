@@ -4,6 +4,10 @@ A **skill** packages one research area: what to look for, how to find it, how to
 interpret it, and what structured output to return. Skills live in
 `skills/<name>/SKILL.md` and are loaded automatically by `skills/registry.py`.
 
+Non-developers can do everything below in the web UI's **🧩 Skills** tab, which has
+validation, a Claude draft and review, version history and soft delete. See
+[CONTRIBUTING_UI.md](CONTRIBUTING_UI.md). This guide is for editing the files directly.
+
 ## Anatomy
 
 ```markdown

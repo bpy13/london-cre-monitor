@@ -89,8 +89,12 @@ Every catalogue (and skill) edit through the code keeps the previous file in a g
 changed since the editor loaded it (`Catalog.version` = content hash). Editing clears the
 caches that embed the vocabulary (catalogue, skill registry, compiled skill agents).
 
-**Period format** (`Metric.period`): quarters `2026-Q2`, months `2026-08`, years `2027`.
-Periods sort as strings, which is what the delta and trend logic relies on.
+**Period format** (`Metric.period`): quarters `2026-Q2`, half-years `2026-H1`, months
+`2026-08`, years `2027`, days `2026-09-25`, weeks `week ending 2026-09-25`.
+`periods.parse_period` turns a label into start and end dates plus a frequency (D/W/M/Q/H/Y).
+Ordering uses the end date, never the text, because "2026-H1" sorts before "2026-Q1" as
+text. Deltas and Dashboard lines only compare periods of the same frequency. Labels it
+can't parse are kept and listed in tables, but left off time axes and out of deltas.
 
 **Enums:** `SignalType` = `risk` | `opportunity`; `Severity` = `low` | `medium` | `high`.
 
@@ -259,6 +263,10 @@ Full authoring guide: [SKILLS.md](SKILLS.md).
 | `reports/<date>/findings_<run_id>.json` | `report_writer` | Brief only | Audit trail: `{run_id, synthesis, findings[], deltas[], issues[]}`, each item the JSON form of the models above |
 | `data/checkpoints.sqlite` | LangGraph `SqliteSaver` | Chat only (`ask()`; `run_brief()` has no checkpointer) | Serialised `AgentState` per `thread_id` and step, including the message history. This is the **agent's memory** that makes a resumed conversation continue with context. Managed by LangGraph; don't edit by hand |
 | `data/conversations.sqlite` (tables `conversations`, `turns`) | `ask()` → `ConversationStore.record_turn` | Every chat turn (UI and CLI) | The **conversation list** for the sidebar and `cre-monitor conversations`: title and timestamps per thread, plus each turn's question, answer, skills, issues and findings, so a reopened conversation can be redrawn with its charts (schema below) |
+| `catalog/metrics.yaml`, `catalog/submarkets.yaml` | `catalog.py` (UI: Dashboard → Metrics / Submarkets) or by hand | On edit | The vocabularies (§2). Committed |
+| `skills/<name>/SKILL.md` | `skills/editor.py` (UI: Skills tab) or by hand | On edit | The skills (§5). Committed |
+| `skills/.history/<name>/`, `catalog/.history/` | `versioned.py` | Before each UI save | `<timestamp>__<file>` copies of the previous version, last 50 kept. Git-ignored |
+| `skills/.trash/<name>__<timestamp>/` | `skills/editor.delete_skill` | On delete from the UI | Deleted skill folders, restorable. Git-ignored |
 | `style/profile.json`, `style/profile.md` | `cre-monitor style learn` | On request | The house style (`StyleProfile`, above). Committable so the team shares one style; read by `synthesis` and `report_writer` unless `REPORT_STYLE=0` |
 | `data/logs/<brief\|chat\|ui>_<date>.log` | `logs.setup_logging` (CLI and UI) | Every run | Run logs (INFO), including one `ERROR` record per `Incident`, searchable by its reference ID |
 

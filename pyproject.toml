@@ -60,7 +60,14 @@ cre_monitor = ["reporting/templates/*.j2"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Each marker is applied automatically to the tests in the folder of the same name
+# (tests/conftest.py), e.g. `pytest -m unit` == `pytest tests/unit`.
 markers = [
+    "unit: one module in isolation (tests/unit)",
+    "integration: several components together, incl. fake-LLM agent loops and CLI (tests/integration)",
+    "e2e: whole-pipeline brief / chat journeys (tests/e2e)",
+    "ui: Streamlit app via AppTest (tests/ui)",
+    "regression: reproductions of fixed bugs (tests/regression)",
     "live: hits real external APIs / LLMs; requires API keys (deselected by default)",
 ]
 addopts = "-m 'not live'"

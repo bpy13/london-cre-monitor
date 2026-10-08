@@ -1,4 +1,20 @@
-"""Shared pytest fixtures.
+"""Shared pytest configuration for every test.
+
+Layout - one folder per test type, each automatically tagged with a marker of the same name
+(so ``pytest tests/unit`` and ``pytest -m unit`` are equivalent):
+
+===============  ==============================================================
+``unit/``        one module in isolation (pure functions, its own temp files)
+``integration/`` several components together (fake-LLM agent loops, stores, CLI)
+``e2e/``         whole-pipeline journeys (a brief or chat turn, start to finish)
+``ui/``          the Streamlit app via AppTest
+``regression/``  reproductions of bugs that were fixed
+``live/``        real external APIs (deselected by default; ``pytest -m live``)
+``support/``     shared test code: fake LLM, fixtures, sample data (not tests)
+===============  ==============================================================
+
+Shared fixtures (``fake_llm``, ``examples``, ``api_refuses``) live in
+``tests/support/fixtures.py`` and are loaded for every test via ``pytest_plugins``.
 
 Every test runs fully offline and without API keys by default:
 
@@ -20,6 +36,20 @@ import shutil
 import pytest
 
 from cre_monitor.config import PROJECT_ROOT, get_settings
+
+#: Fixtures shared across folders (fake_llm, examples, api_refuses).
+pytest_plugins = ["tests.support.fixtures"]
+
+#: Folder -> marker. Every test is tagged with the marker of the folder it lives in.
+TEST_TYPES = ("unit", "integration", "e2e", "ui", "regression", "live")
+
+
+def pytest_collection_modifyitems(config, items):
+    """Tag each test with its folder's marker, e.g. tests/unit/... -> @pytest.mark.unit."""
+    for item in items:
+        folder = item.path.parent.name
+        if folder in TEST_TYPES:
+            item.add_marker(getattr(pytest.mark, folder))
 
 
 def _clear_caches() -> None:

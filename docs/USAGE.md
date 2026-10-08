@@ -350,7 +350,8 @@ How the tests work and how to add them: [TESTING.md](TESTING.md).
 | Command | What it checks | Cost |
 |---|---|---|
 | `pytest` | Offline suite: skills, tools, validator, store, charts, the full graph (demo and fake LLM) and the Streamlit UI | Free, ~10 s |
-| `pytest tests/test_graph.py -v` | One file only (end-to-end pipeline) | Free |
+| `pytest tests/unit` (or `-m unit`) | One test type only: `unit`, `integration`, `e2e`, `ui`, `regression` ([layout](TESTING.md#3-test-types-and-layout)) | Free; unit ~4 s |
+| `pytest tests/e2e/test_brief.py -v` | One file only (end-to-end brief) | Free |
 | `pytest -m live` | Real BoE, ONS, Nomis, Google News and Tavily calls, plus one real skill run if a key is set | Tavily credits, a few cents |
 | `pytest -m live -k "not skill"` | Live data sources only, without Claude | Tavily only |
 | `python evals/run_evals.py` | 7 chat questions: correct routing, grounded and cited answers (demo mode) | Free |

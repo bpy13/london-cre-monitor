@@ -27,7 +27,7 @@ copy .env.example .env                    # add ANTHROPIC_API_KEY (+ optional TA
 cre-monitor --offline --demo brief --open # free demo brief from fixture data
 cre-monitor ask "How is Canary Wharf vacancy trending?"
 cre-monitor ui                            # web UI: Chat / Briefs / Dashboard
-pytest                                    # offline test suite (~10 s)
+pytest                                    # offline test suite (~1 min); pytest tests/unit for ~4 s
 ```
 
 Without an Anthropic key the app runs in **demo mode**: canned findings, no LLM calls.

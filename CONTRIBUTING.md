@@ -5,7 +5,9 @@ person to read.
 
 ## Workflow
 1. Create a branch: `feature/<short-description>` or `skill/<skill-name>`.
-2. Make the change, with tests (`pytest` must pass offline, with no keys).
+2. Make the change, with tests (`pytest` must pass offline, with no keys). Put each test in
+   the folder of its type: `tests/unit`, `integration`, `e2e`, `ui`, `regression` (every
+   fixed bug gets one) or `live`. See [docs/TESTING.md](docs/TESTING.md#7-writing-new-tests).
 3. Update docs alongside the code:
    * the README for user-facing changes;
    * `docs/ARCHITECTURE.md` for structural changes;

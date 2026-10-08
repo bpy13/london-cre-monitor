@@ -146,4 +146,5 @@ no further skill is *started* once it is reached; a running skill is never inter
 | `ui/reference_tab.py` | 📚 Reference reports tab |
 | `graph/nodes/skill_runner.py` | `run_skill(..., trace=)` keeps the transcript for grounding and tokens |
 
-Tests: `tests/test_benchmark.py`, `tests/test_ui_reference.py`.
+Tests: `tests/unit/test_scoring.py`, `tests/unit/test_answer_key.py`,
+`tests/integration/test_benchmark_runs.py`, `tests/ui/test_reference_tab.py`.

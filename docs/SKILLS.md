@@ -63,8 +63,8 @@ never inventing figures, normalising submarket names, and using the controlled m
 3. Add `fixtures/findings/<name>.json`: a realistic, **cited** `SkillFinding` used in
    demo mode and tests.
 4. Run `cre-monitor skills` to confirm it loads (invalid skills are listed in red).
-5. Run `pytest`. `tests/test_skills.py` validates every skill, and the demo graph test
-   runs it. Update `EXPECTED_RESEARCH_SKILLS` in that test.
+5. Run `pytest`. `tests/unit/test_skill_registry.py` validates every skill, and the
+   end-to-end brief test runs it. Update `EXPECTED_RESEARCH_SKILLS` in that test file.
 6. Optional: add a chart in `reporting/charts.py` if the skill introduces a key metric.
 
 Ideas for future skills: `investment-market` (volumes, yields, buyer mix),

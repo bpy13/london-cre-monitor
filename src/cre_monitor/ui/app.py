@@ -8,7 +8,9 @@ Sidebar:
   the agent resumes with the earlier messages as context. The "⋮" menu renames
   or deletes a conversation. The open conversation is also in the page URL
   (``?thread=<id>``), so a refresh or bookmark reopens it.
-* **Settings** (offline/demo toggles) and **Run full brief now**.
+* **Settings** (offline/demo toggles), **Use house style** and **Run full brief now**.
+* **House style**: upload example reports, learn / view / clear the style the
+  briefs imitate (see :mod:`cre_monitor.style`).
 * **Export data**: one zip with briefs, metrics history and conversations
   (see :mod:`cre_monitor.export`).
 
@@ -207,12 +209,25 @@ def settings_panel() -> None:
             f"**LLM:** {'demo (canned findings)' if s.cre_demo_mode else s.model_synthesis}  \n"
             f"**Data:** {'offline fixtures' if s.cre_offline else ('Tavily + public APIs' if s.tavily_api_key else 'Google News + public APIs')}"
         )
+        from cre_monitor.style import active_profile
+
+        # Per-brief switch (passed to run_brief, so it never affects other UI users).
+        profile = active_profile()
+        # Separate keys for "no profile" and "profile": Streamlit keeps a keyed widget's
+        # old value, so without this the toggle would stay off after a style is learned.
+        use_style = st.toggle(
+            "Use house style", value=profile is not None, disabled=profile is None,
+            key="brief-style" if profile is not None else "brief-style-none",
+            help=(f"Write the brief in the learned house style ({profile.name})." if profile else
+                  "No house style learned yet - see 🎨 House style below."
+                  if s.report_style else "Disabled by REPORT_STYLE=0."),
+        )
         if st.button("Run full brief now", width="stretch", key="run-brief"):
             from cre_monitor.graph.builder import run_brief
 
             with st.status("Running all skills...", expanded=False) as status:
                 try:
-                    state = run_brief()
+                    state = run_brief(use_style=use_style)
                 except Exception as exc:  # noqa: BLE001 - show a reference, not a traceback
                     from cre_monitor.errors import incident_from_exception
 
@@ -227,6 +242,104 @@ def settings_panel() -> None:
             if incident is not None:
                 render_incident(incident, compact=True)
             st.session_state.last_brief = state.get("report_paths", {}).get("html")
+
+
+def style_panel() -> None:
+    """House style: manage example reports, learn / view / clear the style profile.
+
+    UI counterpart of ``cre-monitor style learn|show|clear`` (see
+    :mod:`cre_monitor.style.profile`). Example files go to ``style/reports/``
+    (git-ignored); the profile to ``style/profile.json`` and is shared by every
+    user of this installation, like the CLI's.
+    """
+    from cre_monitor.style import (
+        MAX_FILES, SUPPORTED_SUFFIXES, clear_profile, delete_example, learn_profile, list_examples, load_profile,
+        save_example,
+    )
+
+    s = get_settings()
+    with st.sidebar.expander("🎨 House style", expanded=False):
+        st.caption("Briefs can imitate the voice, layout, number conventions and techniques of example "
+                   "reports you supply. Figures always come from the agent's research.")
+
+        # ---- current profile
+        profile = load_profile()
+        if profile is None:
+            st.info("No house style yet - briefs use the built-in style.", icon="ℹ️")
+        else:
+            st.success(f"**{profile.name}**  \nLearned {profile.learned_at or '?'} via {profile.method} "
+                       f"from {len(profile.sources)} report(s).", icon="🎨")
+            if not s.report_style:
+                st.warning("Not applied: REPORT_STYLE=0 is set.", icon="⚠️")
+            if st.toggle("Show learned profile", key="style-show"):
+                st.markdown(profile.to_markdown())
+            if st.button("Clear house style", width="stretch", key="style-clear"):
+                clear_profile()
+                st.session_state.style_notice = ("success", "House style removed - briefs use the built-in style.")
+                st.rerun()
+
+        # One-shot message from the previous run (set just before st.rerun()).
+        if notice := st.session_state.pop("style_notice", None):
+            kind, text = notice
+            (st.warning if kind == "warning" else st.success)(text)
+
+        # ---- example reports
+        st.markdown("**Example reports**")
+        st.caption("⚖️ Check each report's licence first: some publishers prohibit using their "
+                   "reports with AI tools. Files stay on this machine (git-ignored).")
+        # Changing the key after a save empties the uploader (Streamlit has no reset API).
+        upload_key = f"style-upload-{st.session_state.get('style_upload_n', 0)}"
+        uploads = st.file_uploader(
+            "Add reports", type=sorted(x.lstrip(".") for x in SUPPORTED_SUFFIXES),
+            accept_multiple_files=True, key=upload_key,
+        )
+        if uploads and st.button(f"Save {len(uploads)} file(s)", width="stretch", key="style-save"):
+            for f in uploads:
+                try:
+                    save_example(f.name, f.getvalue())
+                except ValueError as exc:
+                    st.error(str(exc))
+            st.session_state.style_upload_n = st.session_state.get("style_upload_n", 0) + 1
+            st.rerun()
+
+        examples = list_examples()
+        if not examples:
+            st.caption("No example reports yet.")
+        for i, path in enumerate(examples):
+            col_name, col_del = st.columns([0.84, 0.16], vertical_alignment="center")
+            # Backticks: file names often contain "_" which Markdown would turn into italics.
+            col_name.caption(f"`{path.name}` · {path.stat().st_size // 1024 + 1} KB"
+                             + (" · not used" if i >= MAX_FILES else ""))
+            if col_del.button("🗑", key=f"style-del-{path.name}", help=f"Remove {path.name}"):
+                delete_example(path.name)
+                st.rerun()
+        if len(examples) > MAX_FILES:
+            st.caption(f"Only the first {MAX_FILES} files (alphabetical) are used.")
+
+        # ---- learn
+        quick = st.checkbox(
+            "Quick analysis (rule-based, no AI cost)", value=bool(s.cre_demo_mode), disabled=bool(s.cre_demo_mode),
+            key="style-quick", help="Demo mode always uses the rule-based analysis. "
+                                    "The AI analysis (synthesis model) captures style far better.",
+        )
+        if st.button("Learn style from these reports", width="stretch", key="style-learn",
+                     type="primary", disabled=not examples):
+            try:
+                with st.spinner("Analysing the example reports..."):
+                    learned = learn_profile(use_llm=not quick)
+                if not quick and learned.method != "llm":
+                    # learn_profile falls back to the heuristic when the AI call fails (logged).
+                    st.session_state.style_notice = ("warning", "The AI analysis failed, so the rule-based "
+                                                     "analysis was used. See the log for details.")
+                else:
+                    st.session_state.style_notice = ("success", f"Learned: {learned.name} ({learned.method}).")
+                st.rerun()
+            except ValueError as exc:  # no usable examples (e.g. scanned PDFs): a user problem, not a bug
+                st.error(str(exc))
+            except Exception as exc:  # noqa: BLE001 - show a reference, not a traceback
+                from cre_monitor.errors import incident_from_exception
+
+                render_incident(incident_from_exception(exc, step="style"), compact=True)
 
 
 def export_panel() -> None:
@@ -265,6 +378,7 @@ def sidebar() -> None:
     conversation_list()
     st.sidebar.divider()
     settings_panel()
+    style_panel()
     export_panel()
 
 

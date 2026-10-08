@@ -62,6 +62,9 @@ class AgentState(TypedDict, total=False):
         skills_override: Optional explicit list of skills to run (CLI ``--skills``).
         context_refs: Thread ids of earlier conversations referenced in this
             chat turn (validated and capped by ``builder.ask``).
+        use_style: Brief mode: apply the learned house style (default True when
+            absent). Per run, so one UI user's toggle never affects another's
+            brief. The global ``REPORT_STYLE`` setting must also be on.
 
     Produced by nodes:
         run_id: Unique id of this run (used as key in the metrics store).
@@ -88,6 +91,7 @@ class AgentState(TypedDict, total=False):
     messages: Annotated[list[AnyMessage], add_messages]
     skills_override: list[str] | None
     context_refs: list[str]
+    use_style: bool
 
     run_id: str
     selected_skills: list[str]

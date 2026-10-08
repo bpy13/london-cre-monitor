@@ -175,6 +175,7 @@ default headings and are placed before the reference sections, so no content is 
 | `messages` | caller, `chat_answer` | Reducer `add_messages`, so history accumulates per chat thread |
 | `skills_override` | caller | Optional explicit skill list (`--skills`) |
 | `context_refs` | caller (`ask(..., refs=)`) | Ids of earlier conversations referenced in this chat turn, cleaned and capped by `builder.resolve_refs`. Always set per turn, so references never carry over |
+| `use_style` | caller (`run_brief(use_style=)`) | Brief only: apply the house style (default `True` when absent). Read by `synthesis` and `report_writer`; `REPORT_STYLE=0` overrides it |
 | `reference_context` | `planner` | Context packs of `context_refs` (see §6). Read by the router and `chat_answer` only, **never** by the research skills |
 | `run_id` | `planner` | `YYYYMMDDTHHMMSS-<6 hex>`. Keys the metrics rows and report files |
 | `selected_skills`, `planner_reasoning` | `planner` | Shown in the UI |

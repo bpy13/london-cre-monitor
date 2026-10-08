@@ -85,11 +85,13 @@ def get_chat_graph() -> CompiledStateGraph:
     return build_graph(SqliteSaver(conn))
 
 
-def run_brief(skills: list[str] | None = None) -> AgentState:
+def run_brief(skills: list[str] | None = None, *, use_style: bool = True) -> AgentState:
     """Run the full scheduled market brief once.
 
     Args:
         skills: Optional subset of skills (defaults to all brief skills).
+        use_style: Apply the learned house style, if one exists (``style/profile.json``).
+            False = built-in layout and wording for this brief only.
 
     Returns:
         Final state; ``state["report_paths"]`` holds the written files and
@@ -97,7 +99,8 @@ def run_brief(skills: list[str] | None = None) -> AgentState:
     """
     get_settings().ensure_dirs()
     # The incident (if any) is created by the report_writer node, so the report shows its reference.
-    state = build_graph().invoke({"mode": "brief", "messages": [], "skills_override": skills})
+    state = build_graph().invoke({"mode": "brief", "messages": [], "skills_override": skills,
+                                  "use_style": use_style})
     state.setdefault("incident", None)
     return state
 

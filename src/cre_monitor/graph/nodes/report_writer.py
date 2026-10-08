@@ -28,7 +28,7 @@ def report_writer(state: AgentState) -> dict:
     """Graph node. Writes ``reports/<date>/`` and returns the file paths (+ incident)."""
     incident = incident_from_state(state)
     findings = state.get("findings") or []
-    profile = active_profile()
+    profile = active_profile(state.get("use_style", True))
     if profile is not None and not get_settings().cre_demo_mode:
         from cre_monitor.style.editor import apply_style
 

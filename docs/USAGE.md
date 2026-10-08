@@ -67,6 +67,11 @@ agency quarterly): voice and tone, section order and headings, headline and para
 style, number conventions ("£190 psf", "bp", "Q2 2026") and signature techniques
 ("compare with the long-term average").
 
+Each step can be done in the terminal (below) or in the web UI's **🎨 House style** sidebar
+panel (upload → **Learn style from these reports** → **Show learned profile**), with the
+**Use house style** toggle next to **Run full brief now**. The profile is shared by everyone
+using the same installation, whichever way it was learned.
+
 1. Put up to 8 example reports in **`style/reports/`** (`.md`, `.txt`, `.html` or `.pdf`;
    the first ~6,000 characters of each are read). The folder is git-ignored except for its
    README, because examples are often licensed documents. **Check the licence first**:
@@ -93,7 +98,7 @@ original wording is kept for that topic. If the editor fails, the brief uses the
 text. Failed topics and the metrics themselves are never touched. The profile describes the
 style; the agent is told never to copy sentences from the examples.
 
-Switch it off for one brief with `brief --no-style`, permanently with `REPORT_STYLE=0`, or
+Switch it off for one brief with `brief --no-style` (or the UI toggle), permanently with `REPORT_STYLE=0`, or
 remove it with `cre-monitor style clear`. In demo mode only the layout is applied (no LLM
 rewriting). Chat answers are not affected.
 
@@ -127,7 +132,8 @@ The sidebar works like a modern chatbot.
 | **⌄** menu on a row | **Rename** the conversation, or **Delete** it. Delete removes both the list entry and the agent's memory of that thread |
 | Page URL `?thread=<id>` | The open conversation is kept in the URL, so a refresh, bookmark or shared link reopens it. Ids are also listed by `cre-monitor conversations` |
 | **📦 Export data** | Optional "since" date and "include logs". **Prepare export** builds the zip, then **⬇ Download** saves it (same as `cre-monitor export`) |
-| **⚙️ Settings & brief** | **Offline data** toggle (same as `--offline`). **Demo mode** toggle (same as `--demo`; locked on without `ANTHROPIC_API_KEY`). Current model and data source. **Run full brief now** (same as `cre-monitor brief`; the result appears in the Briefs tab) |
+| **⚙️ Settings & brief** | **Offline data** toggle (same as `--offline`). **Demo mode** toggle (same as `--demo`; locked on without `ANTHROPIC_API_KEY`). Current model and data source. **Use house style** toggle (on when a style is learned; off = same as `--no-style`, for that brief only). **Run full brief now** (same as `cre-monitor brief`; the result appears in the Briefs tab) |
+| **🎨 House style** | Upload example reports, remove them (🗑), **Learn style from these reports** (tick **Quick analysis** for the free rule-based learner), **Show learned profile**, **Clear house style**. Same as `cre-monitor style learn / show / clear`; see [House style](#house-style-imitating-example-reports) |
 
 Conversations started in the terminal (`cre-monitor ask` / `chat`) appear in the same list.
 Research findings are never reused between turns: every question triggers fresh research,

@@ -147,9 +147,15 @@ def save_profile(profile: StyleProfile) -> Path:
     return path
 
 
-def active_profile() -> StyleProfile | None:
-    """The profile to apply to reports, honouring the REPORT_STYLE switch."""
-    return load_profile() if get_settings().report_style else None
+def active_profile(enabled: bool = True) -> StyleProfile | None:
+    """The profile to apply to a report, or None.
+
+    Args:
+        enabled: Per-run switch (``AgentState.use_style``: CLI ``--no-style``, the UI's
+            "Use house style" toggle). Both it and the global ``REPORT_STYLE``
+            setting must be on.
+    """
+    return load_profile() if enabled and get_settings().report_style else None
 
 
 def resolve_layout(profile: StyleProfile | None) -> list[tuple[str, str]]:
@@ -197,10 +203,49 @@ def read_example(path: Path) -> str:
     return raw
 
 
+def examples_dir() -> Path:
+    """Where example reports live (``style/reports/``, git-ignored except its README)."""
+    return style_dir() / "reports"
+
+
 def list_examples(folder: Path | None = None) -> list[Path]:
-    folder = folder or style_dir() / "reports"
+    """Supported example reports in ``folder`` (default :func:`examples_dir`), README excluded."""
+    folder = folder or examples_dir()
+    if not folder.exists():
+        return []
     return sorted(p for p in folder.rglob("*") if p.is_file() and p.suffix.lower() in SUPPORTED_SUFFIXES
                   and p.name.lower() != "readme.md")
+
+
+def _safe_example_path(name: str) -> Path:
+    """Path for an example file in :func:`examples_dir`, rejecting unsafe or unsupported names.
+
+    Only the base name is kept (an uploaded "../../x.md" becomes "x.md"), so a
+    file can never be written or deleted outside the examples folder.
+    """
+    base = Path(name.replace("\\", "/")).name.strip()
+    if not base or base.startswith(".") or base.lower() == "readme.md":
+        raise ValueError(f"Not a valid example file name: {name!r}")
+    if Path(base).suffix.lower() not in SUPPORTED_SUFFIXES:
+        raise ValueError(f"Unsupported file type {Path(base).suffix or '(none)'}; "
+                         f"use {', '.join(sorted(SUPPORTED_SUFFIXES))}")
+    return examples_dir() / base
+
+
+def save_example(name: str, data: bytes) -> Path:
+    """Save one example report (e.g. a UI upload) into :func:`examples_dir`. Overwrites same name."""
+    path = _safe_example_path(name)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+    return path
+
+
+def delete_example(name: str) -> bool:
+    """Delete one example report by file name. True if it existed."""
+    path = _safe_example_path(name)
+    existed = path.exists()
+    path.unlink(missing_ok=True)
+    return existed
 
 
 # --------------------------------------------------------------------------
@@ -322,7 +367,7 @@ def learn_profile(folder: Path | None = None, *, use_llm: bool | None = None) ->
     """
     files = list_examples(folder)[:MAX_FILES]
     if not files:
-        raise ValueError(f"No example reports (.md/.txt/.html/.pdf) found in {folder or style_dir() / 'reports'}")
+        raise ValueError(f"No example reports (.md/.txt/.html/.pdf) found in {folder or examples_dir()}")
     texts = {p.name: read_example(p) for p in files}
     texts = {k: v for k, v in texts.items() if v.strip()}
     if not texts:

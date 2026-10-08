@@ -14,9 +14,10 @@ from cre_monitor.config import get_settings
 from cre_monitor.schemas import SkillFinding
 from cre_monitor.style.editor import StyledTopic, StyledTopics, apply_style, guard_ok, numbers_in
 from cre_monitor.style.profile import (
-    DEFAULT_LAYOUT, LayoutSection, StyleProfile, learn_profile, load_profile, read_example, resolve_layout,
-    save_profile,
+    DEFAULT_LAYOUT, LayoutSection, StyleProfile, delete_example, learn_profile, list_examples, load_profile,
+    read_example, resolve_layout, save_example, save_profile,
 )
+from tests.fake_llm import submit_call
 from tests.test_graph import fake_llm  # noqa: F401  (pytest fixture)
 
 EXAMPLE_A = """# London Offices Quarterly
@@ -97,6 +98,19 @@ def test_html_examples_are_read(tmp_path):
     assert "£190 psf" in read_example(page)
 
 
+def test_save_and_delete_examples_stay_inside_the_examples_folder():
+    folder = get_settings().style_dir / "reports"
+    assert save_example("../../escape.md", b"# hi") == folder / "escape.md"       # base name only
+    assert save_example("..\\..\\win.txt", b"hi") == folder / "win.txt"
+    for bad in ("evil.exe", "README.md", ".hidden.md", "noext", ""):
+        with pytest.raises(ValueError):
+            save_example(bad, b"x")
+    assert [p.name for p in list_examples()] == ["escape.md", "win.txt"]
+    assert delete_example("escape.md") and not delete_example("escape.md")
+    with pytest.raises(ValueError):
+        delete_example("../profile.json")                                          # can't reach the profile
+
+
 # --------------------------------------------------------------------------- layout
 
 def test_resolve_layout_orders_retitles_and_never_drops_sections():
@@ -134,6 +148,10 @@ def test_brief_follows_house_layout_and_can_be_switched_off(examples, monkeypatc
     assert html.index("<h2>Key themes</h2>") < html.index("<h2>Outlook</h2>") < html.index("<h2>Risks &amp; opportunities</h2>")
     assert "## Key themes" in md and "house style" in md.splitlines()[2]
 
+    # Per run (CLI --no-style, UI toggle) ...
+    plain = Path(run_brief(["office-rents"], use_style=False)["report_paths"]["html"]).read_text(encoding="utf-8")
+    assert "<h2>Executive summary</h2>" in plain and "Key themes" not in plain
+    # ... and globally (REPORT_STYLE=0 overrides use_style=True).
     monkeypatch.setenv("REPORT_STYLE", "0")
     get_settings.cache_clear()
     plain = Path(run_brief(["office-rents"])["report_paths"]["html"]).read_text(encoding="utf-8")
@@ -190,6 +208,14 @@ def test_live_brief_puts_house_style_into_synthesis_prompt(fake_llm):  # noqa: F
     system = synth_call[0].content
     assert isinstance(synth_call[0], SystemMessage) and "HOUSE STYLE (Agency house style)" in system
     assert "Lead with the number" in system and "facts and figures always take priority" in system
+
+    # Switched off for one run: no style in the prompt (the skill submits straight away this time).
+    fake_llm.calls.clear()
+    fake_llm.kinds.clear()
+    fake_llm.responses[:] = [submit_call(fake_llm.macro)]
+    run_brief(["macro-economy"], use_style=False)
+    synth_call = next(c for c, k in zip(fake_llm.calls, fake_llm.kinds) if k == "structured:ExecutiveSynthesis")
+    assert "HOUSE STYLE" not in synth_call[0].content
 
 
 # --------------------------------------------------------------------------- CLI

@@ -58,8 +58,12 @@ def rule_based_synthesis(findings: list[SkillFinding], deltas: list[MetricDelta]
     )
 
 
-def llm_synthesis(findings: list[SkillFinding], deltas: list[MetricDelta], issues: list[ValidationIssue]) -> ExecutiveSynthesis:
-    """Synthesis by the synthesis-tier LLM guided by the market-synthesis skill."""
+def llm_synthesis(findings: list[SkillFinding], deltas: list[MetricDelta], issues: list[ValidationIssue],
+                  use_style: bool = True) -> ExecutiveSynthesis:
+    """Synthesis by the synthesis-tier LLM guided by the market-synthesis skill.
+
+    ``use_style`` is the per-run house style switch (``AgentState.use_style``).
+    """
     skill = get_registry().get(SYNTHESIS_SKILL)
     payload = {
         "today": date.today().isoformat(),
@@ -69,7 +73,7 @@ def llm_synthesis(findings: list[SkillFinding], deltas: list[MetricDelta], issue
         "data_quality_issues": [i.message for i in issues],
     }
     system = skill.instructions
-    profile = active_profile()
+    profile = active_profile(use_style)
     if profile is not None:
         # House style learned from example reports: affects wording, never the facts.
         system += "\n\n" + profile.prompt_text() + "\nThe rules above about facts and figures always take priority."
@@ -87,7 +91,7 @@ def synthesis(state: AgentState) -> dict:
     if get_settings().cre_demo_mode:
         return {"synthesis": rule_based_synthesis(findings, deltas, issues)}
     try:
-        return {"synthesis": llm_synthesis(findings, deltas, issues)}
+        return {"synthesis": llm_synthesis(findings, deltas, issues, state.get("use_style", True))}
     except Exception as exc:  # noqa: BLE001 - a report with a basic summary beats no report
         logger.exception("LLM synthesis failed; using rule-based fallback")
         result = rule_based_synthesis(findings, deltas, issues)

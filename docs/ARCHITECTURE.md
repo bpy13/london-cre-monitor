@@ -189,7 +189,10 @@ style/reports/*.md|html|pdf ──► style learn ──► style/profile.json (
      rewrite adds or changes any figure. Errors keep the original findings. Metrics,
      citations and failed topics are never passed through the editor.
 * LLM steps run only in live mode. Demo mode applies the layout alone.
-  `REPORT_STYLE=0` or `brief --no-style` switches all of it off.
+* Switches: `AgentState.use_style` is per run (`run_brief(use_style=False)`, CLI
+  `--no-style`, the UI toggle), so one UI user's choice never changes another's brief.
+  `REPORT_STYLE=0` switches it off globally. Learning and managing examples is available
+  in the CLI (`cre-monitor style …`) and the UI's **🎨 House style** panel.
 
 ## Extension points
 | Want to... | Do this |

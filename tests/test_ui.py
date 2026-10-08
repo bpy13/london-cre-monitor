@@ -114,6 +114,56 @@ def test_export_from_sidebar():
     assert at.get("download_button")                        # zip offered for download
 
 
+def test_house_style_panel_learn_show_clear_and_delete_example():
+    """Sidebar 🎨 House style. (AppTest can't drive st.file_uploader, so files are saved via
+    save_example - the function the upload button calls - and that is unit-tested in test_style.)"""
+    from cre_monitor.style import list_examples, load_profile, save_example
+    from tests.test_style import EXAMPLE_A, EXAMPLE_B
+
+    save_example("a.md", EXAMPLE_A.encode())
+    save_example("b.md", EXAMPLE_B.encode())
+    at = AppTest.from_file(APP, default_timeout=60).run()
+    assert any("No house style yet" in i.value for i in at.info)
+    assert at.toggle(key="brief-style-none").disabled                  # nothing to apply yet
+
+    at.button(key="style-learn").click().run()                        # demo mode -> rule-based
+    assert not at.exception, at.exception
+    assert load_profile() is not None
+    assert any(s.value.startswith("Learned:") for s in at.success)
+    assert not at.toggle(key="brief-style").disabled and at.toggle(key="brief-style").value
+
+    at.toggle(key="style-show").set_value(True).run()
+    assert any("Key themes" in m.value for m in at.markdown)          # learned heading shown
+
+    at.button(key="style-del-b.md").click().run()
+    assert [p.name for p in list_examples()] == ["a.md"]
+
+    at.button(key="style-clear").click().run()
+    assert not at.exception, at.exception
+    assert load_profile() is None and any("House style removed" in s.value for s in at.success)
+
+
+def test_brief_from_ui_honours_house_style_toggle():
+    from cre_monitor.config import get_settings
+    from cre_monitor.style import learn_profile, save_example
+    from tests.test_style import EXAMPLE_A
+
+    save_example("a.md", EXAMPLE_A.encode())
+    learn_profile()
+    at = AppTest.from_file(APP, default_timeout=60).run()
+
+    def latest_html() -> str:
+        return sorted(get_settings().reports_dir.rglob("brief_*.html"))[-1].read_text(encoding="utf-8")
+
+    at.button(key="run-brief").click().run()
+    assert not at.exception, at.exception
+    assert "<h2>Key themes</h2>" in latest_html()                    # styled by default
+
+    at.toggle(key="brief-style").set_value(False).run()
+    at.button(key="run-brief").click().run()
+    assert "<h2>Executive summary</h2>" in latest_html() and "Key themes" not in latest_html()
+
+
 def test_conversation_opens_from_url():
     first = AppTest.from_file(APP, default_timeout=60).run()
     first.chat_input[0].set_value("Bank Rate?").run()

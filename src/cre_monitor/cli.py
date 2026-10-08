@@ -88,20 +88,17 @@ def brief(
     no_style: bool = typer.Option(False, "--no-style", help="Ignore the learned house style for this brief."),
 ) -> None:
     """Run the full London office market brief and write HTML/Markdown reports."""
-    if no_style:
-        os.environ["REPORT_STYLE"] = "0"
-        get_settings.cache_clear()
     log_file = _setup_logging("brief")
     _mode_banner()
     from cre_monitor.graph.builder import run_brief
     from cre_monitor.style import active_profile
 
-    if (profile := active_profile()) is not None:
+    if (profile := active_profile(not no_style)) is not None:
         console.print(f"[dim]House style: {profile.name}[/dim]")
 
     selected = [s.strip() for s in skills.split(",")] if skills else None
     with console.status("Running skills and building the brief..."):
-        state = run_brief(selected)
+        state = run_brief(selected, use_style=not no_style)
     paths = state.get("report_paths", {})
     issues = state.get("validation_issues", [])
     failed = [f.skill for f in state.get("findings", []) if f.error]

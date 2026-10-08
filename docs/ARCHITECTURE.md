@@ -1,13 +1,15 @@
 # Architecture
 
 This document explains *why* the system is shaped the way it is. For setup, see the
-[README](../README.md). For commands and the UI, see [USAGE.md](USAGE.md). For
-writing skills, see [SKILLS.md](SKILLS.md).
+[README](../README.md). For commands and the UI, see [USAGE.md](USAGE.md). For data
+structures and storage, see [DATA_MODEL.md](DATA_MODEL.md). For tests, see
+[TESTING.md](TESTING.md). For writing skills, see [SKILLS.md](SKILLS.md).
 
 ## Design goals
 
 1. **Testable.** Every component runs offline and without API keys. The full graph is
-   exercised in CI with fixtures and a scripted fake LLM.
+   exercised by the test suite with fixtures and a scripted fake LLM
+   ([TESTING.md](TESTING.md)).
 2. **Extensible by domain experts.** Research areas are *skills* written mostly in
    Markdown. Adding one doesn't require changing graph code.
 3. **Trustworthy output.** Every figure carries a source. Deterministic validation runs
@@ -75,17 +77,12 @@ START → agent ⇄ tools (ToolNode)   … until no more tool calls or step cap
 3. Detailed source documents are fetched only when needed (`fetch_document` with
    `focus` keywords trims long PDFs).
 
-## Data model (`schemas.py`)
-* `Metric(key, submarket, value, unit, period, source, url, as_of, note)`:
-  * `key` comes from a controlled vocabulary (`METRIC_KEYS`, which maps each key to its
-    expected unit);
-  * `submarket` comes from `SUBMARKETS` (canonical names) or `UK`/`London` for macro series.
-* `Signal(type=risk|opportunity, severity, title, rationale, submarket)`.
-* `SkillFinding`: the single output contract for all skills.
-* `ExecutiveSynthesis`, `ValidationIssue`, `MetricDelta`.
-
-The controlled vocabularies are what let charts, history and deltas work across
-skills and sources.
+## Data model
+Every skill returns one `SkillFinding` (metrics, signals, citations, narrative). Shared
+vocabularies for metric keys, units and submarkets let figures from different skills and
+brokers line up in history, deltas and charts. All structures are documented field by
+field in [DATA_MODEL.md](DATA_MODEL.md): domain models, graph state, `SKILL.md`
+frontmatter, the SQLite schema and fixture formats.
 
 ## Metric history (`store/metrics.py`)
 Append-only SQLite table.
@@ -102,44 +99,24 @@ Append-only SQLite table.
 On first use, the store is seeded from `fixtures/history.json`, so trend charts work
 from day one.
 
-## Persistence: what is stored where
+## Persistence
+* Numbers go to an append-only SQLite table (`data/metrics.sqlite`) after validation, on
+  every brief and chat turn.
+* Briefs write HTML, Markdown, per-run PNG charts and a findings JSON audit trail to
+  `reports/<date>/`.
+* Chat memory lives in LangGraph's checkpointer (`data/checkpoints.sqlite`) per thread.
 
-| Store | Written by | When | Contents |
-|---|---|---|---|
-| `data/metrics.sqlite` (table `metrics`) | `persist` node | Every brief **and** every chat turn, after validation | One append-only row per metric: `run_id, run_at, skill, key, submarket, value, unit, period, source, url, as_of, note`. Only validated metrics are written: out-of-range values and failed skills are excluded. The first run seeds `fixtures/history.json` as `run_id='seed'` |
-| `reports/<date>/brief_<run>.html`, `.md` | `report_writer` node | Brief only | The rendered report |
-| `reports/<date>/charts/*.png` | `report_writer` node | Brief only | Static charts for the Markdown report. File names are fixed per day, so a second brief on the same day overwrites them |
-| `reports/<date>/findings_<run>.json` | `report_writer` node | Brief only | Full structured output (synthesis, findings incl. narrative, signals and citations, deltas, validation issues): the audit trail |
-| `data/checkpoints.sqlite` | LangGraph `SqliteSaver` | Chat only (`ask()`; `run_brief()` has no checkpointer) | Graph state per `thread_id`, including the message history, which gives multi-turn memory |
-| `data/logs/*.log` | CLI | CLI runs | Run logs (INFO level) |
-
-Narrative content (headlines, insights, risks/opportunities) lives only in the findings JSON
-and the reports. The SQLite store holds numbers only. Everything under `data/` and
-`reports/` is git-ignored.
+Full table, column schema and reading rules:
+[DATA_MODEL.md §6](DATA_MODEL.md#6-persistence-what-is-stored-where).
 
 ## Testability
+* Deterministic logic is kept separate from the LLM.
+* Offline and demo modes make the whole graph reproducible.
+* A scripted fake LLM is injected through `get_llm()`.
+* The UI is tested headlessly, live smoke tests are opt-in, and an eval set covers
+  model behaviour.
 
-"Testable" here means the agent's behaviour can be checked automatically,
-reproducibly and cheaply, with no network, API keys or LLM spend. The model-dependent
-behaviour that can't be checked that way is measured with evaluations instead.
-
-| Approach | Where |
-|---|---|
-| Deterministic logic kept out of the LLM (validation, deltas, charts, rendering are pure functions) | `test_validator`, `test_store`, `test_charts` |
-| Typed contracts: every skill returns a `SkillFinding`; every `SKILL.md` frontmatter is validated | `schemas.py`, `test_skills` |
-| Offline mode: every tool has a fixture path | `test_tools` |
-| Demo mode: canned findings replace the LLM, so the whole graph runs end to end deterministically (brief and chat) | `test_graph` |
-| Dependency injection: all models come from `get_llm()`, so a scripted fake model drives the **real** ReAct sub-agent, its tool calls and structured output | `tests/fake_llm.py`, `test_graph` |
-| Isolation: each test gets temporary data and report folders, and caches are reset | `tests/conftest.py` |
-| UI rendered and exercised headlessly | `test_ui` (Streamlit `AppTest`) |
-| Live smoke tests, kept separate | `pytest -m live` |
-| Evaluations: routing, grounding, citations (demo or live) | `evals/` |
-| Run audit trail: findings JSON, data-quality notes, logs | see Persistence |
-
-Known gaps:
-* the live Claude path has not been exercised end to end;
-* evals use string checks rather than an LLM judge;
-* there is no tracing (e.g. LangSmith) for live runs.
+Details, per-file coverage and how to add tests: [TESTING.md](TESTING.md).
 
 ## Modes (`config.py`)
 * `CRE_OFFLINE`: tools read `fixtures/` instead of the network.

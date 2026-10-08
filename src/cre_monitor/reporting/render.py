@@ -3,10 +3,13 @@
 Output layout::
 
     reports/2026-10-07/
-        brief_<run_id>.html     # self-contained page, Plotly loaded from CDN
-        brief_<run_id>.md       # same content for email / wiki / git diffs
-        charts/<chart_id>.png   # static charts referenced by the Markdown
-        findings_<run_id>.json  # raw structured output (audit trail)
+        brief_<run_id>.html              # self-contained page, Plotly loaded from CDN
+        brief_<run_id>.md                # same content for email / wiki / git diffs
+        charts/<run_id>/<chart_id>.png   # static charts referenced by the Markdown
+        findings_<run_id>.json           # raw structured output (audit trail)
+
+Charts get a folder per run so that several briefs on the same day don't
+overwrite each other's PNGs (each Markdown file keeps pointing at its own charts).
 
 The HTML template lives in ``reporting/templates/report.html.j2``.
 """
@@ -95,8 +98,14 @@ def _ordered(findings: list[SkillFinding]) -> list[SkillFinding]:
     return sorted(findings, key=lambda f: order.get(f.skill, 999))
 
 
-def export_pngs(figures: dict, charts_dir: Path) -> dict[str, str]:
+def export_pngs(figures: dict, charts_dir: Path, rel_prefix: str) -> dict[str, str]:
     """Write static PNG copies of the charts (for the Markdown report).
+
+    Args:
+        figures: ``chart_id -> Figure``.
+        charts_dir: Folder to write the PNGs into (must exist).
+        rel_prefix: Path of ``charts_dir`` relative to the Markdown file, used in
+            the returned links, e.g. ``"charts/<run_id>"``.
 
     Uses ``plotly.io.write_images`` so all charts are rendered in ONE headless
     Chrome session (kaleido v1 starts a browser per call otherwise, which is
@@ -121,7 +130,7 @@ def export_pngs(figures: dict, charts_dir: Path) -> dict[str, str]:
             height=[figures[i].layout.height or 380 for i in ids],
             scale=2,
         )
-        return {i: f"charts/{i}.png" for i in ids}
+        return {i: f"{rel_prefix}/{i}.png" for i in ids}
     except Exception as exc:  # noqa: BLE001
         logger.warning("PNG export failed (%s); Markdown report will omit charts", exc)
         return {}
@@ -150,13 +159,18 @@ def write_report(
     """
     s = get_settings()
     out_dir = out_dir or s.reports_dir / date.today().isoformat()
-    charts_dir = out_dir / "charts"
-    charts_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     findings = _ordered(findings)
     figures = build_charts(findings, get_store())
 
-    png_paths = export_pngs(figures, charts_dir) if s.report_png else {}
+    png_paths: dict[str, str] = {}
+    if s.report_png:
+        # One folder per run: same-day briefs must not overwrite each other's PNGs.
+        rel_prefix = f"charts/{run_id}"
+        charts_dir = out_dir / rel_prefix
+        charts_dir.mkdir(parents=True, exist_ok=True)
+        png_paths = export_pngs(figures, charts_dir, rel_prefix)
 
     chart_html = {
         # default_width=100% makes each chart fill its card; without it Plotly first

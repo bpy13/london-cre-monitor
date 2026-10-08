@@ -71,7 +71,9 @@ START ─► planner ─Send─► skill_runner × N ─► validator ─► per
 | Doc | For |
 |---|---|
 | [docs/USAGE.md](docs/USAGE.md) | Every command, the UI guide, settings, Python API, outputs, Codespaces |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Design, graph and nodes, persistence, testability, extension points |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Design goals, graph and nodes, skills mechanism, extension points |
+| [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Every data structure (models, graph state, skill metadata), persistence and SQLite schema, fixture formats |
+| [docs/TESTING.md](docs/TESTING.md) | What "testable" means here, techniques, per-file test coverage, fake LLM, evals, adding tests |
 | [docs/SKILLS.md](docs/SKILLS.md) | Writing and adding skills; refreshing fixtures |
 | [fixtures/README.md](fixtures/README.md) | Provenance of the offline demo data |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Team conventions |

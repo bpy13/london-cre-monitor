@@ -1,0 +1,223 @@
+# Data model and persistence
+
+Every data structure in the system, how they relate, and what is stored where. The
+source of truth is the code: `src/cre_monitor/schemas.py` (domain models),
+`graph/state.py` (graph state), `skills/registry.py` (skill metadata) and
+`store/metrics.py` (SQLite schema).
+
+- [1. Overview](#1-overview)
+- [2. Controlled vocabularies](#2-controlled-vocabularies)
+- [3. Domain models](#3-domain-models-schemaspy)
+- [4. Graph state](#4-graph-state-graphstatepy)
+- [5. Skill definition](#5-skill-definition-skillsnameskillmd)
+- [6. Persistence: what is stored where](#6-persistence-what-is-stored-where)
+- [7. Fixture formats](#7-fixture-formats-fixtures)
+
+---
+
+## 1. Overview
+
+```
+Skill sub-agent ──► SkillFinding ─┬─ metrics[]  : Metric      ──► validator ──► persist ──► metrics.sqlite (one row per Metric)
+                                  ├─ signals[]  : Signal                                       │
+                                  ├─ citations[]: Citation                                     ▼
+                                  ├─ headline, summary, insights[], confidence, error      MetricDelta[] ("what changed")
+                                  │
+       all findings + deltas + ValidationIssue[] ──► synthesis ──► ExecutiveSynthesis ──► report_writer ──► reports/<date>/
+```
+
+* **`SkillFinding`** is the single output contract of every skill, whatever its topic.
+  Validation, storage, charts and reports only ever see `SkillFinding` objects. That is
+  what lets new skills plug in without code changes.
+* All models are **Pydantic v2** classes. They validate LLM output, give structured-output
+  JSON schemas to Claude, and serialise to JSON for the audit trail.
+
+## 2. Controlled vocabularies
+
+Shared vocabularies make figures from different skills and brokers line up in history,
+deltas and charts. Skills are instructed to use them, and the validator flags anything else.
+
+**Submarkets** (`SUBMARKETS`): Central London, City, West End, Midtown, King's Cross,
+Southbank, Canary Wharf, Shoreditch & Fringe, Paddington, Battersea & Nine Elms.
+
+**Macro geographies** (`MACRO_GEOGRAPHIES`): `UK`, `London`.
+
+**Metric keys → expected unit** (`METRIC_KEYS`). A unit mismatch triggers a validator warning.
+
+| Group | Keys (unit) |
+|---|---|
+| Rents | `prime_rent`, `grade_a_rent` (GBP psf pa); `rent_free_months` (months); `prime_rent_growth_yoy` (%) |
+| Vacancy | `vacancy_rate`, `new_build_vacancy_rate`, `grade_a_share_of_availability` (%); `availability_sqft` (sq ft) |
+| Leasing | `take_up_sqft`, `take_up_10y_avg_sqft`, `under_offer_sqft`, `active_demand_sqft` (sq ft); `take_up_vs_10y_avg` (%) |
+| Pipeline | `under_construction_sqft`, `speculative_under_construction_sqft`, `completions_sqft`, `refurbishment_pipeline_sqft`, `pipeline_prelet_sqft`, `pipeline_speculative_sqft` (sq ft); `pre_let_share` (%) |
+| Investment | `prime_yield` (%); `investment_volume_gbp` (GBP) |
+| Macro | `bank_rate`, `sonia`, `gilt_10y_yield`, `cpih_yoy`, `cpi_yoy`, `gdp_growth_qoq`, `unemployment_rate`, `london_employment_rate` (%) |
+| Occupier | `office_utilisation` (%) |
+
+**Period format** (`Metric.period`): quarters `2026-Q2`, months `2026-08`, years `2027`.
+Periods sort as strings, which is what the delta and trend logic relies on.
+
+**Enums:** `SignalType` = `risk` | `opportunity`; `Severity` = `low` | `medium` | `high`.
+
+## 3. Domain models (`schemas.py`)
+
+### `Metric`: one numeric data point
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `key` | str | ✓ | From `METRIC_KEYS`; normalised to snake_case |
+| `submarket` | str | ✓ | From `SUBMARKETS` or `UK`/`London` |
+| `value` | float | ✓ | Number only, no units |
+| `unit` | str | ✓ | Should match `METRIC_KEYS[key]` |
+| `period` | str | ✓ | Period described, e.g. `2026-Q2` |
+| `source` | str | ✓ | Publisher, e.g. `JLL`. Drives the like-for-like logic |
+| `url` | str | – (`""`) | Link to the source. Missing → validator warning |
+| `as_of` | date \| None | – | Publication date. Old → "stale" warning |
+| `note` | str | – (`""`) | Definition caveats, e.g. "Grade A vacancy", "derived: …" |
+
+### `Citation`
+| Field | Type | Required |
+|---|---|---|
+| `title` | str | ✓ |
+| `url` | str | ✓ (`""` if unknown) |
+| `publisher` | str | – |
+| `published` | date \| None | – |
+
+### `Signal`: a risk or opportunity for a London office investor/developer
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `type` | `SignalType` | ✓ | `risk` / `opportunity` |
+| `severity` | `Severity` | ✓ | Sorts the risk/opportunity matrix |
+| `title` | str | ✓ | Short label |
+| `rationale` | str | ✓ | Evidence → implication |
+| `submarket` | str | – | Default `Central London` |
+
+### `SkillFinding`: the output contract of every skill
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `skill` | str | ✓ | Always overwritten with the real skill name (not trusted from the LLM) |
+| `headline` | str | ✓ | One-sentence takeaway |
+| `summary` | str | ✓ | 2–5 sentence narrative |
+| `metrics` | list[`Metric`] | – | |
+| `insights` | list[str] | – | Bullet observations (deals, news items, …) |
+| `signals` | list[`Signal`] | – | |
+| `citations` | list[`Citation`] | – | |
+| `confidence` | float 0–1 | – (0.5) | Self-assessed |
+| `error` | str \| None | – | Set when the skill failed; the rest is then minimal |
+
+### `ValidationIssue`: produced by the validator
+| Field | Type | Notes |
+|---|---|---|
+| `level` | str | `warning` (kept, disclosed) or `error` (metric dropped) |
+| `skill` | str | Which skill produced the problem |
+| `message` | str | Human-readable explanation |
+| `metric_key`, `submarket` | str \| None | What it refers to |
+
+### `MetricDelta`: change versus an earlier period (computed, never stored)
+| Field / property | Notes |
+|---|---|
+| `key`, `submarket`, `unit` | Identity of the metric |
+| `previous`, `current` | Values |
+| `previous_period`, `current_period` | Periods compared |
+| `previous_source`, `current_source` | Publishers |
+| `change` / `pct_change` | Absolute / relative change |
+| `same_source` | False → labelled "different sources … not like-for-like" |
+| `is_material` | ≥ 0.1pp for % metrics, ≥ 0.5% otherwise; immaterial moves are hidden |
+| `describe()` | One-line text used in reports and prompts |
+
+### `SkillSelection`: router output (chat mode)
+`skills: list[str]` (unknown names are dropped), `reasoning: str`.
+
+### `ExecutiveSynthesis`: brief summary
+`title`, `executive_summary`, `key_takeaways: list[str]`, `risks: list[Signal]`,
+`opportunities: list[Signal]`, `what_changed: list[str]`, `watch_list: list[str]`.
+
+## 4. Graph state (`graph/state.py`)
+
+### `AgentState`: shared by all nodes
+| Field | Set by | Notes |
+|---|---|---|
+| `mode` | caller | `brief` or `chat` |
+| `messages` | caller, `chat_answer` | Reducer `add_messages`, so history accumulates per chat thread |
+| `skills_override` | caller | Optional explicit skill list (`--skills`) |
+| `run_id` | `planner` | `YYYYMMDDTHHMMSS-<6 hex>`. Keys the metrics rows and report files |
+| `selected_skills`, `planner_reasoning` | `planner` | Shown in the UI |
+| `findings` | `skill_runner` (append), `planner` / `validator` (replace) | Custom reducer `merge_findings`: plain lists append; `Replace([...])` overwrites (a sentinel first element, so it stays serialisable for checkpoints) |
+| `validation_issues` | `validator` | list[`ValidationIssue`] |
+| `deltas` | `persist` | list[`MetricDelta`] |
+| `synthesis` | `synthesis` | `ExecutiveSynthesis` (brief only) |
+| `report_paths` | `report_writer` | `{"html", "markdown", "json"}` → path |
+| `answer` | `chat_answer` | Final chat text |
+
+### `SkillTask`: private input to one parallel skill run (via `Send`)
+`skill_name`, `mode`, `question` (the user's question, or the standard brief instruction).
+
+### `SkillAgentState`: inside one skill's sub-agent
+`messages` (research transcript), `steps` (counted against `SKILL_MAX_STEPS`), `finding`.
+
+## 5. Skill definition (`skills/<name>/SKILL.md`)
+
+YAML frontmatter, validated by `SkillMetadata`, followed by a Markdown body: the
+sub-agent's instructions.
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `name` | str | required | Must equal the folder name |
+| `description` | str (≥ 20 chars) | required | The only text the router sees |
+| `tools` | list[str] | `[]` | Allow-list from the tool catalogue; `[]` = meta-skill |
+| `metrics` | list[str] | `[]` | Keys the skill should return; must exist in `METRIC_KEYS` |
+| `sanity_ranges` | dict[key → [min, max]] | `{}` | Validator drops values outside these |
+| `preferred_domains` | list[str] | `[]` | Search hints |
+| `model_tier` | str | `skill` | `router` / `skill` / `synthesis` |
+| `in_brief` | bool | `true` | Include in the scheduled brief |
+| `order` | int | `100` | Section order in the report |
+| `keywords` | list[str] | `[]` | Fallback chat routing (whole-word match) |
+
+Full authoring guide: [SKILLS.md](SKILLS.md).
+
+## 6. Persistence: what is stored where
+
+| Store | Written by | When | Contents |
+|---|---|---|---|
+| `data/metrics.sqlite` (table `metrics`) | `persist` node | Every brief **and** every chat turn, after validation | One append-only row per `Metric` (schema below). Only validated metrics are written: out-of-range values and failed skills are excluded. The first run seeds `fixtures/history.json` as `run_id='seed'` |
+| `reports/<date>/brief_<run_id>.html`, `.md` | `report_writer` | Brief only | The rendered report |
+| `reports/<date>/charts/<run_id>/*.png` | `report_writer` | Brief only, if `REPORT_PNG` | Static charts for the Markdown, one folder per run |
+| `reports/<date>/findings_<run_id>.json` | `report_writer` | Brief only | Audit trail: `{run_id, synthesis, findings[], deltas[], issues[]}`, each item the JSON form of the models above |
+| `data/checkpoints.sqlite` | LangGraph `SqliteSaver` | Chat only (`ask()`; `run_brief()` has no checkpointer) | Serialised `AgentState` per `thread_id` and step, including the message history (multi-turn memory). Managed by LangGraph; don't edit by hand |
+| `data/logs/<brief\|chat>_<date>.log` | CLI | CLI runs | Run logs (INFO) |
+
+### `metrics` table schema (`store/metrics.py`)
+| Column | Type | From |
+|---|---|---|
+| `run_id` | TEXT NOT NULL | `AgentState.run_id` (or `seed`) |
+| `run_at` | TEXT NOT NULL | ISO timestamp of the run |
+| `skill` | TEXT NOT NULL | `SkillFinding.skill` |
+| `key`, `submarket` | TEXT NOT NULL | `Metric` |
+| `value` | REAL NOT NULL | `Metric.value` |
+| `unit` | TEXT | `Metric.unit` |
+| `period` | TEXT NOT NULL | `Metric.period` |
+| `source`, `url` | TEXT | `Metric` |
+| `as_of` | TEXT | ISO date or NULL |
+| `note` | TEXT | `Metric.note` |
+
+Index: `(key, submarket, period)`. Rows are never updated, so history is auditable.
+Reading rules:
+* `series()` returns one row per (submarket, period, source), and the latest run wins;
+* `deltas()` compares different periods only, prefers same-source history, and labels
+  cross-source changes.
+
+Narrative content (headlines, insights, signals) is **not** in SQLite. It lives in the
+findings JSON and the reports. `data/` and `reports/` are git-ignored. To reset, delete
+`data/` (it is re-seeded on the next run).
+
+## 7. Fixture formats (`fixtures/`)
+
+| File | Shape | Used by |
+|---|---|---|
+| `findings/<skill>.json` | One `SkillFinding` | Demo mode, tests |
+| `history.json` | list[`Metric`] | Seeds the metrics store |
+| `macro_series.json` | `{name: {name, label, source, url, observations: [{period, value}]}}` | `boe_series` / `ons_series` offline |
+| `search_results.json` | list[`{title, url, snippet, published, source}`] | `web_search` offline |
+| `news.json` | list[`{title, url, published, feed, summary}`] | `rss_news` offline |
+| `documents/index.json` + `*.txt` | `{url: filename}` + text summaries | `fetch_document` offline |
+
+Provenance of every figure: [fixtures/README.md](../fixtures/README.md).

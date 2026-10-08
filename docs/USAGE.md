@@ -87,6 +87,8 @@ right-click 8501, choose **Port Visibility**, then **Organization** or **Public*
 
 ## 3. Tests and evaluations
 
+How the tests work and how to add them: [TESTING.md](TESTING.md).
+
 | Command | What it checks | Cost |
 |---|---|---|
 | `pytest` | Offline suite: skills, tools, validator, store, charts, the full graph (demo and fake LLM) and the Streamlit UI | Free, ~10 s |
@@ -147,15 +149,15 @@ The full template is in `.env.example`.
 
 | Path | Contents |
 |---|---|
-| `reports/<date>/` | `brief_<run>.html`, `brief_<run>.md`, `charts/*.png`, `findings_<run>.json` |
+| `reports/<date>/` | `brief_<run>.html`, `brief_<run>.md`, `charts/<run>/*.png`, `findings_<run>.json` |
 | `data/metrics.sqlite` | Metric history used by deltas, charts and the Dashboard |
 | `data/checkpoints.sqlite` | Chat memory per thread |
 | `data/logs/` | `brief_<date>.log`, `chat_<date>.log` |
 
 * **Reset history:** delete `data/`. It is re-seeded from fixtures on the next run.
 * **Clear old reports:** delete `reports/`.
-* Both folders are git-ignored. What is stored and when is covered in
-  [ARCHITECTURE.md → Persistence](ARCHITECTURE.md#persistence-what-is-stored-where).
+* Both folders are git-ignored. What is stored, when, and the table schema are covered in
+  [DATA_MODEL.md §6](DATA_MODEL.md#6-persistence-what-is-stored-where).
 
 ---
 

@@ -39,9 +39,32 @@ def test_brief_demo_end_to_end_writes_report(monkeypatch):
         assert section in html
     assert "plotly" in html.lower() and "chart-prime_rent_by_submarket" in html
     assert "## Executive summary" in md and "&amp;" not in md  # markdown must not be HTML-escaped
-    pngs = list((Path(state["report_paths"]["html"]).parent / "charts").glob("*.png"))
+    pngs = list((Path(state["report_paths"]["html"]).parent / "charts" / state["run_id"]).glob("*.png"))
     assert pngs, "expected PNG charts (kaleido needs a local Chrome - run `plotly_get_chrome`)"
-    assert "](charts/" in md
+    assert f"](charts/{state['run_id']}/" in md
+
+
+def test_same_day_briefs_keep_their_own_charts(monkeypatch):
+    """Regression: a second brief on the same day must not overwrite the first's PNGs."""
+    import cre_monitor.reporting.render as render
+
+    def fake_export(figures, charts_dir, rel_prefix):  # no Chrome needed
+        for cid in figures:
+            (charts_dir / f"{cid}.png").write_bytes(b"png")
+        return {cid: f"{rel_prefix}/{cid}.png" for cid in figures}
+
+    monkeypatch.setattr(render, "export_pngs", fake_export)
+    monkeypatch.setenv("REPORT_PNG", "1")
+    get_settings.cache_clear()
+
+    first, second = run_brief(), run_brief()
+    for state in (first, second):
+        md_path = Path(state["report_paths"]["markdown"])
+        links = [line.split("](")[1].rstrip(")") for line in md_path.read_text(encoding="utf-8").splitlines()
+                 if line.startswith("![")]
+        assert links and all(f"charts/{state['run_id']}/" in link for link in links)
+        assert all((md_path.parent / link).exists() for link in links)
+    assert first["run_id"] != second["run_id"]
 
 
 def test_first_brief_detects_changes_vs_seeded_history():

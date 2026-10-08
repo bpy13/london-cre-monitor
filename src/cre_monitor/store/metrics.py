@@ -6,7 +6,9 @@ To spot **market shifts** we need memory across runs - "City vacancy was
 ``persist`` graph node then computes :class:`~cre_monitor.schemas.MetricDelta`
 objects and the report charts read time series back out.
 
-Schema (one table, append-only - never update rows, so history is auditable)::
+Schema (one table, append-only - rows are never updated, so history is
+auditable; they are only removed when a user deletes a brief *with* its
+metrics, see :meth:`MetricsStore.delete_run`)::
 
     metrics(run_id, run_at, skill, key, submarket, value, unit,
             period, source, url, as_of, note)
@@ -93,6 +95,19 @@ class MetricsStore:
         with self._conn() as conn:
             conn.executemany("INSERT INTO metrics VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", rows)
         return len(rows)
+
+    def delete_run(self, run_id: str) -> int:
+        """Remove all rows of one run (used when a brief is deleted with its metrics).
+
+        The ``seed`` history is protected: deleting it would break trends and deltas.
+
+        Returns:
+            Number of rows deleted.
+        """
+        if run_id == "seed":
+            raise ValueError("The seed history cannot be deleted")
+        with self._conn() as conn:
+            return conn.execute("DELETE FROM metrics WHERE run_id = ?", (run_id,)).rowcount
 
     def is_empty(self) -> bool:
         with self._conn() as conn:

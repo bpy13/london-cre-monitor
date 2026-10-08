@@ -16,7 +16,8 @@ Tabs:
   data-quality notes and charts relevant to the findings. The "📎 Reference
   earlier conversations" picker adds up to 3 past chats as dated background
   for the next question (see :func:`reference_picker`).
-* **Briefs**    - view/download previously generated market briefs.
+* **Briefs**    - view/download previously generated market briefs, and delete
+  them (optionally with their figures in the metrics history).
 * **Dashboard** - interactive time series from the metrics store.
 
 Where conversations live: the agent's memory per thread is in LangGraph's
@@ -389,22 +390,58 @@ def _figure_relevant(fig, keys: set[str]) -> bool:
 # --------------------------------------------------------------------------
 
 def briefs_tab() -> None:
-    reports = sorted(get_settings().reports_dir.glob("*/brief_*.html"), key=lambda p: p.stat().st_mtime, reverse=True)
-    if not reports:
+    from cre_monitor.reporting.briefs import list_briefs
+
+    if msg := st.session_state.pop("brief_deleted_msg", None):
+        st.success(msg, icon="🗑")
+    briefs = list_briefs()
+    if not briefs:
         st.info("No briefs yet. Click **Run full brief now** in the sidebar, or run `cre-monitor brief`.")
         return
-    labels = {f"{p.parent.name} · {p.stem.removeprefix('brief_')}": p for p in reports}
-    choice = st.selectbox("Brief", list(labels))
-    path: Path = labels[choice]
+    by_label = {b.label: b for b in briefs}
+    brief = by_label[st.selectbox("Brief", list(by_label), key="brief-select")]
+    path: Path = brief.html
     md_path = path.with_suffix(".md")
-    c1, c2 = st.columns(2)
+    c1, c2, c3 = st.columns(3)
     c1.download_button("Download HTML", path.read_bytes(), file_name=path.name, mime="text/html")
     if md_path.exists():
         c2.download_button("Download Markdown", md_path.read_bytes(), file_name=md_path.name, mime="text/markdown")
+    with c3.popover("🗑 Delete brief", width="stretch"):
+        delete_brief_dialog(brief)
     # st.iframe embeds a local HTML file as-is (scripts enabled, needed for the
     # interactive Plotly charts). That is safe here because the file is our own
     # generated report, whose template HTML-escapes all model/source text.
     st.iframe(path, height=1400)
+
+
+def delete_brief_dialog(brief) -> None:
+    """Confirmation content for deleting a brief (rendered inside a popover).
+
+    Two deliberate steps (open the popover, then confirm) guard against accidental
+    clicks. Removing the brief's figures from the metrics history is opt-in,
+    because that changes "what changed" deltas and Dashboard trends.
+    """
+    from cre_monitor.reporting.briefs import delete_brief
+
+    st.markdown(f"Delete the brief **{brief.label}**?")
+    st.caption("Removes its HTML, Markdown, findings JSON and charts. This cannot be undone.")
+    with_metrics = st.checkbox(
+        "Also remove its figures from the metrics history",
+        key=f"del-metrics-{brief.run_id}",
+        help="Off by default: the figures stay available for trends, deltas and the Dashboard.",
+    )
+    if st.button("Delete permanently", type="primary", key=f"del-brief-{brief.run_id}", width="stretch"):
+        try:
+            removed = delete_brief(brief.run_id, with_metrics=with_metrics)
+            extra = " and its metrics history" if with_metrics else ""
+            st.session_state["brief_deleted_msg"] = f"Deleted brief {brief.run_id} ({len(removed)} files/folders){extra}."
+        except Exception as exc:  # noqa: BLE001 - show a reference, not a traceback
+            from cre_monitor.errors import incident_from_exception
+
+            render_incident(incident_from_exception(exc, step="delete-brief"), compact=True)
+            return
+        st.session_state.pop("brief-select", None)  # the deleted label no longer exists
+        st.rerun()
 
 
 # --------------------------------------------------------------------------

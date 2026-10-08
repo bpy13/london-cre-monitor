@@ -91,6 +91,19 @@ def test_api_failure_shows_decorated_panel_with_reference(monkeypatch):
     assert "Error code" not in _assistant_text(at)          # raw text only inside "for engineers"
 
 
+def test_delete_brief_from_briefs_tab():
+    from cre_monitor.graph.builder import run_brief
+    from cre_monitor.reporting.briefs import get_brief
+
+    run_id = run_brief(["office-rents"])["run_id"]
+    at = AppTest.from_file(APP, default_timeout=60).run()
+    at.button(key=f"del-brief-{run_id}").click().run()
+    assert not at.exception, at.exception
+    assert get_brief(run_id) is None
+    assert any(f"Deleted brief {run_id}" in s.value for s in at.success)
+    assert any("No briefs yet" in i.value for i in at.info)
+
+
 def test_conversation_opens_from_url():
     first = AppTest.from_file(APP, default_timeout=60).run()
     first.chat_input[0].set_value("Bank Rate?").run()

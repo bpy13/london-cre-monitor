@@ -5,6 +5,8 @@ Commands
 ``brief``     Run the full market brief once and write the report.
 ``ask``       Ask a single question (chat mode).
 ``chat``      Interactive multi-turn chat in the terminal.
+``briefs``    List generated briefs, or delete one (``briefs delete <id>``).
+``conversations``  List saved chat conversations.
 ``skills``    List loaded skills (and any invalid SKILL.md files).
 ``schedule``  Install / remove / show the weekly scheduled brief (Windows
               Task Scheduler; prints a cron line for Linux/macOS).
@@ -35,6 +37,8 @@ from cre_monitor.config import PROJECT_ROOT, get_settings
 app = typer.Typer(add_completion=False, help="London CRE Market Monitor - LangGraph agent PoC.")
 schedule_app = typer.Typer(help="Manage the recurring scheduled brief.")
 app.add_typer(schedule_app, name="schedule")
+briefs_app = typer.Typer(help="List or delete generated briefs.")
+app.add_typer(briefs_app, name="briefs")
 console = Console()
 
 TASK_NAME = "LondonCREMonitorBrief"
@@ -209,6 +213,43 @@ def list_conversations(limit: int = typer.Option(20, help="How many to show (mos
         table.add_row(c.thread_id, c.title, str(c.turn_count), f"{c.updated_at:%Y-%m-%d %H:%M}")
     console.print(table)
     console.print("[dim]Resume: cre-monitor chat --thread <Thread>   ·   UI: open ?thread=<Thread>[/dim]")
+
+
+@briefs_app.command("list")
+def briefs_list(limit: int = typer.Option(20, help="How many to show (newest first).")) -> None:
+    """List generated briefs with their ids."""
+    from cre_monitor.reporting.briefs import list_briefs
+
+    briefs = list_briefs()[:limit]
+    if not briefs:
+        console.print("No briefs yet. Run `cre-monitor brief`.")
+        return
+    table = Table("Brief id", "Created", "HTML report")
+    for b in briefs:
+        table.add_row(b.run_id, f"{b.created_at:%Y-%m-%d %H:%M}", str(b.html))
+    console.print(table)
+
+
+@briefs_app.command("delete")
+def briefs_delete(
+    run_id: str = typer.Argument(..., help="Brief id from `cre-monitor briefs list`."),
+    with_metrics: bool = typer.Option(
+        False, "--with-metrics", help="Also remove the brief's figures from the metrics history (affects deltas/trends).",
+    ),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Don't ask for confirmation."),
+) -> None:
+    """Delete a brief's files (HTML, Markdown, findings JSON, charts)."""
+    from cre_monitor.reporting.briefs import delete_brief, get_brief
+
+    brief = get_brief(run_id)
+    if brief is None:
+        console.print(f"[red]No brief with id {run_id!r}.[/red] See `cre-monitor briefs list`.")
+        raise typer.Exit(code=1)
+    what = "brief and its metrics history" if with_metrics else "brief"
+    if not yes and not typer.confirm(f"Permanently delete {what} {run_id}?"):
+        raise typer.Exit()
+    removed = delete_brief(run_id, with_metrics=with_metrics)
+    console.print(f"[green]Deleted[/green] {what} {run_id} ({len(removed)} files/folders).")
 
 
 @app.command("skills")

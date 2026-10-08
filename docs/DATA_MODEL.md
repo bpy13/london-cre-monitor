@@ -218,7 +218,18 @@ Full authoring guide: [SKILLS.md](SKILLS.md).
 | `as_of` | TEXT | ISO date or NULL |
 | `note` | TEXT | `Metric.note` |
 
-Index: `(key, submarket, period)`. Rows are never updated, so history is auditable.
+Index: `(key, submarket, period)`. Rows are never updated, so history is auditable. Rows are
+only ever removed when a user deletes a brief **with** its metrics
+(`MetricsStore.delete_run`); the `seed` rows are protected.
+
+Deleting a brief (`reporting/briefs.py: delete_brief`) removes:
+* `brief_<run_id>.html` and `.md`;
+* `findings_<run_id>.json`;
+* `charts/<run_id>/`.
+
+Pre-fix briefs share `charts/*.png`, which is removed with the last brief of the day; the
+date folder is removed when it is empty. Run ids are validated against
+`^\d{8}T\d{6}-[0-9a-f]{6}$`, so a delete can never touch paths outside `reports/`.
 Reading rules:
 * `series()` returns one row per (submarket, period, source), and the latest run wins;
 * `deltas()` compares different periods only, prefers same-source history, and labels

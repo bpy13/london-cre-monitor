@@ -42,6 +42,8 @@ Example: `cre-monitor --offline --demo brief`.
 | `cre-monitor ask "..." --ref ID [--ref ID2]` | Uses up to 3 **earlier conversations as background context**. Works with `chat` too, where it applies to the whole session. See [Referencing earlier conversations](#referencing-earlier-conversations) |
 | `cre-monitor conversations [--limit 20]` | Lists saved conversations (id, title, questions, last active), most recent first. The same list appears in the UI sidebar |
 | `cre-monitor ui [--port 8501] [--debug]` | Streamlit web app (see [§2](#2-web-ui-cre-monitor-ui)). `--debug` shows Streamlit's developer toolbar (Rerun, Clear cache) |
+| `cre-monitor briefs list [--limit 20]` | Lists generated briefs (id, created, HTML path), newest first |
+| `cre-monitor briefs delete ID [--with-metrics] [--yes]` | Deletes a brief's files; asks for confirmation unless `--yes` is given. `--with-metrics` also removes its figures from the metrics history |
 | `cre-monitor schedule install --day MON --time 07:00` | Windows: registers a weekly brief in Task Scheduler. Linux, macOS and Codespaces: prints a crontab line instead |
 | `cre-monitor schedule show` / `schedule remove` | Shows or removes the Windows scheduled task |
 
@@ -116,7 +118,7 @@ conversations would be used.
 | Tab | Purpose |
 |---|---|
 | **Chat** | Multi-turn Q&A. Shows live progress (which skills are running), then the answer with its sources, the skills used, any relevant charts and the data-quality notes |
-| **Briefs** | Browse past briefs (newest first), view them inline, and download the HTML or Markdown |
+| **Briefs** | Browse past briefs (newest first), view them inline, and download the HTML or Markdown. **🗑 Delete brief** opens a confirmation that removes the brief's HTML, Markdown, findings JSON and charts. The **Also remove its figures from the metrics history** checkbox (off by default) also deletes that run's figures, which changes "what changed" deltas and Dashboard trends |
 | **Dashboard** | Explore the metric history in `data/metrics.sqlite`. Pick a metric (e.g. prime rent, vacancy rate, Bank Rate, CPIH) and up to 4 submarkets to see a trend chart and its data table. Each line follows one source; dashed lines mix sources and are not like-for-like. History starts from the seeded fixtures and grows with every brief and chat. It is read-only: no research and no cost |
 
 ### When something goes wrong
@@ -241,7 +243,9 @@ The full template is in `.env.example`.
 
 * **Reset history:** delete `data/`. The metrics history is re-seeded from fixtures on the
   next run. Note that this also deletes all saved conversations.
-* **Clear old reports:** delete `reports/`.
+* **Delete one brief:** Briefs tab → 🗑 Delete brief, or `cre-monitor briefs delete <id>`.
+  Same-day briefs are unaffected, and an empty date folder is removed.
+* **Clear all old reports:** delete `reports/`.
 * Both folders are git-ignored. What is stored, when, and the table schema are covered in
   [DATA_MODEL.md §6](DATA_MODEL.md#6-persistence-what-is-stored-where).
 

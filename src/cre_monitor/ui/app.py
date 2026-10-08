@@ -35,7 +35,6 @@ import uuid
 from pathlib import Path
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 from cre_monitor.config import get_settings
 
@@ -152,7 +151,7 @@ def conversation_list() -> None:
     from cre_monitor.store import get_conversation_store
     from cre_monitor.store.conversations import group_by_recency
 
-    if st.sidebar.button("➕ New chat", use_container_width=True, key="new-chat"):
+    if st.sidebar.button("➕ New chat", width="stretch", key="new-chat"):
         start_new_chat()
         st.rerun()
 
@@ -168,18 +167,18 @@ def conversation_list() -> None:
         for c in items:
             col_open, col_menu = st.sidebar.columns([0.84, 0.16], vertical_alignment="center")
             if col_open.button(
-                c.title, key=f"open-{c.thread_id}", use_container_width=True,
+                c.title, key=f"open-{c.thread_id}", width="stretch",
                 type="primary" if c.thread_id == current else "secondary",  # highlight the open one
                 help=f"{c.turn_count} question(s) · last active {c.updated_at:%d %b %H:%M}",
             ):
                 open_conversation(c.thread_id)
                 st.rerun()
-            with col_menu.popover("⋮", use_container_width=True):
+            with col_menu.popover("⋮", width="stretch"):
                 new_title = st.text_input("Rename", value=c.title, key=f"title-{c.thread_id}")
-                if st.button("Save name", key=f"rename-{c.thread_id}", use_container_width=True):
+                if st.button("Save name", key=f"rename-{c.thread_id}", width="stretch"):
                     store.rename(c.thread_id, new_title)
                     st.rerun()
-                if st.button("🗑 Delete", key=f"delete-{c.thread_id}", use_container_width=True):
+                if st.button("🗑 Delete", key=f"delete-{c.thread_id}", width="stretch"):
                     delete_conversation(c.thread_id)
                     if c.thread_id == current:
                         start_new_chat()
@@ -205,7 +204,7 @@ def settings_panel() -> None:
             f"**LLM:** {'demo (canned findings)' if s.cre_demo_mode else s.model_synthesis}  \n"
             f"**Data:** {'offline fixtures' if s.cre_offline else ('Tavily + public APIs' if s.tavily_api_key else 'Google News + public APIs')}"
         )
-        if st.button("Run full brief now", use_container_width=True, key="run-brief"):
+        if st.button("Run full brief now", width="stretch", key="run-brief"):
             from cre_monitor.graph.builder import run_brief
 
             with st.status("Running all skills...", expanded=False) as status:
@@ -250,7 +249,7 @@ def render_turn_details(turn: dict) -> None:
     if turn.get("charts"):
         cols = st.columns(min(2, len(turn["charts"])))
         for i, fig in enumerate(turn["charts"]):
-            cols[i % len(cols)].plotly_chart(fig, use_container_width=True, key=f"{turn['id']}-{i}")
+            cols[i % len(cols)].plotly_chart(fig, key=f"{turn['id']}-{i}")
     if turn.get("issues"):
         with st.expander(f"Data-quality notes ({len(turn['issues'])})"):
             for issue in turn["issues"]:
@@ -399,7 +398,10 @@ def briefs_tab() -> None:
     c1.download_button("Download HTML", path.read_bytes(), file_name=path.name, mime="text/html")
     if md_path.exists():
         c2.download_button("Download Markdown", md_path.read_bytes(), file_name=md_path.name, mime="text/markdown")
-    components.html(path.read_text(encoding="utf-8"), height=1400, scrolling=True)
+    # st.iframe embeds a local HTML file as-is (scripts enabled, needed for the
+    # interactive Plotly charts). That is safe here because the file is our own
+    # generated report, whose template HTML-escapes all model/source text.
+    st.iframe(path, height=1400)
 
 
 # --------------------------------------------------------------------------
@@ -425,11 +427,11 @@ def dashboard_tab() -> None:
     chosen = c2.multiselect("Submarkets (max 4 for readability)", available, default=default, max_selections=4)
     fig = trend_chart(series, key.replace("_", " ").capitalize(), METRIC_KEYS.get(key, ""), chosen)
     if fig is not None:
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig)
     else:
         st.info("Not enough history for a trend line yet (needs 2+ periods).")
     with st.expander("Data table"):
-        st.dataframe(series[series["submarket"].isin(chosen)] if chosen else series, use_container_width=True)
+        st.dataframe(series[series["submarket"].isin(chosen)] if chosen else series)
 
 
 # --------------------------------------------------------------------------

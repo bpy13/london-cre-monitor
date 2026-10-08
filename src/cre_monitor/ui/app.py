@@ -638,8 +638,10 @@ def delete_brief_dialog(brief) -> None:
 
 def dashboard_tab() -> None:
     from cre_monitor.reporting.charts import TREND_SUBMARKETS, trend_chart
-    from cre_monitor.schemas import METRIC_KEYS
+    from cre_monitor.catalog import metric_units
     from cre_monitor.store import get_store
+
+    METRIC_KEYS = metric_units()
 
     store = get_store()
     if store.is_empty():

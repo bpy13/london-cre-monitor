@@ -42,7 +42,7 @@ import frontmatter
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from cre_monitor.config import get_settings
-from cre_monitor.schemas import METRIC_KEYS
+from cre_monitor.catalog import metric_units
 
 logger = logging.getLogger(__name__)
 
@@ -66,10 +66,12 @@ class SkillMetadata(BaseModel):
     @model_validator(mode="after")
     def _check_vocab(self) -> "SkillMetadata":
         # Catch typos early: a misspelt metric key would silently never chart.
-        unknown = [m for m in self.metrics if m not in METRIC_KEYS]
-        unknown += [m for m in self.sanity_ranges if m not in METRIC_KEYS]
+        units = metric_units()
+        unknown = [m for m in self.metrics if m not in units]
+        unknown += [m for m in self.sanity_ranges if m not in units]
         if unknown:
-            raise ValueError(f"unknown metric keys {unknown}; add them to schemas.METRIC_KEYS")
+            raise ValueError(f"unknown metric keys {unknown}; add them to the metric catalogue "
+                             "(catalog/metrics.yaml or Dashboard > Manage metrics)")
         if self.model_tier not in {"router", "skill", "synthesis"}:
             raise ValueError(f"model_tier must be router|skill|synthesis, got {self.model_tier!r}")
         for key, (lo, hi) in self.sanity_ranges.items():

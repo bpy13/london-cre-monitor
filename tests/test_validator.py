@@ -39,13 +39,20 @@ def test_out_of_range_metric_is_dropped_with_error():
 
 def test_unit_mismatch_unknown_key_and_submarket_warn():
     _, issues = validate(
-        [finding(metric(unit="percent"), metric(key="mystery_metric", unit="x"), metric(submarket="Docklands"))],
+        [finding(metric(unit="percent"), metric(key="mystery_metric", unit="x"), metric(submarket="Atlantis"))],
         today=TODAY,
     )
     text = messages(issues)
     assert "expected '%'" in text
     assert "Unknown metric key" in text
-    assert "Non-canonical submarket 'Docklands'" in text
+    assert "Non-canonical submarket 'Atlantis'" in text
+
+
+def test_submarket_aliases_are_mapped_to_catalogue_names():
+    cleaned, issues = validate([finding(metric(submarket="Docklands"), metric(submarket="city of london",
+                                                                              source="JLL"))], today=TODAY)
+    assert [m.submarket for m in cleaned[0].metrics] == ["Canary Wharf", "City"]
+    assert not any("Non-canonical" in i.message for i in issues)
 
 
 def test_missing_url_and_stale_data_warn():

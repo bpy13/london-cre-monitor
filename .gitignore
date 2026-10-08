@@ -17,6 +17,11 @@ merge-in/*
 style/reports/*
 !style/reports/README.md
 
+# Version history and trash of UI edits to skills/ and catalog/ (local safety net;
+# the files themselves are committed as usual).
+.history/
+skills/.trash/
+
 # Python
 __pycache__/
 *.py[cod]

@@ -7,11 +7,12 @@ operate on ``SkillFinding`` objects only.
 
 Naming conventions for :class:`Metric` (important for charts and history):
 
-* ``key`` is a snake_case identifier from the controlled vocabulary in
-  :data:`METRIC_KEYS` (e.g. ``prime_rent``, ``vacancy_rate``). Skills declare
-  which keys they produce in their SKILL.md frontmatter.
-* ``submarket`` is one of :data:`SUBMARKETS`, or ``"Central London"`` for
-  market-wide figures, or ``"UK"`` / ``"London"`` for macro series.
+* ``key`` is a snake_case identifier from the metric catalogue
+  (``catalog/metrics.yaml``, e.g. ``prime_rent``, ``vacancy_rate``). Skills
+  declare which keys they produce in their SKILL.md frontmatter.
+* ``submarket`` is a name from the submarket catalogue
+  (``catalog/submarkets.yaml``): ``"Central London"`` for market-wide figures,
+  ``"UK"`` / ``"London"`` for macro series.
 * ``period`` is the period the figure *describes* (``"2026-Q2"``,
   ``"2026-08"``); ``as_of`` is when it was *published*.
 """
@@ -26,68 +27,9 @@ from pydantic import BaseModel, Field, field_validator
 # --------------------------------------------------------------------------
 # Controlled vocabularies
 # --------------------------------------------------------------------------
-
-#: Canonical submarket names. Skills are instructed to normalise broker
-#: naming (e.g. "Docklands", "E14") to these labels so that figures from
-#: different sources line up in charts and in the metrics history.
-SUBMARKETS: tuple[str, ...] = (
-    "Central London",
-    "City",
-    "West End",
-    "Midtown",
-    "King's Cross",
-    "Southbank",
-    "Canary Wharf",
-    "Shoreditch & Fringe",
-    "Paddington",
-    "Battersea & Nine Elms",
-)
-
-#: Geographic labels used for non-submarket (macro) series.
-MACRO_GEOGRAPHIES: tuple[str, ...] = ("UK", "London")
-
-#: Metric keys with their expected unit. The validator uses this to catch
-#: unit mix-ups (e.g. a rent reported in % instead of £ psf).
-METRIC_KEYS: dict[str, str] = {
-    # Rents
-    "prime_rent": "GBP psf pa",
-    "grade_a_rent": "GBP psf pa",
-    "rent_free_months": "months",
-    "prime_rent_growth_yoy": "%",
-    # Vacancy / availability
-    "vacancy_rate": "%",
-    "availability_sqft": "sq ft",
-    "grade_a_share_of_availability": "%",
-    "new_build_vacancy_rate": "%",
-    # Leasing
-    "take_up_sqft": "sq ft",
-    "take_up_vs_10y_avg": "%",
-    "take_up_10y_avg_sqft": "sq ft",  # quarterly 10-year average (chart reference line)
-    "under_offer_sqft": "sq ft",
-    "active_demand_sqft": "sq ft",
-    # Supply pipeline
-    "under_construction_sqft": "sq ft",
-    "speculative_under_construction_sqft": "sq ft",
-    "pre_let_share": "%",
-    "completions_sqft": "sq ft",
-    # Pipeline by expected completion year (period = "2027"): pre-let vs speculative split.
-    "pipeline_prelet_sqft": "sq ft",
-    "pipeline_speculative_sqft": "sq ft",
-    "refurbishment_pipeline_sqft": "sq ft",
-    # Investment
-    "prime_yield": "%",
-    "investment_volume_gbp": "GBP",
-    # Macro
-    "bank_rate": "%",
-    "sonia": "%",
-    "gilt_10y_yield": "%",
-    "cpih_yoy": "%",
-    "cpi_yoy": "%",
-    "gdp_growth_qoq": "%",
-    "unemployment_rate": "%",
-    "london_employment_rate": "%",
-    "office_utilisation": "%",
-}
+# Metric keys (with units) and submarket names live in the editable catalogue
+# (catalog/metrics.yaml, catalog/submarkets.yaml), read via cre_monitor.catalog:
+# get_catalog().units(), .submarket_names(), .macro_geographies().
 
 
 class SignalType(str, Enum):
@@ -123,10 +65,10 @@ class Citation(BaseModel):
 class Metric(BaseModel):
     """One numeric data point, e.g. *prime West End rent = £175 psf in 2026-Q1*."""
 
-    key: str = Field(description=f"Metric identifier. One of: {', '.join(METRIC_KEYS)}.")
-    submarket: str = Field(
-        description=f"One of {', '.join(SUBMARKETS + MACRO_GEOGRAPHIES)}."
-    )
+    # The allowed keys / places are listed in the research prompt (they are editable,
+    # so they can't be baked into this schema at import time).
+    key: str = Field(description="Metric key from the list in your instructions, e.g. 'prime_rent'.")
+    submarket: str = Field(description="Submarket or geography from the list in your instructions.")
     value: float = Field(description="Numeric value only - no units or symbols.")
     unit: str = Field(description="Unit, e.g. 'GBP psf pa', '%', 'sq ft', 'months'.")
     period: str = Field(description="Period described, e.g. '2026-Q2' or '2026-08'.")
@@ -139,7 +81,7 @@ class Metric(BaseModel):
     @classmethod
     def _normalise_key(cls, v: str) -> str:
         # Be forgiving with LLM output ("Prime Rent" -> "prime_rent"); the
-        # validator node still flags keys that are not in METRIC_KEYS.
+        # validator node still flags keys that are not in the catalogue.
         return v.strip().lower().replace(" ", "_").replace("-", "_")
 
 

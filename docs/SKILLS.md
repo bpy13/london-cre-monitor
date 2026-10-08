@@ -12,7 +12,7 @@ name: office-rents                 # REQUIRED - must equal the folder name
 description: >-                    # REQUIRED (>= 20 chars) - the ONLY text the router sees.
   Prime and Grade A office rents ...  Say what it covers AND when to use it.
 tools: [web_search, fetch_document, metrics_history]   # allow-list; [] = meta-skill
-metrics: [prime_rent, grade_a_rent]                    # keys it should return (schemas.METRIC_KEYS)
+metrics: [prime_rent, grade_a_rent]                    # keys it should return (catalog/metrics.yaml)
 sanity_ranges:                                         # validator drops values outside these
   prime_rent: [30, 400]
 preferred_domains: [knightfrank.co.uk, cbre.co.uk]     # hints for search queries
@@ -54,7 +54,8 @@ never inventing figures, normalising submarket names, and using the controlled m
 
 ## Adding a skill: checklist
 1. `mkdir skills/<name>` and write `SKILL.md` (copy an existing one as a template).
-2. Any new metric keys go in `src/cre_monitor/schemas.py::METRIC_KEYS` (with the unit).
+2. Any new metric keys go in `catalog/metrics.yaml` (key, label, unit, group, definition),
+   or use the UI: Dashboard → Manage metrics.
 3. Add `fixtures/findings/<name>.json`: a realistic, **cited** `SkillFinding` used in
    demo mode and tests.
 4. Run `cre-monitor skills` to confirm it loads (invalid skills are listed in red).

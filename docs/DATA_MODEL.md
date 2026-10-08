@@ -32,17 +32,26 @@ Skill sub-agent ──► SkillFinding ─┬─ metrics[]  : Metric      ──
 * All models are **Pydantic v2** classes. They validate LLM output, give structured-output
   JSON schemas to Claude, and serialise to JSON for the audit trail.
 
-## 2. Controlled vocabularies
+## 2. Controlled vocabularies (the catalogue)
 
 Shared vocabularies make figures from different skills and brokers line up in history,
-deltas and charts. Skills are instructed to use them, and the validator flags anything else.
+deltas and charts. They are **data, not code**: two YAML files in `catalog/`, loaded by
+`cre_monitor/catalog.py`, editable by hand or from the UI (Dashboard → Manage metrics /
+Manage submarkets). The research prompt lists them, skills may only declare catalogue
+metrics, and the validator flags anything else.
 
-**Submarkets** (`SUBMARKETS`): Central London, City, West End, Midtown, King's Cross,
-Southbank, Canary Wharf, Shoreditch & Fringe, Paddington, Battersea & Nine Elms.
+### Metric catalogue (`catalog/metrics.yaml`, `MetricDef`)
+| Field | Type | Notes |
+|---|---|---|
+| `key` | str | snake_case, 3-60 chars; stored with every figure; never renamed |
+| `label` | str | Plain-English name shown in the UI, unique (case-insensitive) |
+| `unit` | str | Expected unit; a mismatch triggers a validator warning |
+| `group` | str | Dashboard grouping: Rents, Vacancy & availability, Leasing, Supply pipeline, Investment, Occupier demand, Macro |
+| `definition` | str | What exactly is measured (shown in the UI and to the add-metric assessment) |
+| `tracked` | bool | Shown on the Dashboard by default |
+| `added_at` | str | Set when added through the UI |
 
-**Macro geographies** (`MACRO_GEOGRAPHIES`): `UK`, `London`.
-
-**Metric keys → expected unit** (`METRIC_KEYS`). A unit mismatch triggers a validator warning.
+The original 31 metrics:
 
 | Group | Keys (unit) |
 |---|---|
@@ -54,6 +63,32 @@ Southbank, Canary Wharf, Shoreditch & Fringe, Paddington, Battersea & Nine Elms.
 | Macro | `bank_rate`, `sonia`, `gilt_10y_yield`, `cpih_yoy`, `cpi_yoy`, `gdp_growth_qoq`, `unemployment_rate`, `london_employment_rate` (%) |
 | Occupier | `office_utilisation` (%) |
 
+Tracked by default: prime rent, vacancy rate, take-up, under construction, prime yield,
+Bank Rate, 10-year gilt yield.
+
+**Protected metrics** (`catalog.PROTECTED_METRICS`) are referenced by code (report charts,
+KPI tiles, macro data tools) and cannot be removed: `prime_rent`, `vacancy_rate`,
+`take_up_sqft`, `take_up_10y_avg_sqft`, `pipeline_prelet_sqft`, `pipeline_speculative_sqft`
+and the 8 macro series. A metric still listed by a skill must be removed from that skill first.
+
+### Submarket catalogue (`catalog/submarkets.yaml`, `SubmarketDef`)
+| Field | Type | Notes |
+|---|---|---|
+| `name` | str | Canonical name stored with every figure; never renamed |
+| `kind` | `submarket` \| `macro` | Office submarket, or geography for economic series |
+| `aliases` | list[str] | Other spellings; the validator maps them (case-insensitive) to `name`, e.g. Docklands → Canary Wharf |
+| `description` | str | What area it covers |
+
+Original entries: Central London, City, West End, Midtown, King's Cross, Southbank, Canary
+Wharf, Shoreditch & Fringe, Paddington, Battersea & Nine Elms; macro: UK, London. Names and
+aliases must be unique across all entries. **Protected:** Central London, UK, London.
+
+### Editing safety (`versioned.py`)
+Every catalogue (and skill) edit through the code keeps the previous file in a git-ignored
+`.history/` folder (last 50 versions) and is refused with `ConflictError` if the file
+changed since the editor loaded it (`Catalog.version` = content hash). Editing clears the
+caches that embed the vocabulary (catalogue, skill registry, compiled skill agents).
+
 **Period format** (`Metric.period`): quarters `2026-Q2`, months `2026-08`, years `2027`.
 Periods sort as strings, which is what the delta and trend logic relies on.
 
@@ -64,10 +99,10 @@ Periods sort as strings, which is what the delta and trend logic relies on.
 ### `Metric`: one numeric data point
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `key` | str | ✓ | From `METRIC_KEYS`; normalised to snake_case |
-| `submarket` | str | ✓ | From `SUBMARKETS` or `UK`/`London` |
+| `key` | str | ✓ | From the metric catalogue; normalised to snake_case |
+| `submarket` | str | ✓ | From the submarket catalogue (aliases are mapped by the validator) |
 | `value` | float | ✓ | Number only, no units |
-| `unit` | str | ✓ | Should match `METRIC_KEYS[key]` |
+| `unit` | str | ✓ | Should match the catalogue unit for `key` |
 | `period` | str | ✓ | Period described, e.g. `2026-Q2` |
 | `source` | str | ✓ | Publisher, e.g. `JLL`. Drives the like-for-like logic |
 | `url` | str | – (`""`) | Link to the source. Missing → validator warning |
@@ -204,7 +239,7 @@ sub-agent's instructions.
 | `name` | str | required | Must equal the folder name |
 | `description` | str (≥ 20 chars) | required | The only text the router sees |
 | `tools` | list[str] | `[]` | Allow-list from the tool catalogue; `[]` = meta-skill |
-| `metrics` | list[str] | `[]` | Keys the skill should return; must exist in `METRIC_KEYS` |
+| `metrics` | list[str] | `[]` | Keys the skill should return; must exist in the metric catalogue |
 | `sanity_ranges` | dict[key → [min, max]] | `{}` | Validator drops values outside these |
 | `preferred_domains` | list[str] | `[]` | Search hints |
 | `model_tier` | str | `skill` | `router` / `skill` / `synthesis` |

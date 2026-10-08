@@ -1,0 +1,47 @@
+# Submarket catalogue: the canonical place names figures are recorded against.
+#
+# Edited by the UI (Dashboard > Manage submarkets) or by hand. Skills are told to
+# normalise broker naming to these names; the validator also maps `aliases`
+# (case-insensitive) to the canonical name, so "Docklands" is stored as "Canary Wharf".
+# kind: submarket = office submarket; macro = geography for economic series (UK, London).
+# Central London, UK and London are used by code (KPI tiles, macro charts) and are protected.
+# See docs/DATA_MODEL.md "Submarket catalogue".
+submarkets:
+- name: Central London
+  description: Whole central London office market (market-wide figures).
+  aliases: [Central]
+- name: City
+  description: The City of London (EC2-EC4) core financial district.
+  aliases: [City of London, City Core]
+- name: West End
+  description: Mayfair, St James's, Marylebone, Soho, Fitzrovia, Covent Garden, Victoria.
+  aliases: [West End core]
+- name: Midtown
+  description: Holborn, Bloomsbury, Farringdon fringes between the City and the West End.
+  aliases: [Holborn]
+- name: King's Cross
+  description: King's Cross, St Pancras and Euston.
+  aliases: [Kings Cross, King's Cross & Euston]
+- name: Southbank
+  description: South of the river from Waterloo to London Bridge.
+  aliases: [South Bank]
+- name: Canary Wharf
+  description: Canary Wharf and the wider Docklands (E14).
+  aliases: [Docklands, Canary Wharf & Docklands, E14]
+- name: Shoreditch & Fringe
+  description: Shoreditch, Old Street, Clerkenwell and the City fringe ("Tech Belt").
+  aliases: [Shoreditch, City Fringe, Tech Belt]
+- name: Paddington
+  description: Paddington Basin and Paddington Central.
+  aliases: []
+- name: Battersea & Nine Elms
+  description: Battersea Power Station, Nine Elms and Vauxhall.
+  aliases: [Battersea, Nine Elms]
+- name: UK
+  kind: macro
+  description: United Kingdom (economic series).
+  aliases: []
+- name: London
+  kind: macro
+  description: Greater London (economic series, e.g. employment).
+  aliases: []

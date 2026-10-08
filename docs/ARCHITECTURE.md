@@ -108,7 +108,9 @@ engineers)". See [USAGE.md → When something goes wrong](USAGE.md#when-somethin
 ## Data model
 Every skill returns one `SkillFinding` (metrics, signals, citations, narrative). Shared
 vocabularies for metric keys, units and submarkets let figures from different skills and
-brokers line up in history, deltas and charts. All structures are documented field by
+brokers line up in history, deltas and charts. They live in an editable **catalogue**
+(`catalog/*.yaml`, `catalog.py`) rather than in code; keys and places the code itself
+depends on are protected. All structures are documented field by
 field in [DATA_MODEL.md](DATA_MODEL.md): domain models, graph state, `SKILL.md`
 frontmatter, the SQLite schema and fixture formats.
 
@@ -199,7 +201,8 @@ style/reports/*.md|html|pdf ──► style learn ──► style/profile.json (
 |---|---|
 | Add a research area | New `skills/<name>/SKILL.md` ([guide](SKILLS.md)) |
 | Add a data source | New `@tool` in `tools/` with an offline fixture path; register in `tools/__init__.py`; list it in skills' `tools` |
-| Add a metric | Add the key + unit to `schemas.METRIC_KEYS`; reference it in a skill's `metrics` / `sanity_ranges` |
+| Add a metric | Add it to `catalog/metrics.yaml`; reference it in a skill's `metrics` / `sanity_ranges` |
+| Add a submarket | Add it to `catalog/submarkets.yaml` (with aliases) |
 | Add a chart | New function in `reporting/charts.py`, register in `build_charts` |
 | Change the report's writing style | Put examples in `style/reports/`, run `cre-monitor style learn`, review/edit `style/profile.json` |
 | Change models | `.env`: `MODEL_ROUTER`, `MODEL_SKILL`, `MODEL_SYNTHESIS` |

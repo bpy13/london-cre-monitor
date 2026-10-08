@@ -48,7 +48,8 @@ from pydantic import BaseModel, Field, ValidationError
 from cre_monitor.config import get_settings
 from cre_monitor.graph.state import SkillTask
 from cre_monitor.llm import get_llm
-from cre_monitor.schemas import METRIC_KEYS, SUBMARKETS, Citation, Metric, Signal, SkillFinding
+from cre_monitor.catalog import get_catalog
+from cre_monitor.schemas import Citation, Metric, Signal, SkillFinding
 from cre_monitor.skills import Skill, get_registry
 from cre_monitor.tools import get_tools
 from cre_monitor.tools.fixtures import load_json
@@ -66,8 +67,8 @@ Research rules (apply to every skill):
    Verify key numbers with fetch_document when a search snippet is ambiguous.
 4. Brokers define metrics differently (e.g. availability vs vacancy, take-up incl./excl. pre-lets).
    Record the source for every figure and keep conflicting figures as separate metrics - do not average.
-5. Normalise submarket names to: {submarkets}.
-6. Metric keys must come from: {metric_keys}.
+5. Normalise submarket names to: {submarkets}. Economic series use: {macro_geographies}.
+6. Metric keys (with expected unit) must come from: {metric_keys}.
 7. Signals are from the perspective of a London office landlord/investor/developer.
 8. Be concise. Stop researching once you have the evidence you need.
 9. Finish by calling the submit_finding tool exactly once with your structured result. Include only
@@ -124,10 +125,12 @@ class SkillAgentState(TypedDict, total=False):
 
 def build_system_prompt(skill: Skill) -> str:
     """Common rules + skill instructions, with today's date filled in."""
+    cat = get_catalog()
     return COMMON_RULES.format(
         today=date.today().isoformat(),
-        submarkets=", ".join(SUBMARKETS),
-        metric_keys=", ".join(METRIC_KEYS),
+        submarkets=", ".join(cat.submarket_names()),
+        macro_geographies=", ".join(cat.macro_geographies()),
+        metric_keys=", ".join(f"{m.key} ({m.unit})" for m in cat.metrics),
         skill_name=skill.name,
         instructions=skill.instructions,
     )
@@ -221,8 +224,20 @@ def build_skill_agent(skill_name: str):
 
 
 def demo_finding(skill_name: str) -> SkillFinding:
-    """Load the canned finding for ``skill_name`` from ``fixtures/findings``."""
-    return SkillFinding.model_validate(load_json("findings", f"{skill_name}.json"))
+    """Load the canned finding for ``skill_name`` from ``fixtures/findings``.
+
+    Skills added later (e.g. from the UI's Skills tab) have no canned finding;
+    they return an empty, clearly labelled finding rather than an error, so a
+    demo brief still completes.
+    """
+    try:
+        return SkillFinding.model_validate(load_json("findings", f"{skill_name}.json"))
+    except FileNotFoundError:
+        return SkillFinding(
+            skill=skill_name, headline=f"No demo data for {skill_name}.",
+            summary="This skill has no canned demo finding (fixtures/findings). Run in live mode to research it.",
+            confidence=0.0,
+        )
 
 
 def run_skill(skill_name: str, question: str) -> SkillFinding:

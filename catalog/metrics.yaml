@@ -1,0 +1,173 @@
+# Metric catalogue: every metric the agent may record, with its unit and meaning.
+#
+# Edited by the UI (Dashboard > Manage metrics) or by hand. Read by:
+#   * the skills (allowed metric keys in each SKILL.md `metrics:` list),
+#   * the validator (unit check, unknown-key warning),
+#   * the research prompt (list of allowed keys),
+#   * the Dashboard (labels, units, definitions; `tracked: true` = shown by default).
+# Keys used directly by code (report charts, KPI tiles, macro tools) are protected
+# in cre_monitor/catalog.py and cannot be removed from the UI.
+# See docs/DATA_MODEL.md "Metric catalogue".
+metrics:
+- key: prime_rent
+  label: Prime rent
+  unit: GBP psf pa
+  group: Rents
+  definition: Top headline rent achievable for best-in-class space (best building, typical size), per sq ft per year. Not the single record deal.
+  tracked: true
+- key: grade_a_rent
+  label: Grade A rent
+  unit: GBP psf pa
+  group: Rents
+  definition: Typical headline rent for new or comprehensively refurbished space; below prime.
+- key: rent_free_months
+  label: Rent-free period
+  unit: months
+  group: Rents
+  definition: Months of rent-free on a typical 10-year lease - the main landlord incentive.
+- key: prime_rent_growth_yoy
+  label: Prime rent growth (y/y)
+  unit: '%'
+  group: Rents
+  definition: Change in prime rent versus the same period a year earlier.
+- key: vacancy_rate
+  label: Vacancy rate
+  unit: '%'
+  group: Vacancy & availability
+  definition: Vacant space as a share of total office stock. Brokers differ on whether under-offer space is included.
+  tracked: true
+- key: availability_sqft
+  label: Available space
+  unit: sq ft
+  group: Vacancy & availability
+  definition: Space being actively marketed (vacant now or within ~12 months).
+- key: grade_a_share_of_availability
+  label: Grade A share of availability
+  unit: '%'
+  group: Vacancy & availability
+  definition: Share of available space that is Grade A (new or refurbished).
+- key: new_build_vacancy_rate
+  label: New-build vacancy rate
+  unit: '%'
+  group: Vacancy & availability
+  definition: Vacancy rate for new or newly refurbished space only.
+- key: take_up_sqft
+  label: Take-up
+  unit: sq ft
+  group: Leasing
+  definition: Space let (leases signed) in the period. Some brokers include pre-lets and renewals, others don't.
+  tracked: true
+- key: take_up_vs_10y_avg
+  label: Take-up vs 10-year average
+  unit: '%'
+  group: Leasing
+  definition: Take-up in the period relative to its 10-year quarterly average (+ = above average).
+- key: take_up_10y_avg_sqft
+  label: Take-up 10-year average
+  unit: sq ft
+  group: Leasing
+  definition: Quarterly 10-year average take-up, used as the reference line on the take-up chart.
+- key: under_offer_sqft
+  label: Space under offer
+  unit: sq ft
+  group: Leasing
+  definition: Space agreed but not yet signed - a leading indicator of take-up.
+- key: active_demand_sqft
+  label: Active demand
+  unit: sq ft
+  group: Leasing
+  definition: Total space requirements of occupiers actively searching.
+- key: under_construction_sqft
+  label: Under construction
+  unit: sq ft
+  group: Supply pipeline
+  definition: Office space currently being built or comprehensively refurbished.
+  tracked: true
+- key: speculative_under_construction_sqft
+  label: Speculative under construction
+  unit: sq ft
+  group: Supply pipeline
+  definition: Space under construction without a tenant signed (not pre-let).
+- key: pre_let_share
+  label: Pre-let share
+  unit: '%'
+  group: Supply pipeline
+  definition: Share of space under construction already let before completion.
+- key: completions_sqft
+  label: Completions
+  unit: sq ft
+  group: Supply pipeline
+  definition: New or refurbished space completed in the period.
+- key: pipeline_prelet_sqft
+  label: Pipeline - pre-let
+  unit: sq ft
+  group: Supply pipeline
+  definition: Space due to complete in a given year (period = year) that is already pre-let.
+- key: pipeline_speculative_sqft
+  label: Pipeline - speculative
+  unit: sq ft
+  group: Supply pipeline
+  definition: Space due to complete in a given year (period = year) that is not yet let.
+- key: refurbishment_pipeline_sqft
+  label: Refurbishment pipeline
+  unit: sq ft
+  group: Supply pipeline
+  definition: Space in the pipeline that is refurbishment rather than new build.
+- key: prime_yield
+  label: Prime yield
+  unit: '%'
+  group: Investment
+  definition: Initial yield on a prime, fully let office investment - the main pricing measure for buyers.
+  tracked: true
+- key: investment_volume_gbp
+  label: Investment volume
+  unit: GBP
+  group: Investment
+  definition: Value of office investment transactions completed in the period.
+- key: bank_rate
+  label: Bank Rate
+  unit: '%'
+  group: Macro
+  definition: Bank of England policy rate - drives borrowing costs and property yields.
+  tracked: true
+- key: sonia
+  label: SONIA
+  unit: '%'
+  group: Macro
+  definition: Sterling overnight interest rate, the benchmark for floating-rate property debt.
+- key: gilt_10y_yield
+  label: 10-year gilt yield
+  unit: '%'
+  group: Macro
+  definition: UK 10-year government bond yield - the risk-free benchmark property yields are priced against.
+  tracked: true
+- key: cpih_yoy
+  label: CPIH inflation
+  unit: '%'
+  group: Macro
+  definition: UK consumer prices including owner-occupier housing costs, change year on year (ONS headline).
+- key: cpi_yoy
+  label: CPI inflation
+  unit: '%'
+  group: Macro
+  definition: UK consumer price inflation, year on year (the Bank of England's target measure).
+- key: gdp_growth_qoq
+  label: GDP growth (q/q)
+  unit: '%'
+  group: Macro
+  definition: UK real GDP growth versus the previous quarter.
+- key: unemployment_rate
+  label: Unemployment rate
+  unit: '%'
+  group: Macro
+  definition: UK unemployment rate, aged 16+ (ONS Labour Force Survey).
+- key: london_employment_rate
+  label: London employment rate
+  unit: '%'
+  group: Macro
+  definition: Share of London residents aged 16-64 in work (Nomis).
+- key: office_utilisation
+  label: Office utilisation
+  unit: '%'
+  group: Occupier demand
+  definition: Share of office capacity in use on a typical day (hybrid working indicator).

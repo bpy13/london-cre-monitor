@@ -93,6 +93,8 @@ class Settings(BaseSettings):
 
     # --- Paths -------------------------------------------------------------
     skills_dir: Path = PROJECT_ROOT / "skills"
+    #: Metric + submarket vocabularies (metrics.yaml, submarkets.yaml), editable from the UI.
+    catalog_dir: Path = PROJECT_ROOT / "catalog"
     fixtures_dir: Path = PROJECT_ROOT / "fixtures"
     data_dir: Path = PROJECT_ROOT / "data"
     reports_dir: Path = PROJECT_ROOT / "reports"

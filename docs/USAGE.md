@@ -59,6 +59,12 @@ cre-monitor --live ask "How is Canary Wharf vacancy trending?"
 
 Opens on port 8501: `http://localhost:8501` locally, or as a forwarded port in Codespaces.
 
+Streamlit's **Deploy** button and developer options (rerun, clear cache) are hidden by
+`toolbarMode = "viewer"`. It is set in `.streamlit/config.toml` and also passed by
+`cre-monitor ui`. Deploy would publish to Streamlit Community Cloud, which this PoC is not
+set up for: its storage is temporary and apps are public by default. The **⋮** menu
+(theme, print) remains.
+
 ### Sidebar
 
 The sidebar works like a modern chatbot.

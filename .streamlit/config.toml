@@ -1,0 +1,10 @@
+# Streamlit settings for the London CRE Monitor UI.
+# Streamlit reads this file from the folder it is launched in (the repo root for
+# `streamlit run src/cre_monitor/ui/app.py`). `cre-monitor ui` also passes the
+# same options on the command line, so it works from any folder.
+
+[client]
+# "viewer" hides Streamlit's developer options - the Deploy button (which would
+# publish the app to Streamlit Community Cloud, not supported for this PoC) and
+# rerun / clear cache - while keeping the ⋮ menu (theme settings, print, about).
+toolbarMode = "viewer"

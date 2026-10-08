@@ -230,7 +230,13 @@ def list_skills() -> None:
 def ui(port: int = 8501) -> None:
     """Launch the Streamlit chat UI and dashboard."""
     app_path = Path(__file__).parent / "ui" / "app.py"
-    subprocess.run([sys.executable, "-m", "streamlit", "run", str(app_path), "--server.port", str(port)], check=False)
+    subprocess.run(
+        [sys.executable, "-m", "streamlit", "run", str(app_path), "--server.port", str(port),
+         # Hide Streamlit's Deploy button / developer options regardless of the
+         # launch folder (mirrors .streamlit/config.toml at the repo root).
+         "--client.toolbarMode", "viewer"],
+        check=False,
+    )
 
 
 # --------------------------------------------------------------------------

@@ -25,6 +25,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 
 from cre_monitor.config import get_settings
 from cre_monitor.errors import Incident, classify
+from cre_monitor.style.profile import StyleProfile, resolve_layout
 from cre_monitor.reporting.charts import build_charts
 from cre_monitor.schemas import Citation, ExecutiveSynthesis, MetricDelta, SkillFinding, ValidationIssue
 from cre_monitor.skills import get_registry
@@ -147,6 +148,7 @@ def write_report(
     issues: list[ValidationIssue],
     out_dir: Path | None = None,
     incident: Incident | None = None,
+    style: StyleProfile | None = None,
 ) -> dict[str, Path]:
     """Render and save the report files.
 
@@ -160,6 +162,8 @@ def write_report(
         incident: Failures of this run, shown as a user-friendly problem panel
             with a reference ID. Raw error text appears only in the collapsed
             "Technical details" section (HTML) / appendix (Markdown).
+        style: House style profile; sets section order and headings
+            (``style.profile.resolve_layout``). None = built-in layout.
 
     Returns:
         Mapping of output kind (``html``, ``markdown``, ``json``) to path.
@@ -201,6 +205,8 @@ def write_report(
         "issues": [i for i in issues if not (incident and i.message.startswith("Skill failed:"))],
         "incident": incident,
         "support_contact": s.support_contact,
+        "layout": resolve_layout(style),       # [(section id, heading), ...]
+        "style_name": style.name if style else None,
         "charts": chart_html,
         "png_charts": png_paths,
         "citations": all_citations(findings),

@@ -43,8 +43,8 @@ structures and storage, see [DATA_MODEL.md](DATA_MODEL.md). For tests, see
 | `skill_runner` | sub-agent | Run one skill as its own compiled LangGraph (see below) → `SkillFinding` |
 | `validator` | deterministic | Range/unit/vocabulary/staleness/citation checks; flags cross-source conflicts; drops implausible metrics |
 | `persist` | deterministic | Seed history on first run, compute deltas vs earlier periods, append metrics |
-| `synthesis` | LLM (brief) | `market-synthesis` meta-skill → `ExecutiveSynthesis` |
-| `report_writer` | deterministic | Charts + HTML/Markdown/JSON |
+| `synthesis` | LLM (brief) | `market-synthesis` meta-skill → `ExecutiveSynthesis`; follows the house style if one is learned |
+| `report_writer` | deterministic (+ optional style editor LLM) | House-style rewrite of topic text (number-guarded), then charts + HTML/Markdown/JSON in the house layout |
 | `chat_answer` | LLM (chat) | Cited conversational answer, appended to `messages`; uses referenced conversations as dated background |
 
 ### Referencing earlier conversations
@@ -163,7 +163,33 @@ Plotly figures follow the team's data-viz rules (documented in `charts.py`):
 * interactive hover in HTML.
 
 The Jinja2 templates render HTML (interactive) and Markdown (with PNGs via kaleido;
-PNG export failure is non-fatal).
+PNG export failure is non-fatal). Both loop over a `layout` list of `(section, heading)`
+pairs, so section order and headings are data, not template code.
+
+### House style (`style/`)
+The brief can imitate a set of example reports (`style/reports/`):
+
+```
+style/reports/*.md|html|pdf ──► style learn ──► style/profile.json (StyleProfile)
+                                   (LLM, or heuristic fallback)        │
+       synthesis node: profile appended to the system prompt ◄─────────┤
+       report_writer:  editor.apply_style (topic text) + resolve_layout ◄┘
+```
+
+* **Learning** (`style/profile.py`): Claude reads bounded excerpts (8 files × 6,000 chars)
+  and returns a structured `StyleProfile` that *describes* the style (voice, layout,
+  number conventions, techniques). It never stores copied text. A rule-based learner is
+  the fallback when there is no key or the LLM call fails.
+* **Applying** happens at three points, and each has a safe fallback:
+  1. *Layout*, in the templates, via `resolve_layout`, which never drops a section.
+  2. *Synthesis*: the profile is appended to the system prompt, and the factual rules
+     explicitly take priority.
+  3. *Style editor* (`style/editor.py`): one structured call rewrites topic headlines,
+     summaries and insights. A **number guard** keeps a topic's original text if the
+     rewrite adds or changes any figure. Errors keep the original findings. Metrics,
+     citations and failed topics are never passed through the editor.
+* LLM steps run only in live mode. Demo mode applies the layout alone.
+  `REPORT_STYLE=0` or `brief --no-style` switches all of it off.
 
 ## Extension points
 | Want to... | Do this |
@@ -172,6 +198,7 @@ PNG export failure is non-fatal).
 | Add a data source | New `@tool` in `tools/` with an offline fixture path; register in `tools/__init__.py`; list it in skills' `tools` |
 | Add a metric | Add the key + unit to `schemas.METRIC_KEYS`; reference it in a skill's `metrics` / `sanity_ranges` |
 | Add a chart | New function in `reporting/charts.py`, register in `build_charts` |
+| Change the report's writing style | Put examples in `style/reports/`, run `cre-monitor style learn`, review/edit `style/profile.json` |
 | Change models | `.env`: `MODEL_ROUTER`, `MODEL_SKILL`, `MODEL_SYNTHESIS` |
 | Deliver reports elsewhere | Add a node after `report_writer` (e.g. email/Teams) |
 

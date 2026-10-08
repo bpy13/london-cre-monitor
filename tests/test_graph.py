@@ -144,6 +144,8 @@ def fake_llm(monkeypatch):
     for module in ("planner", "skill_runner", "synthesis", "chat_answer"):
         mod = importlib.import_module(f"cre_monitor.graph.nodes.{module}")
         monkeypatch.setattr(mod, "get_llm", lambda tier="skill": model)
+    # Modules that import get_llm at call time (style learner / editor) read it from cre_monitor.llm.
+    monkeypatch.setattr("cre_monitor.llm.get_llm", lambda tier="skill": model)
     model.__dict__["macro"] = macro  # handy for tests that script their own responses
     return model
 

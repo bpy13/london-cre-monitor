@@ -87,6 +87,9 @@ class Settings(BaseSettings):
     #: Export static PNG charts for the Markdown report (needs a local Chrome
     #: for kaleido). Tests switch it off for speed.
     report_png: bool = True
+    #: Apply the learned house style (style/profile.json) to briefs: layout, executive
+    #: summary and topic wording. No effect until `cre-monitor style learn` has run.
+    report_style: bool = True
 
     # --- Paths -------------------------------------------------------------
     skills_dir: Path = PROJECT_ROOT / "skills"
@@ -95,6 +98,8 @@ class Settings(BaseSettings):
     reports_dir: Path = PROJECT_ROOT / "reports"
     #: Where `cre-monitor export` writes its zip files (git-ignored).
     exports_dir: Path = PROJECT_ROOT / "exports"
+    #: House style: example reports in style/reports/ (git-ignored), learned profile in style/profile.json.
+    style_dir: Path = PROJECT_ROOT / "style"
 
     # --- HTTP --------------------------------------------------------------
     http_timeout_s: float = 30.0

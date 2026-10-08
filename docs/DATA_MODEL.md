@@ -148,6 +148,24 @@ reference. It is stored in `findings_<run>.json` and, for chat turns, in
 `title`, `executive_summary`, `key_takeaways: list[str]`, `risks: list[Signal]`,
 `opportunities: list[Signal]`, `what_changed: list[str]`, `watch_list: list[str]`.
 
+### `StyleProfile`: the learned house style (`style/profile.py`)
+Saved as `style/profile.json` (plus a readable `profile.md`). Learned by
+`cre-monitor style learn` from the examples in `style/reports/`; hand-editable.
+
+| Field | Type | Notes |
+|---|---|---|
+| `name` | str | Shown in the report header badge and the prompts |
+| `sources`, `learned_at`, `method` | list[str], str, str | Example file names, ISO timestamp, `llm` or `heuristic` |
+| `voice`, `audience` | str | Tone and register, e.g. "first person plural ('we'), measured" |
+| `layout` | list[`LayoutSection`] | Section order and headings: `{section, title, guidance}`, where `section` is one of `kpis`, `summary`, `what_changed`, `risks`, `charts`, `topics`, `watch_list`, `data_quality`, `sources` |
+| `headline_style`, `paragraph_style`, `number_style` | str | E.g. "lead with the number", "short paragraphs", "£ psf, bp, Q2 2026" |
+| `techniques`, `preferred_phrases`, `avoid` | list[str] | Signature techniques, phrasing to use, phrasing to avoid |
+| `example_sentences` | list[str] | Short *paraphrased* illustrations of the style, never copied text |
+
+`resolve_layout(profile)` turns `layout` into the `(section, heading)` list the report
+templates loop over. Duplicates are ignored, and sections the profile omits get their
+default headings and are placed before the reference sections, so no content is dropped.
+
 ## 4. Graph state (`graph/state.py`)
 
 ### `AgentState`: shared by all nodes
@@ -205,6 +223,7 @@ Full authoring guide: [SKILLS.md](SKILLS.md).
 | `reports/<date>/findings_<run_id>.json` | `report_writer` | Brief only | Audit trail: `{run_id, synthesis, findings[], deltas[], issues[]}`, each item the JSON form of the models above |
 | `data/checkpoints.sqlite` | LangGraph `SqliteSaver` | Chat only (`ask()`; `run_brief()` has no checkpointer) | Serialised `AgentState` per `thread_id` and step, including the message history. This is the **agent's memory** that makes a resumed conversation continue with context. Managed by LangGraph; don't edit by hand |
 | `data/conversations.sqlite` (tables `conversations`, `turns`) | `ask()` → `ConversationStore.record_turn` | Every chat turn (UI and CLI) | The **conversation list** for the sidebar and `cre-monitor conversations`: title and timestamps per thread, plus each turn's question, answer, skills, issues and findings, so a reopened conversation can be redrawn with its charts (schema below) |
+| `style/profile.json`, `style/profile.md` | `cre-monitor style learn` | On request | The house style (`StyleProfile`, above). Committable so the team shares one style; read by `synthesis` and `report_writer` unless `REPORT_STYLE=0` |
 | `data/logs/<brief\|chat\|ui>_<date>.log` | `logs.setup_logging` (CLI and UI) | Every run | Run logs (INFO), including one `ERROR` record per `Incident`, searchable by its reference ID |
 
 ### `metrics` table schema (`store/metrics.py`)

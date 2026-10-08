@@ -1,7 +1,7 @@
 {# Markdown version of the brief - same context as report.html.j2. #}
 # {{ synthesis.title }}
 
-_Generated {{ generated }} · run `{{ run_id }}`{% if demo_mode %} · **demo mode (canned research, no LLM)**{% endif %}{% if offline %} · offline data{% endif %}_
+_Generated {{ generated }} · run `{{ run_id }}`{% if demo_mode %} · **demo mode (canned research, no LLM)**{% endif %}{% if offline %} · offline data{% endif %}{% if style_name %} · house style{% endif %}_
 
 {% if incident %}
 {% set cat = incident.category %}
@@ -17,15 +17,17 @@ _Generated {{ generated }} · run `{{ run_id }}`{% if demo_mode %} · **demo mod
 > **Reference for support:** `{{ incident.id }}` (please send it to {{ support_contact }} so they can trace the problem)
 
 {% endif %}
-{% if kpis %}
+{# Sections in the order of `layout` (house style profile or built-in default); `title` = heading. #}
+{% for sid, title in layout %}
+{% if sid == "kpis" and kpis %}
 | Indicator | Value | Change | Period | Source |
 |---|---|---|---|---|
 {% for k in kpis %}
 | {{ k.label }} | {{ k.value }} | {{ k.change or "-" }} | {{ k.period }} | {{ k.source }} |
 {% endfor %}
-{% endif %}
 
-## Executive summary
+{% elif sid == "summary" %}
+## {{ title }}
 
 {{ synthesis.executive_summary }}
 
@@ -35,15 +37,15 @@ _Generated {{ generated }} · run `{{ run_id }}`{% if demo_mode %} · **demo mod
 - {{ t }}
 {% endfor %}
 
-{% if synthesis.what_changed or deltas %}
-## What changed
+{% elif sid == "what_changed" and (synthesis.what_changed or deltas) %}
+## {{ title }}
 
 {% for c in (synthesis.what_changed or deltas) %}
 - {{ c }}
 {% endfor %}
-{% endif %}
 
-## Risks & opportunities
+{% elif sid == "risks" %}
+## {{ title }}
 
 | Type | Severity | Signal | Submarket | Rationale |
 |---|---|---|---|---|
@@ -54,15 +56,15 @@ _Generated {{ generated }} · run `{{ run_id }}`{% if demo_mode %} · **demo mod
 | Opportunity | {{ s.severity.value|title }} | {{ s.title }} | {{ s.submarket }} | {{ s.rationale }} |
 {% endfor %}
 
-{% if png_charts %}
-## Market charts
+{% elif sid == "charts" and png_charts %}
+## {{ title }}
 
 {% for cid, path in png_charts.items() %}
 ![{{ cid|label }}]({{ path }})
 
 {% endfor %}
-{% endif %}
-## Research by topic
+{% elif sid == "topics" %}
+## {{ title }}
 
 {% for f in findings %}
 ### {{ f.skill|replace("-", " ")|title }}
@@ -91,27 +93,28 @@ _Confidence {{ "%.0f"|format(f.confidence * 100) }}%_
 {% endif %}
 
 {% endfor %}
-{% if synthesis.watch_list %}
-## Watch list
+{% elif sid == "watch_list" and synthesis.watch_list %}
+## {{ title }}
 
 {% for w in synthesis.watch_list %}
 - {{ w }}
 {% endfor %}
-{% endif %}
 
-{% if issues %}
-## Data quality notes
+{% elif sid == "data_quality" and issues %}
+## {{ title }}
 
 {% for i in issues %}
 - **{{ i.level|title }}** ({{ i.skill }}): {{ i.message }}
 {% endfor %}
-{% endif %}
 
-## Sources
+{% elif sid == "sources" %}
+## {{ title }}
 
 {% for c in citations %}
 {{ loop.index }}. {% if c.url %}[{{ c.title }}]({{ c.url }}){% else %}{{ c.title }}{% endif %}{% if c.publisher %} - {{ c.publisher }}{% endif %}{% if c.published %}, {{ c.published }}{% endif %}
 
+{% endfor %}
+{% endif %}
 {% endfor %}
 {% if incident %}
 ## Technical details for engineers

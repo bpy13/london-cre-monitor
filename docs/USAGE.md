@@ -36,6 +36,9 @@ Example: `cre-monitor --offline --demo brief`.
 | `cre-monitor brief` | Full market brief, written to `reports/<date>/` (HTML, Markdown, JSON, PNG charts). Log goes to `data/logs/` |
 | `cre-monitor brief --skills office-rents,macro-economy` | Runs only those skills (cheaper; good for testing) |
 | `cre-monitor brief --open` | Opens the HTML report when done (local machine only) |
+| `cre-monitor brief --no-style` | Ignores the learned house style for this brief (built-in layout and wording) |
+| `cre-monitor style learn [--from DIR] [--heuristic]` | Learns a **house style** from example reports in `style/reports/` (see [House style](#house-style-imitating-example-reports)) |
+| `cre-monitor style show` / `style clear` | Shows the learned style profile, or removes it (back to the built-in style) |
 | `cre-monitor ask "question"` | One question in a **new** conversation; prints a cited answer, the skills used and the conversation id |
 | `cre-monitor ask "..." --thread ID` | Continues conversation `ID`, so follow-up questions have context |
 | `cre-monitor chat [--thread ID]` | Interactive multi-turn chat in the terminal: new conversation, or resume `ID`. Type `exit` to quit |
@@ -56,6 +59,43 @@ cre-monitor --offline --demo brief                    # free, deterministic, no 
 cre-monitor --live brief --skills macro-economy      # cheapest real end-to-end check
 cre-monitor --live ask "How is Canary Wharf vacancy trending?"
 ```
+
+### House style: imitating example reports
+
+The brief can imitate the writing of a set of reports you admire (an in-house monthly, an
+agency quarterly): voice and tone, section order and headings, headline and paragraph
+style, number conventions ("£190 psf", "bp", "Q2 2026") and signature techniques
+("compare with the long-term average").
+
+1. Put up to 8 example reports in **`style/reports/`** (`.md`, `.txt`, `.html` or `.pdf`;
+   the first ~6,000 characters of each are read). The folder is git-ignored except for its
+   README, because examples are often licensed documents. **Check the licence first**:
+   some publishers prohibit using their reports with AI tools.
+2. Run `cre-monitor --live style learn`. Claude (synthesis model) analyses the examples
+   and writes a **style profile**: `style/profile.json`, plus `style/profile.md` for humans
+   to review. Without a key, or with `--heuristic`, a rule-based learner is used instead
+   (headings, sentence length, bullets, voice, number conventions; no LLM, free).
+3. Review `style/profile.md` (or `cre-monitor style show`). Commit `profile.json` if the
+   team should share the style. Edit the JSON by hand if needed.
+4. Run `cre-monitor brief`. The report header shows "House style".
+
+What changes in a brief:
+
+| Part | How the style is applied |
+|---|---|
+| **Layout** | Sections follow the profile's order and headings. Sections the profile doesn't mention keep their default headings and are placed before the reference sections (sources, data quality), so no content is ever dropped |
+| **Executive summary, takeaways, risks** | The synthesis prompt carries the style profile (live mode) |
+| **Topic headlines and summaries** | A style editor (one skill-model call per brief, live mode) rewrites them in the house style |
+
+**Facts never change.** Figures come only from the agent's research. The style editor's
+output is checked by a number guard: if a restyled topic adds or changes any number, the
+original wording is kept for that topic. If the editor fails, the brief uses the original
+text. Failed topics and the metrics themselves are never touched. The profile describes the
+style; the agent is told never to copy sentences from the examples.
+
+Switch it off for one brief with `brief --no-style`, permanently with `REPORT_STYLE=0`, or
+remove it with `cre-monitor style clear`. In demo mode only the layout is applied (no LLM
+rewriting). Chat answers are not affected.
 
 ---
 
@@ -239,6 +279,8 @@ The full template is in `.env.example`.
 | `SKILL_MAX_STEPS` | Research turns per skill (default 12) |
 | `CRE_OFFLINE`, `CRE_DEMO_MODE` | Default run modes |
 | `REPORT_PNG=0` | Skip PNG charts (needed if no Chrome/Chromium is installed) |
+| `REPORT_STYLE=0` | Ignore the learned house style (`style/profile.json`) in briefs |
+| `STYLE_DIR` | Where the style profile and `reports/` examples live (default `style/`) |
 | `STALE_AFTER_DAYS` | When the validator flags data as stale |
 | `SUPPORT_CONTACT` | Who users should send error reference IDs to (shown in error panels) |
 | `CRE_UI_DEBUG=1` | UI debug mode: Streamlit developer toolbar (Rerun, Clear cache) |
@@ -257,6 +299,8 @@ The full template is in `.env.example`.
 | `exports/` | Export zips from `cre-monitor export` / the sidebar (git-ignored) |
 | `data/backups/pre-merge_<timestamp>/` | Automatic database backups taken before each `cre-monitor merge` |
 | `merge-in/<name>/` | Data from other installations waiting to be merged (git-ignored, except its README) |
+| `style/reports/` | Example reports for the house style (git-ignored, except its README) |
+| `style/profile.json` / `profile.md` | The learned house style (committable) and its readable summary |
 
 * **Reset history:** delete `data/`. The metrics history is re-seeded from fixtures on the
   next run. Note that this also deletes all saved conversations.

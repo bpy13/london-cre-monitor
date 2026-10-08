@@ -90,6 +90,7 @@
       Generated {{ generated }} · run {{ run_id }}
       {% if demo_mode %}<span class="badge">Demo mode - canned research, no LLM</span>{% endif %}
       {% if offline %}<span class="badge">Offline data</span>{% endif %}
+      {% if style_name %}<span class="badge" title="{{ style_name }}">House style</span>{% endif %}
     </div>
   </header>
 
@@ -105,7 +106,10 @@
   </section>
   {% endif %}
 
-  {% if kpis %}
+  {# Sections render in the order of `layout` (house style profile or the built-in default);
+     `title` is that section's heading. See cre_monitor.style.profile.resolve_layout. #}
+  {% for sid, title in layout %}
+  {% if sid == "kpis" and kpis %}
   <section class="grid kpis" aria-label="Headline indicators">
     {% for k in kpis %}
     <div class="card kpi">
@@ -116,23 +120,23 @@
     </div>
     {% endfor %}
   </section>
-  {% endif %}
 
-  <h2>Executive summary</h2>
+  {% elif sid == "summary" %}
+  <h2>{{ title }}</h2>
   <div class="card">
     <p>{{ synthesis.executive_summary }}</p>
     <h3>Key takeaways</h3>
     <ul>{% for t in synthesis.key_takeaways %}<li>{{ t }}</li>{% endfor %}</ul>
   </div>
 
-  {% if synthesis.what_changed or deltas %}
-  <h2>What changed</h2>
+  {% elif sid == "what_changed" and (synthesis.what_changed or deltas) %}
+  <h2>{{ title }}</h2>
   <div class="card"><ul>
     {% for c in (synthesis.what_changed or deltas) %}<li>{{ c }}</li>{% endfor %}
   </ul></div>
-  {% endif %}
 
-  <h2>Risks &amp; opportunities</h2>
+  {% elif sid == "risks" %}
+  <h2>{{ title }}</h2>
   <div class="card">
     <table>
       <thead><tr><th>Type</th><th>Severity</th><th>Signal</th><th>Submarket</th><th>Rationale</th></tr></thead>
@@ -147,14 +151,14 @@
     </table>
   </div>
 
-  {% if charts %}
-  <h2>Market charts</h2>
+  {% elif sid == "charts" and charts %}
+  <h2>{{ title }}</h2>
   <section class="grid charts">
     {% for cid, html in charts.items() %}<div class="chart" id="chart-{{ cid }}">{{ html|safe }}</div>{% endfor %}
   </section>
-  {% endif %}
 
-  <h2>Research by topic</h2>
+  {% elif sid == "topics" %}
+  <h2>{{ title }}</h2>
   {% for f in findings %}
   <section class="card skill" id="skill-{{ f.skill }}">
     <h3>{{ f.skill|replace("-", " ")|title }}</h3>
@@ -184,22 +188,23 @@
   </section>
   {% endfor %}
 
-  {% if synthesis.watch_list %}
-  <h2>Watch list</h2>
+  {% elif sid == "watch_list" and synthesis.watch_list %}
+  <h2>{{ title }}</h2>
   <div class="card"><ul>{% for w in synthesis.watch_list %}<li>{{ w }}</li>{% endfor %}</ul></div>
-  {% endif %}
 
-  {% if issues %}
-  <h2>Data quality notes</h2>
+  {% elif sid == "data_quality" and issues %}
+  <h2>{{ title }}</h2>
   <div class="card"><ul>
     {% for i in issues %}<li class="issue-{{ i.level }}"><strong>{{ i.level|title }}</strong> ({{ i.skill }}): {{ i.message }}</li>{% endfor %}
   </ul></div>
-  {% endif %}
 
-  <h2>Sources</h2>
+  {% elif sid == "sources" %}
+  <h2>{{ title }}</h2>
   <div class="card"><ol>
     {% for c in citations %}<li>{% if c.url %}<a href="{{ c.url }}" target="_blank" rel="noopener">{{ c.title }}</a>{% else %}{{ c.title }}{% endif %}{% if c.publisher %} - {{ c.publisher }}{% endif %}{% if c.published %}, {{ c.published }}{% endif %}</li>{% endfor %}
   </ol></div>
+  {% endif %}
+  {% endfor %}
 
   {% if incident %}
   <details class="tech">

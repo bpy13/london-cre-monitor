@@ -19,6 +19,7 @@ from cre_monitor.graph.state import AgentState
 from cre_monitor.llm import STRUCTURED, get_llm
 from cre_monitor.schemas import ExecutiveSynthesis, MetricDelta, Severity, Signal, SignalType, SkillFinding, ValidationIssue
 from cre_monitor.skills import get_registry
+from cre_monitor.style import active_profile
 
 logger = logging.getLogger(__name__)
 
@@ -67,9 +68,14 @@ def llm_synthesis(findings: list[SkillFinding], deltas: list[MetricDelta], issue
         "changes_vs_previous_periods": [d.describe() for d in deltas if d.is_material],
         "data_quality_issues": [i.message for i in issues],
     }
+    system = skill.instructions
+    profile = active_profile()
+    if profile is not None:
+        # House style learned from example reports: affects wording, never the facts.
+        system += "\n\n" + profile.prompt_text() + "\nThe rules above about facts and figures always take priority."
     model = get_llm(skill.meta.model_tier).with_structured_output(ExecutiveSynthesis, **STRUCTURED)
     return model.invoke(
-        [SystemMessage(skill.instructions), HumanMessage(json.dumps(payload, ensure_ascii=False, default=str))]
+        [SystemMessage(system), HumanMessage(json.dumps(payload, ensure_ascii=False, default=str))]
     )
 
 

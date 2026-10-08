@@ -43,6 +43,10 @@ def offline_env(tmp_path, monkeypatch, request):
     monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
     monkeypatch.setenv("REPORTS_DIR", str(tmp_path / "reports"))
     monkeypatch.setenv("EXPORTS_DIR", str(tmp_path / "exports"))
+    monkeypatch.setenv("STYLE_DIR", str(tmp_path / "style"))      # never use the repo's style profile
+    # Safety net: if a test ever builds a real Claude client by mistake, it fails instantly
+    # (connection refused) instead of calling the real API.
+    monkeypatch.setenv("ANTHROPIC_BASE_URL", "http://127.0.0.1:9")
     _clear_caches()
     yield
     _clear_caches()

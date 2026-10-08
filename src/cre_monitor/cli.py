@@ -9,6 +9,7 @@ Commands
 ``conversations``  List saved chat conversations.
 ``export``    Export briefs, metrics and conversations as one zip (CSV/Excel/Markdown/JSON).
 ``merge``     Merge another installation's data/ (and reports/) into this one.
+``style``     House style: ``learn`` from example reports, ``show``, ``clear``.
 ``skills``    List loaded skills (and any invalid SKILL.md files).
 ``schedule``  Install / remove / show the weekly scheduled brief (Windows
               Task Scheduler; prints a cron line for Linux/macOS).
@@ -41,6 +42,8 @@ schedule_app = typer.Typer(help="Manage the recurring scheduled brief.")
 app.add_typer(schedule_app, name="schedule")
 briefs_app = typer.Typer(help="List or delete generated briefs.")
 app.add_typer(briefs_app, name="briefs")
+style_app = typer.Typer(help="House style: learn from example reports and apply it to briefs.")
+app.add_typer(style_app, name="style")
 console = Console()
 
 TASK_NAME = "LondonCREMonitorBrief"
@@ -82,11 +85,19 @@ def _mode_banner() -> None:
 def brief(
     skills: str = typer.Option(None, help="Comma-separated subset of skills, e.g. 'office-rents,macro-economy'."),
     open_report: bool = typer.Option(False, "--open", help="Open the HTML report when done."),
+    no_style: bool = typer.Option(False, "--no-style", help="Ignore the learned house style for this brief."),
 ) -> None:
     """Run the full London office market brief and write HTML/Markdown reports."""
+    if no_style:
+        os.environ["REPORT_STYLE"] = "0"
+        get_settings.cache_clear()
     log_file = _setup_logging("brief")
     _mode_banner()
     from cre_monitor.graph.builder import run_brief
+    from cre_monitor.style import active_profile
+
+    if (profile := active_profile()) is not None:
+        console.print(f"[dim]House style: {profile.name}[/dim]")
 
     selected = [s.strip() for s in skills.split(",")] if skills else None
     with console.status("Running skills and building the brief..."):
@@ -215,6 +226,50 @@ def list_conversations(limit: int = typer.Option(20, help="How many to show (mos
         table.add_row(c.thread_id, c.title, str(c.turn_count), f"{c.updated_at:%Y-%m-%d %H:%M}")
     console.print(table)
     console.print("[dim]Resume: cre-monitor chat --thread <Thread>   ·   UI: open ?thread=<Thread>[/dim]")
+
+
+@style_app.command("learn")
+def style_learn(
+    source: Path = typer.Option(None, "--from", help="Folder of example reports (default: style/reports/)."),
+    heuristic: bool = typer.Option(False, "--heuristic", help="Use the offline heuristic instead of the LLM."),
+) -> None:
+    """Learn the house style from example reports (.md/.txt/.html/.pdf) and save style/profile.json."""
+    _setup_logging("style", console_level=logging.WARNING)
+    from cre_monitor.style import learn_profile
+    from cre_monitor.style.profile import profile_path
+
+    try:
+        with console.status("Analysing example reports..."):
+            profile = learn_profile(source, use_llm=False if heuristic else None)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1)
+    console.print(f"[green]Learned[/green] '{profile.name}' via {profile.method} from {len(profile.sources)} report(s).")
+    console.print(f"  Review / edit: {profile_path()} (readable copy: {profile_path().with_suffix('.md')})")
+    console.print("  It now applies to every brief (layout, executive summary, topic wording). "
+                  "Use `brief --no-style` or REPORT_STYLE=0 to switch it off.")
+
+
+@style_app.command("show")
+def style_show() -> None:
+    """Show the current house style profile."""
+    from cre_monitor.style import load_profile
+
+    profile = load_profile()
+    if profile is None:
+        console.print("No house style learned yet. Put example reports in style/reports/ and run `cre-monitor style learn`.")
+        return
+    console.print(Markdown(profile.to_markdown()))
+    if not get_settings().report_style:
+        console.print("[yellow]REPORT_STYLE=0: the profile is currently NOT applied to briefs.[/yellow]")
+
+
+@style_app.command("clear")
+def style_clear() -> None:
+    """Delete the house style profile (briefs return to the built-in style)."""
+    from cre_monitor.style import clear_profile
+
+    console.print("Profile removed." if clear_profile() else "No profile to remove.")
 
 
 @briefs_app.command("list")

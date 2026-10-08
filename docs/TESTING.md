@@ -36,14 +36,14 @@ An LLM agent is testable when its behaviour can be checked:
 | **Demo mode** (`CRE_DEMO_MODE=1`) | Skills return `fixtures/findings/*.json`; synthesis and chat answers are rule-based | The **whole graph** runs end to end with the same result every time |
 | **Dependency injection** | Every model comes from `get_llm()`, which tests patch | A scripted fake LLM drives the **real** agent code (see §5) |
 | **Failure isolation** | A skill exception becomes an error finding instead of crashing the run; all failures become one `Incident` with a reference ID | Failure paths are observable and assertable, including what users see |
-| **Test isolation** | `tests/conftest.py` sets offline + demo mode, blanks the keys, points `DATA_DIR`/`REPORTS_DIR` at a temp folder, disables PNG export and clears all cached singletons per test | Tests never touch real history and don't leak state |
+| **Test isolation** | `tests/conftest.py` sets offline + demo mode, blanks the keys, points `DATA_DIR`/`REPORTS_DIR`/`EXPORTS_DIR`/`STYLE_DIR` at a temp folder, disables PNG export and clears all cached singletons per test. Safety net: `ANTHROPIC_BASE_URL` points at a closed local port, so a test that builds a real Claude client by mistake fails in seconds instead of spending credit | Tests never touch real history or the repo's style profile, never call the real API, and don't leak state |
 | **Audit trail** | `findings_<run>.json`, data-quality notes in the report, logs | Live runs can be inspected afterwards |
 
 ## 3. Test layers
 
 | Layer | What runs | Where |
 |---|---|---|
-| Unit | Pure functions (validator rules, deltas, chart selection, focus-text trimming, conversation grouping) | `test_validator`, `test_store`, `test_charts`, `test_tools`, `test_conversations` |
+| Unit | Pure functions (validator rules, deltas, chart selection, focus-text trimming, conversation grouping, style layout and number guard) | `test_validator`, `test_store`, `test_charts`, `test_tools`, `test_conversations`, `test_style` |
 | Contract | Every skill loads and conforms; invalid skills are rejected, not crashed | `test_skills` |
 | Integration (tools) | Each LangChain tool via its public interface, on fixtures | `test_tools` |
 | End to end (demo) | Full graph: brief and multi-turn chat, report files, PNGs, same-day runs | `test_graph` |
@@ -54,7 +54,7 @@ An LLM agent is testable when its behaviour can be checked:
 
 ## 4. Test files
 
-`pytest` runs 115 offline tests in about 40 s. `pytest -m live` runs 7 more.
+`pytest` runs 128 offline tests in about 40 s. `pytest -m live` runs 7 more.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -70,6 +70,7 @@ An LLM agent is testable when its behaviour can be checked:
 | `test_briefs.py` | 12 | Deleting one of two same-day briefs keeps the other; empty date folder removed; legacy shared charts removed only with the last brief; invalid ids (incl. path traversal) and unknown ids rejected; `--with-metrics` removes only that run's rows and keeps the seed; the default keeps metrics; the seed cannot be deleted; CLI `briefs list` / `delete --yes` / confirmation prompt |
 | `test_export.py` | 6 | Zip structure; metrics rows match the store; briefs copied and indexed; transcripts include references and error IDs; `conversations.json` structure; Excel sheets and row counts; manifest; **no API key anywhere in the export**; `--since` filtering (seed only in full exports); logs only on request; empty installation; CLI date validation and export |
 | `test_merge.py` | 17 | Real second installation merged into the target: everything added and **merged chats resume with their memory**; re-running changes nothing; a continued conversation is extended (memory includes the new turn); same id with different history is renamed, references are remapped and memories kept apart; seed not duplicated; **dry run writes nothing yet reports exactly what the real merge does**; pre-merge backup holds the old state; invalid / own-folder sources rejected; old-schema source; brief file conflicts keep the target's file; CLI dry-run, preview/decline, `--yes`. **All-or-nothing**, each comparing full database contents before and after: failure after a partial commit → restored byte-for-byte; failure while copying briefs → DBs restored and the copy removed; failure while preparing → nothing changed, no backup; target locked by another writer → "in use", nothing changed; failure on a fresh target → created databases removed; CLI shows "Merge failed … restored" with an `ERR-` reference |
+| `test_style.py` | 13 | House style: heuristic learning (layout, voice, number conventions, techniques; README ignored; profile saved as JSON + Markdown); LLM learning sends bounded excerpts; no examples → clear error; HTML examples read; layout resolution (order, headings, duplicates ignored, **no section ever dropped**, missing sections placed before the reference sections); a brief follows the house layout and `REPORT_STYLE=0` switches it off; **number guard** (restyled text may not add or change figures); style editor restyles, keeps the original when the guard trips, leaves failed findings and metrics untouched, and survives an LLM failure; the synthesis prompt carries the profile with "facts take priority"; CLI `style learn/show/clear` and `brief --no-style` |
 | `test_cli.py` | 3 | `cre-monitor ui` passes `toolbarMode=viewer` by default, and `developer` with `--debug` or `CRE_UI_DEBUG=1` (Streamlit launch is captured, not run) |
 | `test_live.py` | 7 (opt-in) | BoE Bank Rate; ONS CPIH / unemployment / GDP; Nomis London employment; Google News + search; one real `macro-economy` skill run (needs `ANTHROPIC_API_KEY`) |
 

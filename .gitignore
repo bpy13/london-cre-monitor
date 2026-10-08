@@ -11,6 +11,11 @@ exports/
 merge-in/*
 !merge-in/README.md
 
+# Example reports for the house style (often licensed broker documents) - never committed.
+# The learned style/profile.json (a description, no copied text) IS committed for the team.
+style/reports/*
+!style/reports/README.md
+
 # Python
 __pycache__/
 *.py[cod]

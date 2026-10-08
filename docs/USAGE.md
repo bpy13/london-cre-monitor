@@ -245,6 +245,7 @@ The full template is in `.env.example`.
 | `data/logs/` | `brief_<date>.log`, `chat_<date>.log` (CLI), `ui_<date>.log` (web UI). Error references (`ERR-…`) are logged here |
 | `exports/` | Export zips from `cre-monitor export` / the sidebar (git-ignored) |
 | `data/backups/pre-merge_<timestamp>/` | Automatic database backups taken before each `cre-monitor merge` |
+| `merge-in/<name>/` | Data from other installations waiting to be merged (git-ignored, except its README) |
 
 * **Reset history:** delete `data/`. The metrics history is re-seeded from fixtures on the
   next run. Note that this also deletes all saved conversations.
@@ -283,10 +284,10 @@ cre-monitor merge /path/to/other --dry-run              # preview only
 ```
 
 1. **Stop both apps first**, so no database is mid-write.
-2. Copy the other installation's `data/` folder (and `reports/` if you want its briefs) to
-   somewhere this machine can read. In Codespaces, download the folders from the file
-   explorer.
-3. Run the merge and review the preview table.
+2. Copy the other installation's `data/` folder (and `reports/` if you want its briefs) into
+   **`merge-in/<name>/`** in this repo. That folder is git-ignored, so the data is never
+   committed. In Codespaces, download the folders from the file explorer.
+3. Run `cre-monitor merge merge-in/<name>` and review the preview table.
 
 | Data | What happens |
 |---|---|

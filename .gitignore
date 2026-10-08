@@ -6,6 +6,11 @@ data/
 reports/
 exports/
 
+# Incoming data from other installations, waiting to be merged (cre-monitor merge).
+# Contents are never committed; only the README that explains the folder is kept.
+merge-in/*
+!merge-in/README.md
+
 # Python
 __pycache__/
 *.py[cod]

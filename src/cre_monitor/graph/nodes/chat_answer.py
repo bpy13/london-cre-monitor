@@ -75,9 +75,17 @@ def rule_based_answer(
     findings: list[SkillFinding], deltas: list[MetricDelta], issues: list[ValidationIssue],
     reference_context: str = "",
 ) -> str:
-    """Demo-mode answer: a structured digest of the relevant findings."""
+    """Demo-mode / fallback answer: a structured digest of the successful findings.
+
+    Failed skills are deliberately left out of the text: raw error messages are
+    not for business users. They are reported separately as an ``Incident``
+    with a reference ID (see :mod:`cre_monitor.errors`).
+    """
     if not findings:
         return "I don't have research for that yet - try asking about rents, vacancy, take-up, supply, submarkets, macro, occupier demand or news."
+    if all(f.error for f in findings):
+        return "I couldn't complete the research for this question."
+    findings = [f for f in findings if not f.error]
     # Blocks are joined with blank lines so Markdown does not glue a paragraph
     # onto the preceding bullet list.
     blocks = ["*(Demo mode - answer assembled from canned research without an LLM.)*"]
@@ -87,9 +95,6 @@ def rule_based_answer(
         blocks.append("**Referenced earlier conversations** (background; current research below takes precedence)\n\n"
                       + "\n".join(f"- {t}" for t in titles))
     for f in findings:
-        if f.error:
-            blocks.append(f"**{f.skill}** - failed: {f.error}")
-            continue
         bullets = "\n".join(
             f"- {m.submarket} {m.key.replace('_', ' ')}: {m.value:,.4g} {m.unit} ({m.period}, {m.source})"
             for m in f.metrics[:6]
@@ -111,6 +116,7 @@ def chat_answer(state: AgentState) -> dict:
     issues = state.get("validation_issues") or []
     reference_context = state.get("reference_context") or ""
 
+    errors: list[str] = []
     if get_settings().cre_demo_mode:
         answer = rule_based_answer(findings, deltas, issues, reference_context)
     else:
@@ -126,6 +132,8 @@ def chat_answer(state: AgentState) -> dict:
                 b.get("text", "") for b in reply.content if isinstance(b, dict)
             )
         except Exception as exc:  # noqa: BLE001
+            # Fall back to the plain digest; the raw error goes to `errors` (-> Incident), not the answer text.
             logger.exception("Chat answer LLM failed; returning digest")
-            answer = rule_based_answer(findings, deltas, issues, reference_context) + f"\n\n_(LLM error: {exc})_"
-    return {"answer": answer, "messages": [AIMessage(answer)]}
+            answer = rule_based_answer(findings, deltas, issues, reference_context)
+            errors.append(f"answer: {type(exc).__name__}: {exc}")
+    return {"answer": answer, "messages": [AIMessage(answer)], "errors": errors}

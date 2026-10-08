@@ -107,6 +107,43 @@ conversations would be used.
 | **Briefs** | Browse past briefs (newest first), view them inline, and download the HTML or Markdown |
 | **Dashboard** | Explore the metric history in `data/metrics.sqlite`. Pick a metric (e.g. prime rent, vacancy rate, Bank Rate, CPIH) and up to 4 submarkets to see a trend chart and its data table. Each line follows one source; dashed lines mix sources and are not like-for-like. History starts from the seeded fixtures and grows with every brief and chat. It is read-only: no research and no cost |
 
+### When something goes wrong
+
+If part of the work fails (most often the Claude API: invalid key, access denied, no
+credit, rate limit, outage, network), users never see raw error text. Instead they get:
+
+* **A red panel** ("We couldn't answer this question") when nothing usable was produced,
+  or **an amber panel** ("this answer may be incomplete") when only some steps failed.
+  Each panel gives a plain-English title, an explanation and **What you can do**.
+* **A reference ID**, e.g. `ERR-20261008-1217-F1E4`, with a copy button. The panel also
+  shows who to send it to (`SUPPORT_CONTACT`).
+* **Technical details (for engineers)**, collapsed: the category, the affected steps,
+  the conversation and run IDs, the log file, and the raw messages.
+
+The panel is saved with the turn, so it reappears when the conversation is reopened. The
+same information is printed in the terminal by `ask`, `chat` and `brief`.
+**Run full brief now** shows a compact version in the sidebar.
+
+**For engineers tracing a reference:**
+
+```bash
+grep -A5 ERR-20261008-1217-F1E4 data/logs/*.log      # PowerShell: Select-String -Path data\logs\*.log -Pattern ERR-... -Context 0,5
+```
+
+One `ERROR` record holds the category, scope, thread, run, mode, and each failed step's
+exact error. Logs: `ui_<date>.log` (web UI), `chat_<date>.log`, `brief_<date>.log` (CLI).
+
+| Category | Typical cause | Shown to users as |
+|---|---|---|
+| `access_denied` | HTTP 403: account lacks access, or the API is unavailable from the location | "The AI service refused the request" |
+| `auth` | HTTP 401: missing, invalid or revoked API key | "The AI service key was not accepted" |
+| `credit` | Credit balance exhausted | "AI usage credit has run out" |
+| `rate_limit` | HTTP 429 | "The AI service is busy" (retry) |
+| `service` | HTTP 5xx / 529 overloaded | "Temporarily unavailable" (retry) |
+| `network` | Connection, DNS, TLS or timeout errors | "Could not reach the AI service" |
+| `config` | Live mode without a key configured | "Not configured for live AI research" |
+| `unknown` | Anything else | "Something went wrong" |
+
 ### Sharing the UI
 
 Forwarded ports in Codespaces are private by default. To share, open the **Ports** panel,
@@ -175,6 +212,7 @@ The full template is in `.env.example`.
 | `CRE_OFFLINE`, `CRE_DEMO_MODE` | Default run modes |
 | `REPORT_PNG=0` | Skip PNG charts (needed if no Chrome/Chromium is installed) |
 | `STALE_AFTER_DAYS` | When the validator flags data as stale |
+| `SUPPORT_CONTACT` | Who users should send error reference IDs to (shown in error panels) |
 
 ---
 
@@ -186,7 +224,7 @@ The full template is in `.env.example`.
 | `data/metrics.sqlite` | Metric history used by deltas, charts and the Dashboard |
 | `data/checkpoints.sqlite` | Agent chat memory per thread (LangGraph) |
 | `data/conversations.sqlite` | Conversation list: titles and per-turn details for the sidebar |
-| `data/logs/` | `brief_<date>.log`, `chat_<date>.log` |
+| `data/logs/` | `brief_<date>.log`, `chat_<date>.log` (CLI), `ui_<date>.log` (web UI). Error references (`ERR-…`) are logged here |
 
 * **Reset history:** delete `data/`. The metrics history is re-seeded from fixtures on the
   next run. Note that this also deletes all saved conversations.

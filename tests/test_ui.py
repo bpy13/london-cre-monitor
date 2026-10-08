@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
@@ -60,6 +61,34 @@ def test_reference_picker_adds_earlier_conversation_as_context():
     assert not at.exception, at.exception
     assert any(c.value.startswith("📎 Referenced: What are prime rents in the West End?") for c in at.caption)
     assert "Referenced earlier conversations" in _assistant_text(at)
+
+
+def test_api_failure_shows_decorated_panel_with_reference(monkeypatch):
+    """When Claude refuses requests, users get a friendly panel + reference ID, not raw errors."""
+    import importlib
+
+    from cre_monitor.config import get_settings
+
+    monkeypatch.setenv("CRE_DEMO_MODE", "0")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    monkeypatch.setenv("SUPPORT_CONTACT", "the London FDE team")
+    get_settings.cache_clear()
+
+    def refuse(tier="skill"):
+        raise RuntimeError("Error code: 403 - {'error': {'type': 'forbidden', 'message': 'Request not allowed'}}")
+
+    for module in ("planner", "skill_runner", "synthesis", "chat_answer"):
+        monkeypatch.setattr(importlib.import_module(f"cre_monitor.graph.nodes.{module}"), "get_llm", refuse)
+
+    at = AppTest.from_file(APP, default_timeout=60).run()
+    at.chat_input[0].set_value("What are prime rents in the West End?").run()
+    assert not at.exception, at.exception
+
+    assert any("The AI service refused the request" in e.value for e in at.error)
+    reference = next(c.value for c in at.code if c.value.startswith("ERR-"))
+    assert re.fullmatch(r"ERR-\d{8}-\d{4}-[0-9A-F]{4}", reference)
+    assert any("the London FDE team" in m.value for m in at.markdown)
+    assert "Error code" not in _assistant_text(at)          # raw text only inside "for engineers"
 
 
 def test_conversation_opens_from_url():

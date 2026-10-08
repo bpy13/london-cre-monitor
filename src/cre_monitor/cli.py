@@ -22,12 +22,12 @@ import platform
 import subprocess
 import sys
 import webbrowser
-from datetime import date
 from pathlib import Path
 
 import typer
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.panel import Panel
 from rich.table import Table
 
 from cre_monitor.config import PROJECT_ROOT, get_settings
@@ -41,27 +41,11 @@ TASK_NAME = "LondonCREMonitorBrief"
 
 
 def _setup_logging(log_name: str, console_level: int = logging.INFO) -> Path:
-    """Log INFO to ``data/logs/<log_name>_<date>.log`` and ``console_level`` to the console.
+    """Log to ``data/logs/<log_name>_<date>.log`` (the file matters for scheduled
+    runs, which have no console). See :func:`cre_monitor.logs.setup_logging`."""
+    from cre_monitor.logs import setup_logging
 
-    The log file matters for scheduled runs, which have no visible console.
-    Interactive commands (ask/chat) pass WARNING so answers aren't buried in logs.
-    """
-    s = get_settings()
-    log_dir = s.data_dir / "logs"
-    log_dir.mkdir(parents=True, exist_ok=True)
-    log_file = log_dir / f"{log_name}_{date.today().isoformat()}.log"
-    console = logging.StreamHandler()
-    console.setLevel(console_level)
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
-        handlers=[console, logging.FileHandler(log_file, encoding="utf-8")],
-        force=True,
-    )
-    # Third-party libraries are chatty at INFO.
-    for noisy in ("httpx", "httpcore", "anthropic", "trafilatura", "kaleido", "choreographer"):
-        logging.getLogger(noisy).setLevel(logging.WARNING)
-    return log_file
+    return setup_logging(log_name, console_level)
 
 
 @app.callback()
@@ -109,8 +93,25 @@ def brief(
     for kind, path in paths.items():
         console.print(f"  {kind:9} {path}")
     console.print(f"  log       {log_file}")
+    _print_incident(state.get("incident"))
     if open_report and "html" in paths:
         webbrowser.open(Path(paths["html"]).as_uri())
+
+
+def _print_incident(incident) -> None:
+    """Terminal version of the UI error panel: plain-English problem + traceable reference."""
+    if incident is None:
+        return
+    cat = incident.category
+    total = incident.scope == "total"
+    lead = "Could not answer." if total else "Part of the research failed - the result may be incomplete."
+    body = (
+        f"[bold]{cat.title}[/bold]\n{lead} {cat.message}\n\n"
+        + "\n".join(f"• {a}" for a in cat.actions)
+        + f"\n\nReference for support: [bold]{incident.id}[/bold]  (send to {get_settings().support_contact})"
+        + f"\n[dim]Affected: {', '.join(incident.affected)} · details in {incident.log_file or 'the log'}[/dim]"
+    )
+    console.print(Panel(body, title="Problem" if total else "Warning", border_style="red" if total else "yellow"))
 
 
 def _resolve_thread(thread: str | None) -> str:
@@ -164,6 +165,7 @@ def ask(
         state = ask_graph(question, thread_id=thread, refs=refs)
     console.print(f"[dim]Skills used: {', '.join(state.get('selected_skills') or ['none'])}[/dim]")
     console.print(Markdown(state.get("answer", "")))
+    _print_incident(state.get("incident"))
 
 
 @app.command()
@@ -190,6 +192,7 @@ def chat(
             state = ask_graph(question, thread_id=thread, refs=refs)
         console.print(f"[dim]Skills: {', '.join(state.get('selected_skills') or ['none'])}[/dim]")
         console.print(Markdown(state.get("answer", "")))
+        _print_incident(state.get("incident"))
 
 
 @app.command("conversations")

@@ -15,7 +15,8 @@ Schema::
 
     conversations(thread_id PK, title, created_at, updated_at)
     turns(thread_id, idx, created_at, question, answer, skills_json,
-          reasoning, issues_json, findings_json, refs_json, PK(thread_id, idx))
+          reasoning, issues_json, findings_json, refs_json, incident_json,
+          PK(thread_id, idx))
 
 Turns are written by :func:`cre_monitor.graph.builder.ask`, so chats started from
 the UI *and* the CLI (``cre-monitor chat --thread X``) appear in the list.
@@ -38,6 +39,7 @@ from typing import Iterator
 from pydantic import BaseModel
 
 from cre_monitor.config import get_settings
+from cre_monitor.errors import Incident
 from cre_monitor.schemas import SkillFinding, ValidationIssue
 
 _SCHEMA = """
@@ -58,6 +60,7 @@ CREATE TABLE IF NOT EXISTS turns (
     issues_json   TEXT NOT NULL,
     findings_json TEXT NOT NULL,
     refs_json     TEXT NOT NULL DEFAULT '[]',
+    incident_json TEXT,
     PRIMARY KEY (thread_id, idx)
 );
 CREATE INDEX IF NOT EXISTS ix_conversations_updated ON conversations(updated_at);
@@ -100,6 +103,7 @@ class Turn(BaseModel):
     issues: list[ValidationIssue]
     findings: list[SkillFinding]
     refs: list[str] = []  # thread ids of earlier conversations referenced in this turn
+    incident: Incident | None = None  # set when part of the turn failed (shown as an error panel)
 
 
 def make_title(question: str) -> str:
@@ -117,10 +121,12 @@ class ConversationStore:
         path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as conn:
             conn.executescript(_SCHEMA)
-            # Upgrade databases created before cross-conversation references existed.
+            # Upgrade databases created by earlier versions (columns added over time).
             cols = {r["name"] for r in conn.execute("PRAGMA table_info(turns)")}
             if "refs_json" not in cols:
                 conn.execute("ALTER TABLE turns ADD COLUMN refs_json TEXT NOT NULL DEFAULT '[]'")
+            if "incident_json" not in cols:
+                conn.execute("ALTER TABLE turns ADD COLUMN incident_json TEXT")
 
     @contextmanager
     def _conn(self) -> Iterator[sqlite3.Connection]:
@@ -144,11 +150,13 @@ class ConversationStore:
         issues: list[ValidationIssue] | None = None,
         findings: list[SkillFinding] | None = None,
         refs: list[str] | None = None,
+        incident: Incident | None = None,
     ) -> int:
         """Append a turn, creating the conversation on its first turn.
 
         Args:
             refs: Thread ids of earlier conversations referenced in this turn.
+            incident: Failure report for the turn, if anything went wrong.
 
         Returns:
             The index (0-based) of the recorded turn.
@@ -165,7 +173,7 @@ class ConversationStore:
             ).fetchone()[0]
             conn.execute(
                 "INSERT INTO turns (thread_id, idx, created_at, question, answer, skills_json, "
-                "reasoning, issues_json, findings_json, refs_json) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                "reasoning, issues_json, findings_json, refs_json, incident_json) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     thread_id, idx, now, question, answer,
                     json.dumps(skills or []),
@@ -173,6 +181,7 @@ class ConversationStore:
                     json.dumps([i.model_dump(mode="json") for i in issues or []]),
                     json.dumps([f.model_dump(mode="json") for f in findings or []]),
                     json.dumps(refs or []),
+                    incident.model_dump_json() if incident else None,
                 ),
             )
         return idx
@@ -224,6 +233,7 @@ class ConversationStore:
                 issues=[ValidationIssue(**i) for i in json.loads(r["issues_json"])],
                 findings=[SkillFinding(**f) for f in json.loads(r["findings_json"])],
                 refs=json.loads(r["refs_json"] or "[]"),
+                incident=Incident.model_validate_json(r["incident_json"]) if r["incident_json"] else None,
             )
             for r in rows
         ]

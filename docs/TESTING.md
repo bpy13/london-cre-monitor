@@ -35,7 +35,7 @@ An LLM agent is testable when its behaviour can be checked:
 | **Offline mode** (`CRE_OFFLINE=1`) | Every tool has a fixture path (`fixtures/`) | Repeatable tool tests and graph runs without the internet |
 | **Demo mode** (`CRE_DEMO_MODE=1`) | Skills return `fixtures/findings/*.json`; synthesis and chat answers are rule-based | The **whole graph** runs end to end with the same result every time |
 | **Dependency injection** | Every model comes from `get_llm()`, which tests patch | A scripted fake LLM drives the **real** agent code (see §5) |
-| **Failure isolation** | A skill exception becomes an error finding instead of crashing the run | Failure paths are observable and assertable |
+| **Failure isolation** | A skill exception becomes an error finding instead of crashing the run; all failures become one `Incident` with a reference ID | Failure paths are observable and assertable, including what users see |
 | **Test isolation** | `tests/conftest.py` sets offline + demo mode, blanks the keys, points `DATA_DIR`/`REPORTS_DIR` at a temp folder, disables PNG export and clears all cached singletons per test | Tests never touch real history and don't leak state |
 | **Audit trail** | `findings_<run>.json`, data-quality notes in the report, logs | Live runs can be inspected afterwards |
 
@@ -54,7 +54,7 @@ An LLM agent is testable when its behaviour can be checked:
 
 ## 4. Test files
 
-`pytest` runs 53 offline tests in about 11 s. `pytest -m live` runs 7 more.
+`pytest` runs 67 offline tests in about 13 s. `pytest -m live` runs 7 more.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -65,7 +65,8 @@ An LLM agent is testable when its behaviour can be checked:
 | `test_charts.py` | 5 | Single-source preference for trends; mixed-source fallback flagged and dashed; consistent source in bar charts; full chart set built from history |
 | `test_graph.py` | 10 | Demo brief end to end (HTML/MD sections, PNGs, no HTML escaping in Markdown); deltas vs seeded history; skill subset; unknown skill rejected; keyword routing; multi-turn chat resets findings but keeps messages; same-day briefs keep their own charts; **fake-LLM**: real sub-agent calls tools and returns a structured finding; router drops unknown skills; **referenced conversations reach the router and answer prompts (with precedence rules) but never a research skill's prompt** |
 | `test_conversations.py` | 10 | Conversation store: record, list, redraw turns, rename, delete; titles; recency grouping; `ask()` records turns and resume keeps agent memory; delete removes index and memory; **context packs** (dated, excerpted, figures listed, capped to recent turns/size); old database upgraded with the `refs_json` column; `resolve_refs` drops self/unknown/duplicates and caps at 3; refs are used, recorded and don't carry over to the next turn |
-| `test_ui.py` | 5 | App renders all tabs; a chat turn returns an answer with skills shown; a conversation is listed in the sidebar (titled, in the URL), New chat clears it and clicking it restores it; a fresh session opens a conversation from `?thread=`; the reference picker lists other chats and the answer shows "📎 Referenced" |
+| `test_ui.py` | 6 | App renders all tabs; a chat turn returns an answer with skills shown; a conversation is listed in the sidebar (titled, in the URL), New chat clears it and clicking it restores it; a fresh session opens a conversation from `?thread=`; the reference picker lists other chats and the answer shows "📎 Referenced"; **an API failure shows the styled error panel, a valid `ERR-` reference, the support contact, and no raw error text in the answer** |
+| `test_errors.py` | 13 | Classification of real error texts (incl. the exact 403 seen in practice) into 8 categories; reference ID format; incidents logged with the reference, thread and raw errors; most actionable category wins; exception → total incident; **end to end with every LLM call refused**: chat gives a clean answer plus a total incident saved with the turn; a brief reports an incident and keeps raw text out of the report |
 | `test_live.py` | 7 (opt-in) | BoE Bank Rate; ONS CPIH / unemployment / GDP; Nomis London employment; Google News + search; one real `macro-economy` skill run (needs `ANTHROPIC_API_KEY`) |
 
 ## 5. The fake LLM (`tests/fake_llm.py`)

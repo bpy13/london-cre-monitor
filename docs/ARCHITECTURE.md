@@ -86,6 +86,19 @@ START → agent ⇄ tools (ToolNode)   … until no more tool calls or step cap
 3. Detailed source documents are fetched only when needed (`fetch_document` with
    `focus` keywords trims long PDFs).
 
+## Error handling (`errors.py`)
+Failures never stop the pipeline:
+* a failed skill becomes an error finding;
+* failed LLM steps fall back to rule-based output and record the raw error in
+  `AgentState.errors`.
+
+After each run, `builder.incident_for` gathers all failures into one **`Incident`**. It has
+a user-facing category (e.g. "The AI service refused the request"), suggested actions, a
+scope (total or partial), and a reference ID (`ERR-…`), and it is logged as one searchable
+record. The UI shows it as a styled panel with the reference and the support contact; the
+CLI prints a formatted box. Raw error text is shown only under "Technical details (for
+engineers)". See [USAGE.md → When something goes wrong](USAGE.md#when-something-goes-wrong).
+
 ## Data model
 Every skill returns one `SkillFinding` (metrics, signals, citations, narrative). Shared
 vocabularies for metric keys, units and submarkets let figures from different skills and

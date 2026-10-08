@@ -139,6 +139,7 @@ def planner(state: AgentState) -> dict:
         "deltas": [],
         "synthesis": None,
         "answer": "",
+        "errors": [],
     }
 
 

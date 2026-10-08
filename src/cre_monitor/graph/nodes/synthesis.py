@@ -85,5 +85,5 @@ def synthesis(state: AgentState) -> dict:
     except Exception as exc:  # noqa: BLE001 - a report with a basic summary beats no report
         logger.exception("LLM synthesis failed; using rule-based fallback")
         result = rule_based_synthesis(findings, deltas, issues)
-        result.watch_list.append(f"(Synthesis LLM failed: {exc})")
-        return {"synthesis": result}
+        result.watch_list.append("(The AI summary could not be generated; this summary was assembled automatically.)")
+        return {"synthesis": result, "errors": [f"synthesis: {type(exc).__name__}: {exc}"]}

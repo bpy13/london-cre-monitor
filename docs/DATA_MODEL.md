@@ -124,6 +124,20 @@ Periods sort as strings, which is what the delta and trend logic relies on.
 | `is_material` | ≥ 0.1pp for % metrics, ≥ 0.5% otherwise; immaterial moves are hidden |
 | `describe()` | One-line text used in reports and prompts |
 
+### `Incident`: a user-facing failure report (`errors.py`)
+Created by `builder.incident_for` after a chat turn or brief whenever any step failed:
+failed skills (`SkillFinding.error`) plus failed LLM steps (`AgentState.errors`).
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | str | Reference users quote: `ERR-YYYYMMDD-HHMM-XXXX`. Also logged, so `grep` finds the details |
+| `created_at` | datetime | |
+| `category` | `ErrorCategory` | `code` (`access_denied`, `auth`, `credit`, `rate_limit`, `service`, `network`, `config`, `unknown`), `title`, `message`, `actions[]`, `retryable`. Chosen by ordered regex rules over the raw error text |
+| `scope` | str | `total` (no usable result: red panel) or `partial` (answer may be incomplete: amber panel) |
+| `affected` | list[str] | Failed steps, e.g. `office-rents`, `answer`, `synthesis` |
+| `details` | list[str] | Raw `step: error` messages, shown only under "for engineers" |
+| `thread_id`, `run_id`, `log_file` | str \| None | Where to look |
+
 ### `SkillSelection`: router output (chat mode)
 `skills: list[str]` (unknown names are dropped), `reasoning: str`.
 
@@ -148,7 +162,9 @@ Periods sort as strings, which is what the delta and trend logic relies on.
 | `deltas` | `persist` | list[`MetricDelta`] |
 | `synthesis` | `synthesis` | `ExecutiveSynthesis` (brief only) |
 | `report_paths` | `report_writer` | `{"html", "markdown", "json"}` → path |
-| `answer` | `chat_answer` | Final chat text |
+| `answer` | `chat_answer` | Final chat text (never contains raw error text) |
+| `errors` | `chat_answer`, `synthesis` | Raw `"step: error"` strings from failed LLM steps outside the skills. Reset by the planner each run |
+| `incident` | `builder.ask` / `run_brief` (after the graph) | `Incident` or `None`: the user-facing summary of all failures in the run |
 
 ### `SkillTask`: private input to one parallel skill run (via `Send`)
 `skill_name`, `mode`, `question` (the user's question, or the standard brief instruction).
@@ -186,7 +202,7 @@ Full authoring guide: [SKILLS.md](SKILLS.md).
 | `reports/<date>/findings_<run_id>.json` | `report_writer` | Brief only | Audit trail: `{run_id, synthesis, findings[], deltas[], issues[]}`, each item the JSON form of the models above |
 | `data/checkpoints.sqlite` | LangGraph `SqliteSaver` | Chat only (`ask()`; `run_brief()` has no checkpointer) | Serialised `AgentState` per `thread_id` and step, including the message history. This is the **agent's memory** that makes a resumed conversation continue with context. Managed by LangGraph; don't edit by hand |
 | `data/conversations.sqlite` (tables `conversations`, `turns`) | `ask()` → `ConversationStore.record_turn` | Every chat turn (UI and CLI) | The **conversation list** for the sidebar and `cre-monitor conversations`: title and timestamps per thread, plus each turn's question, answer, skills, issues and findings, so a reopened conversation can be redrawn with its charts (schema below) |
-| `data/logs/<brief\|chat>_<date>.log` | CLI | CLI runs | Run logs (INFO) |
+| `data/logs/<brief\|chat\|ui>_<date>.log` | `logs.setup_logging` (CLI and UI) | Every run | Run logs (INFO), including one `ERROR` record per `Incident`, searchable by its reference ID |
 
 ### `metrics` table schema (`store/metrics.py`)
 | Column | Type | From |
@@ -238,10 +254,11 @@ They share the same `thread_id`. Deleting a conversation
 | `issues_json` | TEXT | JSON list of `ValidationIssue` |
 | `findings_json` | TEXT | JSON list of `SkillFinding`. Lets the UI rebuild the turn's charts on reopen |
 | `refs_json` | TEXT, default `'[]'` | JSON list of conversation ids referenced in this turn. Added later; older databases are upgraded automatically on open |
+| `incident_json` | TEXT, nullable | JSON `Incident` if part of the turn failed. Lets a reopened conversation show the same error panel and reference. Added later; upgraded automatically |
 
 In code these are read as `Conversation` (thread_id, title, created_at, updated_at,
 turn_count) and `Turn` (idx, created_at, question, answer, skills, reasoning,
-issues, findings, refs) objects. `group_by_recency()` buckets conversations for the sidebar.
+issues, findings, refs, incident) objects. `group_by_recency()` buckets conversations for the sidebar.
 
 ### Context pack (cross-conversation references)
 

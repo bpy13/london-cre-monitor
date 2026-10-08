@@ -72,6 +72,11 @@ class Settings(BaseSettings):
     conflict_tolerance_pct_points: float = 1.5
     conflict_tolerance_rent_pct: float = 10.0
 
+    # --- Support -----------------------------------------------------------
+    #: Who users should contact when an error panel shows a reference ID, e.g.
+    #: "Jane Doe (jane.doe@nanfung.com)" or "#london-cre-support on Teams".
+    support_contact: str = "the London engineering team"
+
     # --- Reporting ---------------------------------------------------------
     #: Export static PNG charts for the Markdown report (needs a local Chrome
     #: for kaleido). Tests switch it off for speed.

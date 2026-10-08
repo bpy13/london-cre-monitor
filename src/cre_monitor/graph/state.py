@@ -75,6 +75,10 @@ class AgentState(TypedDict, total=False):
         synthesis: Executive synthesis (brief mode).
         report_paths: Written report files, e.g. ``{"html": ".../brief.html"}``.
         answer: Final chat answer text (chat mode).
+        errors: Raw ``"step: error"`` strings from LLM steps that failed outside
+            the skills (answer, synthesis). Skill failures live on
+            ``SkillFinding.error``. Both are turned into one user-facing
+            ``Incident`` by ``builder`` (see ``cre_monitor.errors``).
     """
 
     mode: Mode
@@ -94,6 +98,7 @@ class AgentState(TypedDict, total=False):
     synthesis: ExecutiveSynthesis | None
     report_paths: dict[str, str]
     answer: str
+    errors: list[str]
 
 
 class SkillTask(TypedDict):

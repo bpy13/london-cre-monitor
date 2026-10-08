@@ -73,13 +73,13 @@ def open_conversation(thread_id: str) -> None:
     history: list[dict] = []
     for t in get_conversation_store().turns(thread_id):
         history.append({"role": "user", "content": t.question})
-        history.append(assistant_turn(t.answer, t.skills, t.reasoning, t.issues, t.findings, t.refs))
+        history.append(assistant_turn(t.answer, t.skills, t.reasoning, t.issues, t.findings, t.refs, t.incident))
     st.session_state.thread_id = thread_id
     st.session_state.history = history
     st.query_params["thread"] = thread_id
 
 
-def assistant_turn(answer, skills, reasoning, issues, findings, refs=None) -> dict:
+def assistant_turn(answer, skills, reasoning, issues, findings, refs=None, incident=None) -> dict:
     """View model for one assistant message (used for live and reloaded turns alike)."""
     from cre_monitor.reporting.charts import build_charts
     from cre_monitor.store import get_conversation_store, get_store
@@ -90,11 +90,56 @@ def assistant_turn(answer, skills, reasoning, issues, findings, refs=None) -> di
     figs = [f for f in figs if _figure_relevant(f, keys)][:4]
     store = get_conversation_store()
     ref_titles = [(c.title if (c := store.get(r)) else "(deleted conversation)") for r in refs or []]
+    issues = issues or []
+    if incident is not None:
+        # Skill failures are explained by the incident panel; don't repeat raw errors as data notes.
+        issues = [i for i in issues if not i.message.startswith("Skill failed:")]
     return {
         "id": uuid.uuid4().hex[:6], "role": "assistant", "content": answer,
-        "skills": skills, "reasoning": reasoning, "issues": issues or [], "charts": figs,
-        "ref_titles": ref_titles,
+        "skills": skills, "reasoning": reasoning, "issues": issues, "charts": figs,
+        "ref_titles": ref_titles, "incident": incident,
     }
+
+
+def render_incident(incident, where=st, compact: bool = False) -> None:
+    """User-friendly error panel with a reference ID engineers can trace in the logs.
+
+    Shows what happened in plain English, what the user can do, and the
+    reference to quote (with a copy button). Raw technical details are tucked
+    into a collapsed "for engineers" section.
+
+    Args:
+        incident: The :class:`~cre_monitor.errors.Incident` to show.
+        where: Streamlit container to render into.
+        compact: Narrow version for the sidebar (no columns or nested expander,
+            which Streamlit doesn't allow inside the settings expander).
+    """
+    cat = incident.category
+    total = incident.scope == "total"
+    contact = get_settings().support_contact
+    box = where.error if total else where.warning
+    lead = "We couldn't answer this question." if total else "Part of the research failed - this answer may be incomplete."
+    actions = "\n".join(f"- {a}" for a in cat.actions)
+    box(
+        f"**{cat.title}**\n\n{lead} {cat.message}\n\n**What you can do**\n{actions}",
+        icon="🚫" if total else "⚠️",
+    )
+    if compact:
+        where.caption(f"Reference for support - send to {contact}:")
+        where.code(incident.id, language=None)
+        return
+    c1, c2 = where.columns([0.55, 0.45], vertical_alignment="center")
+    c1.markdown(f"**Reference for support:** please send this ID to **{contact}** so they can trace the problem.")
+    c2.code(incident.id, language=None)  # st.code has a built-in copy button
+    details = where.expander("Technical details (for engineers)")
+    details.markdown(
+        f"- **Reference:** `{incident.id}` · **time:** {incident.created_at:%Y-%m-%d %H:%M:%S}\n"
+        f"- **Category:** `{cat.code}` · **scope:** {incident.scope} · **retryable:** {'yes' if cat.retryable else 'no'}\n"
+        f"- **Affected steps:** {', '.join(incident.affected)}\n"
+        f"- **Conversation:** `{incident.thread_id or '-'}` · **run:** `{incident.run_id or '-'}`\n"
+        f"- **Log file:** `{incident.log_file or 'not configured'}`  →  search for the reference ID"
+    )
+    details.code("\n".join(incident.details)[:4000], language=None)
 
 
 # --------------------------------------------------------------------------
@@ -164,8 +209,21 @@ def settings_panel() -> None:
             from cre_monitor.graph.builder import run_brief
 
             with st.status("Running all skills...", expanded=False) as status:
-                state = run_brief()
-                status.update(label="Brief ready - see the Briefs tab", state="complete")
+                try:
+                    state = run_brief()
+                except Exception as exc:  # noqa: BLE001 - show a reference, not a traceback
+                    from cre_monitor.errors import incident_from_exception
+
+                    state = {"incident": incident_from_exception(exc, step="brief")}
+                incident = state.get("incident")
+                if incident is not None and incident.scope == "total":
+                    status.update(label="Brief failed", state="error")
+                elif incident is not None:
+                    status.update(label="Brief ready, with problems - see the Briefs tab", state="complete")
+                else:
+                    status.update(label="Brief ready - see the Briefs tab", state="complete")
+            if incident is not None:
+                render_incident(incident, compact=True)
             st.session_state.last_brief = state.get("report_paths", {}).get("html")
 
 
@@ -183,6 +241,8 @@ def sidebar() -> None:
 
 def render_turn_details(turn: dict) -> None:
     """Supporting detail under an assistant answer."""
+    if turn.get("incident") is not None:
+        render_incident(turn["incident"])
     if turn.get("ref_titles"):
         st.caption("📎 Referenced: " + " · ".join(turn["ref_titles"]))
     if turn.get("skills"):
@@ -236,12 +296,22 @@ def chat_tab() -> None:
                     label += f": {update['findings'][0].skill}"
                 status.write(label)
 
-            state = ask(question, thread_id=st.session_state.thread_id, stream_handler=on_update, refs=refs)
-            status.update(label="Done", state="complete", expanded=False)
+            try:
+                state = ask(question, thread_id=st.session_state.thread_id, stream_handler=on_update, refs=refs)
+            except Exception as exc:  # noqa: BLE001 - never show users a raw traceback
+                state = unexpected_failure(question, exc)
+            incident = state.get("incident")
+            if incident is None:
+                status.update(label="Done", state="complete", expanded=False)
+            elif incident.scope == "total":
+                status.update(label="Could not complete the research", state="error", expanded=False)
+            else:
+                status.update(label="Done - with problems (see below)", state="complete", expanded=False)
 
         turn = assistant_turn(
             state.get("answer", ""), state.get("selected_skills"), state.get("planner_reasoning"),
             state.get("validation_issues"), state.get("findings") or [], state.get("context_refs"),
+            incident,
         )
         st.markdown(turn["content"])
         render_turn_details(turn)
@@ -250,6 +320,25 @@ def chat_tab() -> None:
     # appears in the list (the sidebar was drawn before this turn ran).
     st.query_params["thread"] = st.session_state.thread_id
     st.rerun()
+
+
+def unexpected_failure(question: str, exc: Exception) -> dict:
+    """Handle an exception that escaped ``ask()`` entirely (e.g. a storage problem).
+
+    Logs the traceback under a new incident reference and records the failed
+    turn, so it stays visible in the conversation and can be traced later.
+    """
+    from cre_monitor.errors import incident_from_exception
+    from cre_monitor.store import get_conversation_store
+
+    thread_id = st.session_state.thread_id
+    incident = incident_from_exception(exc, step="chat", thread_id=thread_id)
+    answer = "I couldn't complete this request."
+    try:
+        get_conversation_store().record_turn(thread_id, question, answer, incident=incident)
+    except Exception:  # noqa: BLE001 - the incident is already logged; don't fail twice
+        pass
+    return {"answer": answer, "incident": incident}
 
 
 def reference_picker() -> list[str]:
@@ -349,6 +438,9 @@ def dashboard_tab() -> None:
 
 def main() -> None:
     get_settings().ensure_dirs()
+    from cre_monitor.logs import setup_logging
+
+    setup_logging("ui")  # idempotent; incident details are written here for engineers
     if "thread_id" not in st.session_state:
         # First load of this browser session: reopen the conversation named in the
         # URL (refresh / bookmark), otherwise start a new chat.

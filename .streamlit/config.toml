@@ -7,4 +7,8 @@
 # "viewer" hides Streamlit's developer options - the Deploy button (which would
 # publish the app to Streamlit Community Cloud, not supported for this PoC) and
 # rerun / clear cache - while keeping the ⋮ menu (theme settings, print, about).
+#
+# Debug mode (developer toolbar back, incl. Rerun / Clear cache):
+#   cre-monitor ui --debug            or  CRE_UI_DEBUG=1 in .env
+#   STREAMLIT_CLIENT_TOOLBAR_MODE=developer streamlit run src/cre_monitor/ui/app.py
 toolbarMode = "viewer"

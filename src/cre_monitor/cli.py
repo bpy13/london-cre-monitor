@@ -227,14 +227,24 @@ def list_skills() -> None:
 
 
 @app.command()
-def ui(port: int = 8501) -> None:
+def ui(
+    port: int = 8501,
+    debug: bool = typer.Option(
+        False, "--debug",
+        help="Show Streamlit's developer toolbar (Rerun, Clear cache, ...). Also enabled by CRE_UI_DEBUG=1.",
+    ),
+) -> None:
     """Launch the Streamlit chat UI and dashboard."""
     app_path = Path(__file__).parent / "ui" / "app.py"
+    # Business users get the "viewer" toolbar (no Deploy/Rerun/Clear cache);
+    # debug mode restores Streamlit's full developer toolbar. Passed explicitly so
+    # it works from any launch folder (mirrors .streamlit/config.toml).
+    toolbar = "developer" if (debug or get_settings().cre_ui_debug) else "viewer"
+    if toolbar == "developer":
+        console.print("[yellow]UI debug mode: Streamlit developer toolbar enabled (Rerun, Clear cache, Deploy).[/yellow]")
     subprocess.run(
         [sys.executable, "-m", "streamlit", "run", str(app_path), "--server.port", str(port),
-         # Hide Streamlit's Deploy button / developer options regardless of the
-         # launch folder (mirrors .streamlit/config.toml at the repo root).
-         "--client.toolbarMode", "viewer"],
+         "--client.toolbarMode", toolbar],
         check=False,
     )
 

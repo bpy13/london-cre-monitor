@@ -54,7 +54,7 @@ An LLM agent is testable when its behaviour can be checked:
 
 ## 4. Test files
 
-`pytest` runs 67 offline tests in about 13 s. `pytest -m live` runs 7 more.
+`pytest` runs 70 offline tests in about 13 s. `pytest -m live` runs 7 more.
 
 | File | Tests | Covers |
 |---|---|---|
@@ -67,6 +67,7 @@ An LLM agent is testable when its behaviour can be checked:
 | `test_conversations.py` | 10 | Conversation store: record, list, redraw turns, rename, delete; titles; recency grouping; `ask()` records turns and resume keeps agent memory; delete removes index and memory; **context packs** (dated, excerpted, figures listed, capped to recent turns/size); old database upgraded with the `refs_json` column; `resolve_refs` drops self/unknown/duplicates and caps at 3; refs are used, recorded and don't carry over to the next turn |
 | `test_ui.py` | 6 | App renders all tabs; a chat turn returns an answer with skills shown; a conversation is listed in the sidebar (titled, in the URL), New chat clears it and clicking it restores it; a fresh session opens a conversation from `?thread=`; the reference picker lists other chats and the answer shows "📎 Referenced"; **an API failure shows the styled error panel, a valid `ERR-` reference, the support contact, and no raw error text in the answer** |
 | `test_errors.py` | 13 | Classification of real error texts (incl. the exact 403 seen in practice) into 8 categories; reference ID format; incidents logged with the reference, thread and raw errors; most actionable category wins; exception → total incident; **end to end with every LLM call refused**: chat gives a clean answer plus a total incident saved with the turn; a brief reports an incident and keeps raw text out of the report |
+| `test_cli.py` | 3 | `cre-monitor ui` passes `toolbarMode=viewer` by default, and `developer` with `--debug` or `CRE_UI_DEBUG=1` (Streamlit launch is captured, not run) |
 | `test_live.py` | 7 (opt-in) | BoE Bank Rate; ONS CPIH / unemployment / GDP; Nomis London employment; Google News + search; one real `macro-economy` skill run (needs `ANTHROPIC_API_KEY`) |
 
 ## 5. The fake LLM (`tests/fake_llm.py`)

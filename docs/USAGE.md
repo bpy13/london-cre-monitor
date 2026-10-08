@@ -41,7 +41,7 @@ Example: `cre-monitor --offline --demo brief`.
 | `cre-monitor chat [--thread ID]` | Interactive multi-turn chat in the terminal: new conversation, or resume `ID`. Type `exit` to quit |
 | `cre-monitor ask "..." --ref ID [--ref ID2]` | Uses up to 3 **earlier conversations as background context**. Works with `chat` too, where it applies to the whole session. See [Referencing earlier conversations](#referencing-earlier-conversations) |
 | `cre-monitor conversations [--limit 20]` | Lists saved conversations (id, title, questions, last active), most recent first. The same list appears in the UI sidebar |
-| `cre-monitor ui [--port 8501]` | Streamlit web app (see [§2](#2-web-ui-cre-monitor-ui)) |
+| `cre-monitor ui [--port 8501] [--debug]` | Streamlit web app (see [§2](#2-web-ui-cre-monitor-ui)). `--debug` shows Streamlit's developer toolbar (Rerun, Clear cache) |
 | `cre-monitor schedule install --day MON --time 07:00` | Windows: registers a weekly brief in Task Scheduler. Linux, macOS and Codespaces: prints a crontab line instead |
 | `cre-monitor schedule show` / `schedule remove` | Shows or removes the Windows scheduled task |
 
@@ -64,6 +64,12 @@ Streamlit's **Deploy** button and developer options (rerun, clear cache) are hid
 `cre-monitor ui`. Deploy would publish to Streamlit Community Cloud, which this PoC is not
 set up for: its storage is temporary and apps are public by default. The **⋮** menu
 (theme, print) remains.
+
+**Debug mode** brings back Streamlit's full developer toolbar: **Rerun** (also the `R`
+key), **Clear cache**, and Deploy. The sidebar then shows "🐞 Debug mode".
+* `cre-monitor ui --debug`, for one session;
+* `CRE_UI_DEBUG=1` in `.env` or Codespaces secrets, to keep it on;
+* `STREAMLIT_CLIENT_TOOLBAR_MODE=developer` when launching with plain `streamlit run`.
 
 ### Sidebar
 
@@ -219,6 +225,7 @@ The full template is in `.env.example`.
 | `REPORT_PNG=0` | Skip PNG charts (needed if no Chrome/Chromium is installed) |
 | `STALE_AFTER_DAYS` | When the validator flags data as stale |
 | `SUPPORT_CONTACT` | Who users should send error reference IDs to (shown in error panels) |
+| `CRE_UI_DEBUG=1` | UI debug mode: Streamlit developer toolbar (Rerun, Clear cache) |
 
 ---
 

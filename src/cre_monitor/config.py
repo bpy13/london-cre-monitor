@@ -72,6 +72,12 @@ class Settings(BaseSettings):
     conflict_tolerance_pct_points: float = 1.5
     conflict_tolerance_rent_pct: float = 10.0
 
+    # --- UI ----------------------------------------------------------------
+    #: Debug mode for the Streamlit UI: show Streamlit's developer toolbar
+    #: (Rerun, Clear cache, ...). Off by default for business users. Same as
+    #: `cre-monitor ui --debug`.
+    cre_ui_debug: bool = False
+
     # --- Support -----------------------------------------------------------
     #: Who users should contact when an error panel shows a reference ID, e.g.
     #: "Jane Doe (jane.doe@nanfung.com)" or "#london-cre-support on Teams".

@@ -17,6 +17,10 @@ It covers:
 The agent is **built from skills**. Each research area is a folder with a `SKILL.md` file
 (`skills/`), so adding a topic means adding a folder.
 
+**See a real output:** [open the sample brief](examples/sample-brief/brief_20261008T070945-5e5fe0.md)
+(with charts) - a full live run (all 8 skills, Q2 2026 data), with licence-restricted sources
+removed. What was removed and why: [examples/sample-brief/](examples/sample-brief/README.md).
+
 ## Quick start
 
 ```powershell
@@ -51,9 +55,6 @@ conda env automatically. Add the keys as Codespaces secrets.
 **All commands, UI features, settings and the Python API: [docs/USAGE.md](docs/USAGE.md).**
 
 ## What you get
-
-**See a real output:** [examples/sample-brief/](examples/sample-brief/README.md) - a full live run
-(all 8 skills, Q2 2026 data), with licence-restricted sources removed.
 
 | Output | How |
 |---|---|

@@ -43,7 +43,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.2",
-    "ruff>=0.6",     # lint: `ruff check src tests evals`
+    "ruff>=0.6",     # lint: `ruff check src tests evals scripts`
     "vulture>=2.11", # dead code: `vulture src --min-confidence 70`
 ]
 # LangGraph Studio / `langgraph dev` server (heavy: pulls grpc etc.).

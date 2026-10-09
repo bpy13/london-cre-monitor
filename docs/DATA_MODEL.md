@@ -6,7 +6,7 @@ source of truth is the code: `src/cre_monitor/schemas.py` (domain models),
 `store/metrics.py` and `store/conversations.py` (SQLite schemas).
 
 - [1. Overview](#1-overview)
-- [2. Controlled vocabularies](#2-controlled-vocabularies)
+- [2. Controlled vocabularies](#2-controlled-vocabularies-the-catalogue)
 - [3. Domain models](#3-domain-models-schemaspy)
 - [4. Graph state](#4-graph-state-graphstatepy)
 - [5. Skill definition](#5-skill-definition-skillsnameskillmd)

@@ -35,6 +35,19 @@ Without an Anthropic key the app runs in **demo mode**: canned findings, no LLM 
 **GitHub Codespaces:** create a codespace from the repo. `.devcontainer/` builds the same
 conda env automatically. Add the keys as Codespaces secrets.
 
+> **⚠️ Set the codespace region before you create it (needed for the Claude API).** A codespace
+> runs in one of GitHub's regions (US East, US West, Europe West, Southeast Asia, Australia),
+> picked automatically from your location unless you choose one. The Claude API only accepts
+> requests from [supported countries](https://www.anthropic.com/supported-countries), so pick a
+> region in a supported country:
+> * for all your codespaces: **GitHub → Settings → Codespaces → Region → Set manually**;
+> * for one codespace: **Code → Codespaces → ⋯ → New with options… → Region**.
+>
+> A codespace's region can't be changed later; create a new one if needed. In the wrong region,
+> live runs fail with "The AI service refused the request" (HTTP 403). The region only decides
+> where the VM runs: Anthropic's terms still require the people using the app to be in a
+> supported country.
+
 **All commands, UI features, settings and the Python API: [docs/USAGE.md](docs/USAGE.md).**
 
 ## What you get

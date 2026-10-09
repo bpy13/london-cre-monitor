@@ -514,6 +514,10 @@ cre-monitor merge /path/to/other --dry-run              # preview only
 
 ## 8. GitHub Codespaces notes
 
+* **Region first.** Before creating the codespace, choose a region in a country the Claude API
+  supports: **GitHub → Settings → Codespaces → Region**, or **New with options… → Region** for one
+  codespace. The region is fixed once the codespace exists. A wrong region shows up as "The AI
+  service refused the request" (HTTP 403) on live runs. See the [README](../README.md#quick-start).
 * Setup is automatic (`.devcontainer/`). If the env is missing, run `bash .devcontainer/post-create.sh`
   or `conda env create -f environment.yml && conda activate london-cre`.
 * Everything above works except `brief --open` (there is no desktop browser) and `schedule install`

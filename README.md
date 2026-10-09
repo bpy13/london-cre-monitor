@@ -1,7 +1,7 @@
 # London CRE Market Monitor
 
-A **LangGraph agent PoC** that monitors the London office market for Nan Fung Group's London
-team. It replaces manual desk research with a recurring, **cited, chart-backed market brief**,
+A **LangGraph agent PoC** that monitors the London office market for a London real estate
+investment team. It replaces manual desk research with a recurring, **cited, chart-backed market brief**,
 a **scheduled run** and a **chat assistant**.
 
 It covers:

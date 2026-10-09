@@ -53,7 +53,7 @@ exists - this is what separates "how much space" from "what kind of space wins".
 2. Read one substantive source per theme (focus keywords per theme).
 3. Use `rss_news` for recent ESG regulation news and corporate office mandates.
 
-## Interpreting for Nan Fung
+## Interpreting for a landlord / investor
 - ESG non-compliant (EPC D-G) stock faces **stranding risk** -> capex needs, value discount;
   also an **acquisition-and-retrofit opportunity** where pricing reflects it.
 - Strong flight-to-quality supports prime development/refurbishment economics.

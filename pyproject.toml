@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "LangGraph agent PoC that monitors the London commercial real estate (office) market using pluggable skills."
 readme = "README.md"
 requires-python = ">=3.11"
-authors = [{ name = "Nan Fung Group - London FDE team" }]
+authors = [{ name = "London FDE team" }]
 dependencies = [
     # --- Agent framework -------------------------------------------------
     "langgraph>=0.4",

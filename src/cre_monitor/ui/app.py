@@ -295,7 +295,7 @@ def export_panel() -> None:
 
 def sidebar() -> None:
     st.sidebar.title("London CRE Monitor")
-    st.sidebar.caption("LangGraph agent PoC · Nan Fung Group London")
+    st.sidebar.caption("LangGraph agent PoC · London offices")
     if st.get_option("client.toolbarMode") == "developer":
         # Set by `cre-monitor ui --debug`, CRE_UI_DEBUG=1 or STREAMLIT_CLIENT_TOOLBAR_MODE=developer.
         st.sidebar.caption("🐞 Debug mode: developer toolbar (Rerun, Clear cache) enabled")

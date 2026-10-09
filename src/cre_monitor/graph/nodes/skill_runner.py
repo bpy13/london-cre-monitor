@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 
 #: Rules shared by every skill. Skill-specific methodology lives in SKILL.md.
 COMMON_RULES = """You are a senior London commercial real estate research analyst working for
-Nan Fung Group, a long-term investor and developer in London offices. Today is {today}.
+a long-term investor and developer in London offices. Today is {today}.
 
 Research rules (apply to every skill):
 1. Use your tools. Never state a market figure you did not see in a tool result in this session.

@@ -21,7 +21,7 @@
   "signals": [
     {"type": "risk", "severity": "high", "title": "Rising gilt yields squeeze property yields", "rationale": "A ~107bp rise in the 10-year gilt since February compresses the prime yield spread and pressures capital values unless rental growth compensates.", "submarket": "Central London"},
     {"type": "risk", "severity": "medium", "title": "Refinancing pressure for leveraged owners", "rationale": "Higher long-term rates raise refinancing costs, which may force sales by over-leveraged owners.", "submarket": "Central London"},
-    {"type": "opportunity", "severity": "medium", "title": "Distressed or motivated sellers", "rationale": "Well-capitalised, long-term investors such as Nan Fung may find acquisition opportunities as financing stress rises.", "submarket": "Central London"}
+    {"type": "opportunity", "severity": "medium", "title": "Distressed or motivated sellers", "rationale": "Well-capitalised, long-term investors may find acquisition opportunities as financing stress rises.", "submarket": "Central London"}
   ],
   "citations": [
     {"title": "Bank of England Interactive Statistical Database (IUDBEDR, IUDSOIA, IUDMNPY)", "url": "https://www.bankofengland.co.uk/boeapps/database/", "publisher": "Bank of England"},

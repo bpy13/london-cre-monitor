@@ -34,7 +34,7 @@ from pydantic import BaseModel, Field, field_validator
 
 class SignalType(str, Enum):
     """Whether a signal is bad news or good news for a London office landlord /
-    investor such as Nan Fung."""
+    investor."""
 
     RISK = "risk"
     OPPORTUNITY = "opportunity"

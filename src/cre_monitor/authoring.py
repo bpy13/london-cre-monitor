@@ -97,8 +97,8 @@ class _DraftOut(BaseModel):
                                        description="Metrics this skill should record that are NOT in the catalogue.")
 
 
-DRAFT_PROMPT = """You write SKILL.md files for a London office market research agent used by Nan Fung Group
-(a long-term London office investor/developer). A skill = expert instructions for one research topic, run by a
+DRAFT_PROMPT = """You write SKILL.md files for a London office market research agent used by a long-term
+London office investor/developer. A skill = expert instructions for one research topic, run by a
 tool-using research sub-agent. Follow the EXAMPLE's structure and level of precision.
 
 Rules:

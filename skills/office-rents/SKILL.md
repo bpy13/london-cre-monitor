@@ -58,7 +58,7 @@ its main submarkets, how they are trending, and what incentives landlords are of
 ## Interpreting
 - Prime rental growth with supply shortage of best space = classic **flight-to-quality**
   signal; growth concentrated in top buildings while secondary stagnates = **two-tier market**.
-- Signals for Nan Fung (landlord/developer): rising prime rents and falling incentives are
+- Signals for a landlord/developer: rising prime rents and falling incentives are
   opportunities for prime development/refurbishment; widening prime-secondary gap is a
   risk for older stock (stranding).
 

@@ -6,7 +6,7 @@ key) and the brief's Markdown, and returns a rubric:
 =================  ==============================================================
 theme coverage     each reference theme: covered / partly / missing (+ note)
 consistency 1-5    no contradiction with the reference figures (period-aware)
-so-what 1-5        implications for a London office landlord / investor (Nan Fung)
+so-what 1-5        implications for a London office landlord / investor
 structure 1-5      easy to navigate, headline first, sections fit the content
 readability 1-5    plain, precise English; figures with units and periods
 =================  ==============================================================
@@ -62,8 +62,8 @@ class BriefJudgement(BaseModel):
         return round(100 * pts / len(self.themes), 1)
 
 
-JUDGE_PROMPT = """You evaluate a London office market brief written by an AI research agent for Nan Fung Group
-(a long-term London office investor and developer), using a reference report as the benchmark.
+JUDGE_PROMPT = """You evaluate a London office market brief written by an AI research agent for a long-term
+London office investor and developer, using a reference report as the benchmark.
 
 - For EACH reference theme, say whether the brief covers it (covered / partly / missing), with a short note.
 - consistency: 5 = no figure contradicts the reference for the same period, place and definition; differences that

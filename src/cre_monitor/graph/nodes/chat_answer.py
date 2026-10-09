@@ -25,7 +25,7 @@ from cre_monitor.schemas import Citation, MetricDelta, SkillFinding, ValidationI
 
 logger = logging.getLogger(__name__)
 
-ANSWER_PROMPT = """You are a London office market analyst answering a colleague at Nan Fung Group.
+ANSWER_PROMPT = """You are a London office market analyst answering a colleague at a long-term London office investor and developer.
 Answer the latest question using ONLY the research findings below and the conversation so far.
 
 Style:

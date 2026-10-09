@@ -80,7 +80,7 @@ class Settings(BaseSettings):
 
     # --- Support -----------------------------------------------------------
     #: Who users should contact when an error panel shows a reference ID, e.g.
-    #: "Jane Doe (jane.doe@nanfung.com)" or "#london-cre-support on Teams".
+    #: "Jane Doe (jane.doe@example.com)" or "#london-cre-support on Teams".
     support_contact: str = "the London engineering team"
 
     # --- Reporting ---------------------------------------------------------

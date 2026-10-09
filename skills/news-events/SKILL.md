@@ -47,7 +47,7 @@ investor/developer, and flag early warnings.
 - Policy: MEES/EPC changes, planning reform, business rates, Budget measures, City/
   Westminster planning decisions.
 - Transport/infrastructure and big corporate return-to-office mandates.
-- Anything specifically about **Nan Fung** or its peers/competitor schemes.
+- Anything specifically about **our own portfolio** or peers'/competitor schemes.
 
 ## Output guidance
 - `insights`: each item as "[date] What happened - why it matters (submarket)" with the

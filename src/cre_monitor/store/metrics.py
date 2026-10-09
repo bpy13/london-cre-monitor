@@ -28,7 +28,7 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Iterator
+from collections.abc import Iterator
 
 import pandas as pd
 
@@ -57,6 +57,12 @@ CREATE INDEX IF NOT EXISTS ix_metrics_key ON metrics(key, submarket, period);
 """
 
 
+#: Seconds a connection waits for another writer's lock before raising "database is locked".
+#: (WAL mode is deliberately not used: its -wal/-shm side files don't mix well with
+#: file-sync tools such as OneDrive, where developers often keep the repo.)
+BUSY_TIMEOUT_S = 30.0
+
+
 def ensure_schema(conn: sqlite3.Connection) -> None:
     """Create the metrics table/index on any connection (incl. in-memory copies)."""
     conn.executescript(_SCHEMA)
@@ -76,8 +82,10 @@ class MetricsStore:
     def _conn(self) -> Iterator[sqlite3.Connection]:
         # A short-lived connection per operation keeps us safe across the
         # threads LangGraph / Streamlit may use (sqlite3 objects are not
-        # shareable between threads by default).
-        conn = sqlite3.connect(self.path)
+        # shareable between threads by default). The timeout makes concurrent
+        # writers (several UI users, a scheduled brief) wait instead of failing
+        # with "database is locked".
+        conn = sqlite3.connect(self.path, timeout=BUSY_TIMEOUT_S)
         try:
             yield conn
             conn.commit()
@@ -198,7 +206,7 @@ class MetricsStore:
                 if prior.empty:
                     continue
                 prior["_p"] = prior["period"].map(parse_period)
-                earlier = prior["_p"].map(lambda p: p is not None and p.freq == cur.freq and p.end < cur.end)
+                earlier = prior["_p"].map(lambda p, cur=cur: p is not None and p.freq == cur.freq and p.end < cur.end)
                 prior = prior[earlier.astype(bool)]  # explicit bool: an empty object Series would select columns
                 if prior.empty:
                     continue

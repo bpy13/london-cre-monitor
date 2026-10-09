@@ -25,7 +25,7 @@ import streamlit as st
 
 from cre_monitor.catalog import MetricDef, get_catalog
 from cre_monitor.reporting import dashboard as dash
-from cre_monitor.ui.components import render_incident
+from cre_monitor.ui.components import esc, render_incident
 
 AUTO_SOURCE = "Best available (automatic)"
 
@@ -82,7 +82,7 @@ def overview(store) -> None:
     data = {m.key: dash.prepare(store.series(m.key)) for m in tracked}
     for start in range(0, len(tracked), 4):
         cols = st.columns(4)
-        for col, m in zip(cols, tracked[start:start + 4]):
+        for col, m in zip(cols, tracked[start:start + 4], strict=False):  # the last row may be short
             h = dash.headline(data[m.key])
             if h is None:
                 col.metric(m.label, "No data yet", help=m.definition or None, border=True)
@@ -187,7 +187,7 @@ def _toggle_tracked(key: str, label: str, version: str) -> None:
 
 
 def metrics_manager(store) -> None:
-    from cre_monitor.catalog import remove_metric, skills_using_metric
+    from cre_monitor.catalog import remove_metric, skills_using_metric, update_metric
 
     cat = get_catalog()
     counts = store.frame().groupby("key").size().to_dict() if not store.is_empty() else {}
@@ -199,7 +199,7 @@ def metrics_manager(store) -> None:
         n_tracked = sum(m.tracked for m in members)
         with st.expander(f"{group} ({n_tracked} of {len(members)} tracked)", expanded=False):
             for m in members:
-                c_track, c_info, c_del = st.columns([0.07, 0.83, 0.10], vertical_alignment="center")
+                c_track, c_info, c_edit, c_del = st.columns([0.07, 0.77, 0.08, 0.08], vertical_alignment="center")
                 # The catalogue is the source of truth: re-sync the box on every run (it may have
                 # changed elsewhere, e.g. "Track it" in Add a metric), and save a click in the callback.
                 st.session_state[f"track-{m.key}"] = m.tracked
@@ -207,10 +207,20 @@ def metrics_manager(store) -> None:
                                  help=f"Show {m.label} in the Overview",
                                  on_change=_toggle_tracked, args=(m.key, m.label, cat.version))
                 users = skills_using_metric(m.key)
+                # Catalogue text is user-editable: escape it, because this markdown allows HTML.
                 c_info.markdown(
-                    f"**{m.label}** ({m.unit}){' 🔒' if m.protected else ''}  \n"
-                    f"<small>{m.definition or ''}<br>`{m.key}` · {counts.get(m.key, 0)} figures recorded · "
-                    f"collected by: {', '.join(users) or 'no skill'}</small>", unsafe_allow_html=True)
+                    f"**{esc(m.label)}** ({esc(m.unit)}){' 🔒' if m.protected else ''}  \n"
+                    f"<small>{esc(m.definition)}<br>`{m.key}` · {counts.get(m.key, 0)} figures recorded · "
+                    f"collected by: {esc(', '.join(users)) or 'no skill'}</small>", unsafe_allow_html=True)
+                with c_edit.popover("✏️", help=f"Edit {m.label}"):
+                    label = st.text_input("Name", m.label, key=f"edit-label-{m.key}")
+                    group = st.text_input("Group", m.group, key=f"edit-group-{m.key}")
+                    definition = st.text_area("Definition", m.definition, key=f"edit-def-{m.key}")
+                    st.caption(f"Key `{m.key}` and unit ({m.unit}) can't change: recorded figures depend on them.")
+                    if st.button("Save", type="primary", key=f"edit-save-{m.key}"):
+                        _guarded(lambda m=m, lab=label, grp=group, dfn=definition: update_metric(
+                            m.key, label=lab.strip(), group=grp.strip() or "Other", definition=dfn.strip(),
+                            expected_version=cat.version), f"Saved {label.strip()}.")
                 if not m.protected:
                     with c_del.popover("🗑", help="Remove from the catalogue"):
                         st.markdown(f"Remove **{m.label}** from the catalogue?")
@@ -251,9 +261,9 @@ def submarkets_manager(store) -> None:
     for s in cat.submarkets:
         c_info, c_edit, c_del = st.columns([0.8, 0.1, 0.1], vertical_alignment="center")
         kind = " · economic series" if s.kind == "macro" else ""
-        c_info.markdown(
-            f"**{s.name}**{' 🔒' if s.protected else ''}{kind}  \n<small>{s.description or ''}<br>"
-            f"Aliases: {', '.join(s.aliases) or '–'} · {counts.get(s.name, 0)} figures recorded</small>",
+        c_info.markdown(  # user-editable text is escaped: this markdown allows HTML
+            f"**{esc(s.name)}**{' 🔒' if s.protected else ''}{kind}  \n<small>{esc(s.description)}<br>"
+            f"Aliases: {esc(', '.join(s.aliases)) or '–'} · {counts.get(s.name, 0)} figures recorded</small>",
             unsafe_allow_html=True)
         with c_edit.popover("✏️", help=f"Edit {s.name}"):
             aliases = st.text_input("Aliases (comma-separated)", ", ".join(s.aliases), key=f"alias-{s.name}")
@@ -273,9 +283,10 @@ def submarkets_manager(store) -> None:
     st.divider()
     st.markdown("**➕ Add a submarket**")
     with st.form("add-submarket", clear_on_submit=True):
-        name = st.text_input("Name", placeholder="e.g. Victoria")
-        aliases = st.text_input("Aliases (optional, comma-separated)", placeholder="e.g. Victoria & Westminster, SW1")
-        desc = st.text_input("Description (optional)", placeholder="Which area it covers")
+        name = st.text_input("Name", placeholder="e.g. Victoria", key="add-sm-name")
+        aliases = st.text_input("Aliases (optional, comma-separated)", placeholder="e.g. Victoria & Westminster, SW1",
+                                key="add-sm-aliases")
+        desc = st.text_input("Description (optional)", placeholder="Which area it covers", key="add-sm-desc")
         kind = st.radio("Type", ["Office submarket", "Economic geography (for economic series)"], horizontal=True)
         if st.form_submit_button("Add submarket", type="primary"):
             if not name.strip():

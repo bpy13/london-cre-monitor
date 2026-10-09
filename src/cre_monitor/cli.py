@@ -244,7 +244,7 @@ def style_learn(
             profile = learn_profile(source, use_llm=False if heuristic else None)
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
     console.print(f"[green]Learned[/green] '{profile.name}' via {profile.method} from {len(profile.sources)} report(s).")
     console.print(f"  Review / edit: {profile_path()} (readable copy: {profile_path().with_suffix('.md')})")
     console.print("  It now applies to every brief (layout, executive summary, topic wording). "
@@ -303,7 +303,7 @@ def bench_key(
             key = build_key(report)
     except (NeedsLiveMode, ValueError) as exc:
         console.print(f"[red]{exc}[/red]")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
     if accept_safe:
         key.accept_safe()
     save_key(key)
@@ -336,7 +336,7 @@ def bench_run(
             rec = run_figures(key, hints=hints, max_usd=max_usd)
     except (NeedsLiveMode, ValueError) as exc:
         console.print(f"[red]{exc}[/red]")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
     f, c = rec.figure, rec.citation
     console.print(f"[bold]Coverage[/bold] {f['coverage']}% · [bold]accuracy[/bold] {f['accuracy']}% "
                   f"(same source {f['accuracy_same_source']}%, other {f['accuracy_other_source']}%) · "
@@ -359,7 +359,7 @@ def bench_judge(
         rec = run_judge(key, brief)
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
     rb, rr = rec.readability_brief, rec.readability_reference
     console.print(f"Brief {rec.brief_run_id}: Flesch {rb.get('flesch')} (reference {rr.get('flesch')}), "
                   f"avg sentence {rb.get('avg_sentence_words')} words (reference {rr.get('avg_sentence_words')})")
@@ -442,7 +442,7 @@ def export(
             since_date = _date.fromisoformat(since)
         except ValueError:
             console.print(f"[red]--since must be YYYY-MM-DD, got {since!r}[/red]")
-            raise typer.Exit(code=2)
+            raise typer.Exit(code=2) from None
     with console.status("Exporting..."):
         result = export_data(out_dir=out, since=since_date, include_logs=include_logs)
     c = result.counts
@@ -462,6 +462,7 @@ def _print_merge(report) -> None:
     table.add_row("Brief files", "not merged" if report.source_reports is None else
                   f"+{report.report_files_copied}" + (f" · {len(report.report_conflicts)} conflicts (kept target's)"
                                                        if report.report_conflicts else ""))
+    table.add_row("Performance checks", f"+{report.benchmark_runs_copied} runs")
     console.print(table)
     for entry in c["renamed"]:
         console.print(f"[yellow]Renamed (same id, different history): {entry}[/yellow]")
@@ -499,7 +500,7 @@ def merge(
         result = merge_installation(source, backup=not no_backup, **kwargs)
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
     except MergeError as exc:
         incident = incident_from_exception(exc, step="merge")
         outcome = ("Your data was restored to its pre-merge state." if exc.restored
@@ -507,7 +508,7 @@ def merge(
         console.print(Panel(f"[bold]The merge did not complete.[/bold] {outcome}\n\n{exc}\n\n"
                             f"Reference for support: [bold]{incident.id}[/bold]",
                             title="Merge failed", border_style="red"))
-        raise typer.Exit(code=1)
+        raise typer.Exit(code=1) from None
     console.print("[green]Merged.[/green]" + (f" Backup of the previous data: {result.backup}" if result.backup else ""))
     if yes:
         _print_merge(result)

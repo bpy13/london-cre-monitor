@@ -28,7 +28,7 @@ def test_store_records_lists_and_redraws_turns(tmp_path):
     store.record_turn("t2", "Bank Rate?", "3.75%", ["macro-economy"])
 
     convs = store.list()
-    assert [c.thread_id for c in convs][0] == "t2"            # most recent first
+    assert convs[0].thread_id == "t2"                        # most recent first
     t1 = store.get("t1")
     assert t1.title == "What are prime rents in the West End?"  # title = first question
     assert t1.turn_count == 2

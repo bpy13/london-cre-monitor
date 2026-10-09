@@ -129,7 +129,7 @@ class Settings(BaseSettings):
     )
 
     @model_validator(mode="after")
-    def _derive_demo_mode(self) -> "Settings":
+    def _derive_demo_mode(self) -> Settings:
         """Enable demo mode automatically when no Anthropic key is configured."""
         if self.cre_demo_mode is None:
             self.cre_demo_mode = not bool(self.anthropic_api_key)
@@ -168,4 +168,4 @@ def get_settings() -> Settings:
 
 
 #: Re-exported so callers can type-annotate without importing pydantic.
-__all__ = ["Settings", "get_settings", "PROJECT_ROOT", "Field"]
+__all__ = ["PROJECT_ROOT", "Field", "Settings", "get_settings"]

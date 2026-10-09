@@ -25,6 +25,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 
 from cre_monitor.config import get_settings
 from cre_monitor.errors import Incident, classify
+from cre_monitor.periods import parse_period
 from cre_monitor.style.profile import StyleProfile, resolve_layout
 from cre_monitor.reporting.charts import build_charts
 from cre_monitor.schemas import Citation, ExecutiveSynthesis, MetricDelta, SkillFinding, ValidationIssue
@@ -57,18 +58,23 @@ def _env() -> Environment:
     return env
 
 
+def _recency(metric) -> tuple:
+    """Sort key for "latest": the later period end wins; unparseable labels rank below any real period."""
+    p = parse_period(metric.period)
+    return (p is not None, p.end if p else date.min, p.start if p else date.min)
+
+
 def build_kpis(findings: list[SkillFinding], deltas: list[MetricDelta]) -> list[dict]:
     """Values for the KPI tiles, each with its change vs the previous period."""
     delta_map = {(d.key, d.submarket): d for d in deltas}
     tiles = []
     for label, key, submarket, fmt in KPI_TILES:
-        metric = next(
-            (m for f in findings if not f.error for m in sorted(f.metrics, key=lambda x: x.period, reverse=True)
-             if m.key == key and m.submarket == submarket),
-            None,
-        )
-        if metric is None:
+        # The latest figure across ALL findings (several skills may report it), in true time order
+        # (as text, "2026-Q1" would beat "2026-H1"). Ties keep the first finding's figure.
+        candidates = [m for f in findings if not f.error for m in f.metrics if m.key == key and m.submarket == submarket]
+        if not candidates:
             continue
+        metric = max(candidates, key=_recency)
         d = delta_map.get((key, submarket))
         change = None
         if d:

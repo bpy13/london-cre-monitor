@@ -34,13 +34,14 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Iterator
+from collections.abc import Iterator
 
 from pydantic import BaseModel
 
 from cre_monitor.config import get_settings
 from cre_monitor.errors import Incident
 from cre_monitor.schemas import SkillFinding, ValidationIssue
+from cre_monitor.store.metrics import BUSY_TIMEOUT_S
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS conversations (
@@ -136,8 +137,9 @@ class ConversationStore:
 
     @contextmanager
     def _conn(self) -> Iterator[sqlite3.Connection]:
-        # Short-lived connection per operation: safe across Streamlit/LangGraph threads.
-        conn = sqlite3.connect(self.path)
+        # Short-lived connection per operation: safe across Streamlit/LangGraph threads;
+        # concurrent writers wait (BUSY_TIMEOUT_S) instead of failing.
+        conn = sqlite3.connect(self.path, timeout=BUSY_TIMEOUT_S)
         conn.row_factory = sqlite3.Row
         try:
             yield conn

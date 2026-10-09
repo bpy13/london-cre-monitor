@@ -63,9 +63,6 @@ PROTECTED_SUBMARKETS: frozenset[str] = frozenset({"Central London", "UK", "Londo
 GROUP_ORDER = ["Rents", "Vacancy & availability", "Leasing", "Supply pipeline", "Investment",
                "Occupier demand", "Macro"]
 
-#: Units offered when adding a metric (free text is also accepted).
-COMMON_UNITS = ["GBP psf pa", "%", "sq ft", "GBP", "months", "years", "count", "index"]
-
 _KEY_RE = re.compile(r"^[a-z][a-z0-9_]{2,59}$")
 
 _METRICS_HEADER = """# Metric catalogue: every metric the agent may record, with its unit and meaning.

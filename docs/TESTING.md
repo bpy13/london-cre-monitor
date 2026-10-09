@@ -49,17 +49,17 @@ its folder's marker (`tests/conftest.py`), so both forms below select the same t
 
 | Type | Folder / marker | What it checks | Speed |
 |---|---|---|---|
-| **Unit** | `tests/unit/` · `-m unit` | One module in isolation: pure functions, or the module's own temporary files. No graph runs, no CLI, no fake LLM | 79 tests, ~4 s |
-| **Integration** | `tests/integration/` · `-m integration` | Several components together: the skill agent and Claude-assisted features driven by the fake LLM, stores with real files, export/merge between installations, CLI commands | 71 tests |
+| **Unit** | `tests/unit/` · `-m unit` | One module in isolation: pure functions, or the module's own temporary files. No graph runs, no CLI, no fake LLM | 89 tests, ~4 s |
+| **Integration** | `tests/integration/` · `-m integration` | Several components together: the skill agent and Claude-assisted features driven by the fake LLM, stores with real files, export/merge between installations, CLI commands | 73 tests |
 | **End to end** | `tests/e2e/` · `-m e2e` | User journeys through the whole LangGraph pipeline: a brief or chat turn from start to finish, in demo mode or with every LLM call failing | 13 tests |
-| **UI** | `tests/ui/` · `-m ui` | The Streamlit app, run headlessly with `AppTest` | 24 tests |
-| **Regression** | `tests/regression/` · `-m regression` | Reproductions of bugs that were found and fixed (table in `test_fixed_bugs.py`) | 4 tests |
+| **UI** | `tests/ui/` · `-m ui` | The Streamlit app, run headlessly with `AppTest` | 26 tests |
+| **Regression** | `tests/regression/` · `-m regression` | Reproductions of bugs that were found and fixed (table in `test_fixed_bugs.py`) | 6 tests |
 | **Live** | `tests/live/` · `-m live` | Real BoE, ONS, Nomis, Google News, Tavily; one real skill run if a key is set. Deselected by default | 7 tests (opt-in) |
 | Evaluation | `evals/run_evals.py` | Routing, grounding and citations over a question set (demo or live) | – |
 | Performance check | `cre-monitor bench` | The live agent against reference reports ([EVALUATION.md](EVALUATION.md)) | – |
 
 ```bash
-pytest                      # all offline types (191 tests, ~50-90 s)
+pytest                      # all offline types (207 tests, ~50-90 s)
 pytest tests/unit           # fastest feedback while coding (or: pytest -m unit)
 pytest -m "unit or regression"
 pytest -m "not ui"          # skip the slower Streamlit tests
@@ -77,7 +77,7 @@ Shared test code lives in `tests/support/` (not collected as tests):
 
 ## 4. Test files
 
-`pytest` runs 191 offline tests. `pytest -m live` runs 7 more.
+`pytest` runs 207 offline tests. `pytest -m live` runs 7 more. CI (`.github/workflows/ci.yml`) runs lint, dead-code check, the offline tests and the eval set on every push and pull request.
 
 ### Unit (`tests/unit/`)
 | File | Tests | Covers |
@@ -97,6 +97,7 @@ Shared test code lives in `tests/support/` (not collected as tests):
 | `test_style_profile.py` | 8 | Heuristic learning (layout, voice, number conventions, techniques; README ignored; JSON + Markdown); no examples → clear error; HTML examples read; example files stay inside `style/reports/`; library roles; layout resolution (**no section ever dropped**); **number guard** |
 | `test_skill_editor.py` | 4 | Every repo skill round-trips through the editor; plain-English validation messages; **path tricks refused**; no git noise outside the repo |
 | `test_routing.py` | 1 | Keyword (fallback) routing |
+| `test_network_guard.py` | 10 | **SSRF guard**: non-http(s), loopback, `localhost`, cloud metadata, private and IPv6 loopback URLs blocked; public IPs allowed; `fetch_document` reports a blocked URL to the agent without sending a request |
 
 ### Integration (`tests/integration/`)
 | File | Tests | Covers |
@@ -108,8 +109,8 @@ Shared test code lives in `tests/support/` (not collected as tests):
 | `test_style_apply.py` | 4 | LLM style learning sends bounded excerpts; style editor restyles but the guard keeps originals when figures change; editor failure keeps findings; the synthesis prompt carries the house style with "facts take priority" (and not when switched off) |
 | `test_skill_editor_effects.py` | 4 | Save keeps history, rebuilds the registry, **refuses stale saves**, restore works; a new skill joins the brief and runs in demo mode; delete → trash → restore, orphaned metrics, protected `market-synthesis`; attach/detach a metric across skills |
 | `test_briefs.py` | 9 | Deleting one of two same-day briefs keeps the other; legacy shared charts; invalid/unknown ids rejected; `--with-metrics` vs default; seed protected; CLI `briefs list` / `delete --yes` / confirmation |
-| `test_export.py` | 6 | Zip structure and contents; **no API key anywhere in the export**; `--since` filtering; logs only on request; empty installation; CLI |
-| `test_merge.py` | 17 | Real second installation merged: merged chats resume with their memory; idempotent; continued conversations extended; id clashes renamed with references remapped; seed not duplicated; **dry run reports exactly what the merge does**; backup; invalid / old-schema sources; brief file conflicts; **all-or-nothing** on every failure point (byte-for-byte restore, locked target, fresh target); CLI |
+| `test_export.py` | 7 | Zip structure and contents; **no API key anywhere in the export**; `--since` filtering; logs only on request; empty installation; performance-check runs included; CLI |
+| `test_merge.py` | 18 | Real second installation merged: merged chats resume with their memory; idempotent; continued conversations extended; id clashes renamed with references remapped; seed not duplicated; **dry run reports exactly what the merge does**; backup; invalid / old-schema sources; brief file conflicts; performance-check runs merged once; **all-or-nothing** on every failure point (byte-for-byte restore, locked target, fresh target); CLI |
 | `test_cli.py` | 6 | `cre-monitor ui` toolbar mode (default, `--debug`, `CRE_UI_DEBUG=1`; launch captured); `style learn/show/clear`; `brief --no-style`; `bench` commands in demo mode |
 
 ### End to end (`tests/e2e/`)
@@ -122,13 +123,14 @@ Shared test code lives in `tests/support/` (not collected as tests):
 | File | Tests | Covers |
 |---|---|---|
 | `test_app.py` | 11 | Tabs render; chat turn with skills shown; conversations listed, reopened, opened from `?thread=`; reference picker; **API failure shows the styled panel with an `ERR-` reference and no raw text**; delete a brief; sidebar export; house style learn/show/delete/clear and the Use-house-style toggle; **partial brief** tick boxes |
-| `test_dashboard_tab.py` | 3 | Tracked headline cards, no submarket cap, switching metrics; untracking hides a card and saves the catalogue; add/remove a submarket with aliases, protected places have no delete button |
+| `test_dashboard_tab.py` | 5 | Tracked headline cards, no submarket cap, switching metrics; untracking hides a card and saves the catalogue; add/remove a submarket with aliases, protected places have no delete button; edit a metric's definition with **user HTML shown as text** (stored-XSS guard); offline/demo switches hidden outside debug mode |
 | `test_skills_and_metrics_ui.py` | 6 | Skills tab: edit + save, validation errors (nothing saved), create from template → delete → restore, protected skill; Add a metric: Track it (demo), needs Claude (demo), with the fake LLM nothing saved before approval and the proposal is editable |
 | `test_reference_tab.py` | 4 | Reference reports tab: house style moved from the sidebar, library roles saved; answer-key moderation + Accept all safe, AI steps need live mode; figure run scorecard and cost warning; brief judgement in demo mode |
 
 ### Regression (`tests/regression/`)
 | File | Tests | Covers |
 |---|---|---|
+| `test_period_ordering.py` | 2 | The brief's KPI tiles and report charts compared period labels as text (latest figure across all findings; true time order; no mixed period lengths) |
 | `test_fixed_bugs.py` | 4 | The live thinking-signature 400 (one tool list, append-only conversation); same-day briefs overwriting each other's charts; cross-source deltas presented as market moves; half-year vs quarter deltas and text ordering of periods |
 
 ### Live (`tests/live/`, opt-in)
@@ -199,12 +201,16 @@ Conventions:
 
 ## 8. Known gaps
 
-* **The live Claude path has never run end to end.** It has only been exercised with the
-  fake LLM, because the API was not reachable from the development location. Run
-  `pytest -m live` and `python evals/run_evals.py --live` from a supported location
-  before relying on live output.
-* **Evals are string-based.** They don't use an LLM judge, so they can miss wrong but
-  plausible answers.
-* **No tracing** (e.g. LangSmith) for live runs, and no cost assertions.
-* **No CI pipeline** is configured yet. A GitHub Actions workflow running `pytest` on
-  each push is the obvious next step.
+* **The live Claude path is only partly verified.** One live run (macro skill + synthesis) worked
+  from a Codespace; the fix for the thinking-signature 400 and the Claude-assisted features
+  (skill drafts/reviews, metric feasibility, answer keys, performance runs, brief judge) have
+  only run against the fake LLM, because the API was not reachable from the development
+  location. Run `pytest -m live`, `python evals/run_evals.py --live` and one performance check
+  from a supported location before relying on live output.
+* **The eval set is string-based.** The performance check ([EVALUATION.md](EVALUATION.md)) adds
+  figure-level scoring and an AI judge for briefs, but answers to free chat questions are only
+  checked for routing, expected facts and citations.
+* **No tracing** (e.g. LangSmith) for live runs; cost is estimated from token usage in the
+  performance check only.
+* **CI is configured but not yet run on GitHub**: the workflow runs on the next push; the PNG
+  export test needs the runner's Chrome (`plotly_get_chrome` is attempted first).

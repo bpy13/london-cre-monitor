@@ -6,9 +6,20 @@ it from another module would execute the whole app again.
 
 from __future__ import annotations
 
+import html
+
 import streamlit as st
 
 from cre_monitor.config import get_settings
+
+
+def esc(text: str | None) -> str:
+    """HTML-escape user-editable text before it goes into ``st.markdown(..., unsafe_allow_html=True)``.
+
+    Catalogue entries, skill text and file names can be edited by anyone using the UI (or
+    proposed by Claude); unescaped, they could inject HTML into other users' pages.
+    """
+    return html.escape(text or "")
 
 
 def render_incident(incident, where=st, compact: bool = False) -> None:

@@ -90,7 +90,8 @@ def test_export_never_contains_secrets(populated):
 def test_since_filter_excludes_older_data(populated):
     tomorrow = date.today() + timedelta(days=1)
     result = export_data(since=tomorrow)
-    assert result.counts == {"metric_rows": 0, "briefs": 0, "conversations": 0, "turns": 0, "log_files": 0}
+    assert result.counts == {"metric_rows": 0, "briefs": 0, "conversations": 0, "turns": 0,
+                             "performance_checks": 0, "log_files": 0}
 
     today = export_data(since=date.today())
     frame = get_store().frame()
@@ -111,7 +112,23 @@ def test_logs_only_when_requested(populated):
 def test_export_on_empty_installation():
     result = export_data()
     assert result.counts["briefs"] == 0 and result.counts["conversations"] == 0
+    assert result.counts["performance_checks"] == 0
     assert result.path.exists()
+
+
+def test_export_includes_performance_checks(populated):
+    from cre_monitor.benchmark.runner import run_judge
+    from cre_monitor.style import save_example
+    from tests.support.samples import REPORT, run_key
+
+    save_example("ref.md", REPORT.encode())
+    run = run_judge(run_key())                                     # demo mode: free statistics only
+    result = export_data()
+    assert result.counts["performance_checks"] == 1
+    zf, root = _open(result)
+    assert f"{root}/performance_checks/{run.run_id}.json" in zf.namelist()
+    summary = zf.read(f"{root}/performance_checks.csv").decode("utf-8-sig")
+    assert run.run_id in summary and "judge" in summary
 
 
 def test_cli_export(populated):

@@ -121,7 +121,8 @@ set up for: its storage is temporary and apps are public by default. The **⋮**
 (theme, print) remains.
 
 **Debug mode** brings back Streamlit's full developer toolbar: **Rerun** (also the `R`
-key), **Clear cache**, and Deploy. The sidebar then shows "🐞 Debug mode".
+key), **Clear cache**, and Deploy. The sidebar then shows "🐞 Debug mode" and the
+server-wide **Offline data** / **Demo mode** switches (admin use only).
 * `cre-monitor ui --debug`, for one session;
 * `CRE_UI_DEBUG=1` in `.env` or Codespaces secrets, to keep it on;
 * `STREAMLIT_CLIENT_TOOLBAR_MODE=developer` when launching with plain `streamlit run`.
@@ -138,7 +139,7 @@ The sidebar works like a modern chatbot.
 | **⌄** menu on a row | **Rename** the conversation, or **Delete** it. Delete removes both the list entry and the agent's memory of that thread |
 | Page URL `?thread=<id>` | The open conversation is kept in the URL, so a refresh, bookmark or shared link reopens it. Ids are also listed by `cre-monitor conversations` |
 | **📦 Export data** | Optional "since" date and "include logs". **Prepare export** builds the zip, then **⬇ Download** saves it (same as `cre-monitor export`) |
-| **⚙️ Settings & brief** | **Offline data** toggle (same as `--offline`). **Demo mode** toggle (same as `--demo`; locked on without `ANTHROPIC_API_KEY`). Current model and data source. **Use house style** toggle (on when a style is learned; off = same as `--no-style`, for that brief only). **Skills in the brief** tick boxes (all ticked by default; **All** / **None** shortcuts; hover a skill for its description). **Run full brief now** (same as `cre-monitor brief`); with only some skills ticked it becomes **Run partial brief (n of 8 skills)** (same as `brief --skills …`: cheaper and quicker in live mode). Ticks are per browser session. The result appears in the Briefs tab |
+| **⚙️ Settings & brief** | Current model and data source. **Offline data** / **Demo mode** toggles (same as `--offline` / `--demo`) appear only in debug (admin) mode, because they switch the agent for **everyone** using the app; otherwise set `CRE_OFFLINE` / `CRE_DEMO_MODE` in `.env`. **Use house style** toggle (on when a style is learned; off = same as `--no-style`, for that brief only). **Skills in the brief** tick boxes (all ticked by default; **All** / **None** shortcuts; hover a skill for its description). **Run full brief now** (same as `cre-monitor brief`); with only some skills ticked it becomes **Run partial brief (n of 8 skills)** (same as `brief --skills …`: cheaper and quicker in live mode). Ticks are per browser session. The result appears in the Briefs tab |
 
 Conversations started in the terminal (`cre-monitor ask` / `chat`) appear in the same list.
 Research findings are never reused between turns: every question triggers fresh research,
@@ -409,7 +410,7 @@ The full template is in `.env.example`.
 | `STYLE_DIR` | Where the style profile and `reports/` examples live (default `style/`) |
 | `STALE_AFTER_DAYS` | When the validator flags data as stale |
 | `SUPPORT_CONTACT` | Who users should send error reference IDs to (shown in error panels) |
-| `CRE_UI_DEBUG=1` | UI debug mode: Streamlit developer toolbar (Rerun, Clear cache) |
+| `CRE_UI_DEBUG=1` | UI debug (admin) mode: Streamlit developer toolbar (Rerun, Clear cache) and the server-wide offline/demo switches |
 
 ---
 

@@ -32,10 +32,6 @@ class Period:
     end: date
     freq: str  # one of FREQ_NAMES
 
-    @property
-    def sort_key(self) -> tuple[date, date]:
-        return (self.end, self.start)
-
 
 def _month_end(year: int, month: int) -> date:
     return date(year, month, monthrange(year, month)[1])
@@ -69,9 +65,8 @@ def parse_period(label: str) -> Period | None:
     if m := re.fullmatch(r"(\d{4})", s):
         year = int(m[1])
         return Period(s, date(year, 1, 1), date(year, 12, 31), "Y")
-    if m := re.fullmatch(r"week ending (\d{4}-\d{2}-\d{2})", s, flags=re.I):
-        if end := _iso_day(m[1]):
-            return Period(s, date.fromordinal(end.toordinal() - 6), end, "W")
+    if (m := re.fullmatch(r"week ending (\d{4}-\d{2}-\d{2})", s, flags=re.I)) and (end := _iso_day(m[1])):
+        return Period(s, date.fromordinal(end.toordinal() - 6), end, "W")
     if day := _iso_day(s):
         return Period(s, day, day, "D")
     return None
@@ -81,9 +76,3 @@ def period_sort_key(label: str) -> tuple:
     """Sort key putting periods in true time order (unparseable labels last, by text)."""
     p = parse_period(label)
     return (0, p.end, p.start, label) if p else (1, date.max, date.max, str(label))
-
-
-def same_frequency(a: str, b: str) -> bool:
-    """True if both labels parse and have the same frequency (e.g. both quarters)."""
-    pa, pb = parse_period(a), parse_period(b)
-    return pa is not None and pb is not None and pa.freq == pb.freq

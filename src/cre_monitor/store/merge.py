@@ -30,6 +30,8 @@ nothing) and to **never overwrite** existing target data:
   only in checkpoints (no conversation index) are copied if absent.
 * **Briefs** (``reports/``, optional): files missing from the target are copied;
   differing files with the same path are left alone and reported as conflicts.
+* **Performance-check runs** (``data/benchmarks/*.json``): missing runs are copied
+  (run ids are unique timestamps), like brief files.
 
 All-or-nothing - a real merge runs in phases:
 
@@ -114,6 +116,7 @@ class MergeReport(BaseModel):
     checkpoint_threads_copied: int = 0
     checkpoint_rows_copied: int = 0
     report_files_copied: int = 0
+    benchmark_runs_copied: int = 0
     report_conflicts: list[str] = Field(default_factory=list)
 
     def summary(self) -> str:
@@ -126,6 +129,7 @@ class MergeReport(BaseModel):
             f"{self.checkpoint_threads_copied} threads ({self.checkpoint_rows_copied} rows) · "
             f"report files +{self.report_files_copied}"
             + (f", {len(self.report_conflicts)} conflicts" if self.report_conflicts else "")
+            + f" · performance checks +{self.benchmark_runs_copied}"
         )
 
 
@@ -349,24 +353,45 @@ def _ensure_checkpoints(conn: sqlite3.Connection) -> None:
 # Briefs (report files)
 # --------------------------------------------------------------------------
 
-def _merge_reports(src_reports: Path, dst_reports: Path, report: MergeReport, dry_run: bool,
-                   copied: list[Path] | None = None) -> None:
-    """Copy missing brief files; record each copied path in ``copied`` (for rollback)."""
-    for src_file in src_reports.rglob("*"):
+def _copy_missing_files(src_root: Path, dst_root: Path, report: MergeReport, dry_run: bool,
+                        copied: list[Path] | None, label: str = "") -> int:
+    """Copy files missing from ``dst_root``; differing same-path files are reported as conflicts.
+
+    Each copied path is recorded in ``copied`` (for rollback). Returns the number of files
+    copied (or that would be, for a dry run).
+    """
+    n = 0
+    for src_file in src_root.rglob("*"):
         if not src_file.is_file():
             continue
-        rel = src_file.relative_to(src_reports)
-        target = dst_reports / rel
+        rel = src_file.relative_to(src_root)
+        target = dst_root / rel
         if target.exists():
             if not filecmp.cmp(src_file, target, shallow=False):
-                report.report_conflicts.append(str(rel))
+                report.report_conflicts.append(f"{label}{rel}")
             continue
-        report.report_files_copied += 1
+        n += 1
         if not dry_run:
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src_file, target)
             if copied is not None:
                 copied.append(target)
+    return n
+
+
+def _merge_reports(src_reports: Path, dst_reports: Path, report: MergeReport, dry_run: bool,
+                   copied: list[Path] | None = None) -> None:
+    """Copy missing brief files (see :func:`_copy_missing_files`)."""
+    report.report_files_copied += _copy_missing_files(src_reports, dst_reports, report, dry_run, copied)
+
+
+def _merge_benchmarks(src_data: Path, dst_data: Path, report: MergeReport, dry_run: bool,
+                      copied: list[Path] | None = None) -> None:
+    """Copy performance-check runs (``data/benchmarks/<run_id>.json``; ids are unique per run)."""
+    src = src_data / "benchmarks"
+    if src.is_dir():
+        report.benchmark_runs_copied += _copy_missing_files(src, dst_data / "benchmarks", report, dry_run, copied,
+                                                            label="data/benchmarks/")
 
 
 # --------------------------------------------------------------------------
@@ -487,6 +512,7 @@ def _run(sources, s, src_data: Path, src_reports: Path | None, *, dry_run: bool)
             _merge_checkpoints(k_src, dst, thread_map, report)
     if src_reports is not None:
         _merge_reports(src_reports, s.reports_dir, report, dry_run=True)
+    _merge_benchmarks(src_data, s.data_dir, report, dry_run=True)
     return report
 
 
@@ -532,6 +558,7 @@ def _apply(sources, s, src_data: Path, src_reports: Path | None, *, backup: bool
             _commit(conn)
         if src_reports is not None:
             _merge_reports(src_reports, s.reports_dir, report, dry_run=False, copied=copied)
+        _merge_benchmarks(src_data, s.data_dir, report, dry_run=False, copied=copied)
         return report
     except Exception as exc:
         for conn in locks.values():

@@ -49,7 +49,7 @@ def test_live_brief_puts_house_style_into_synthesis_prompt(fake_llm):
     save_profile(StyleProfile(name="Agency house style", voice="crisp, third person",
                               techniques=["Lead with the number"]))
     run_brief(["macro-economy"])
-    synth_call = next(c for c, k in zip(fake_llm.calls, fake_llm.kinds) if k == "structured:ExecutiveSynthesis")
+    synth_call = next(c for c, k in zip(fake_llm.calls, fake_llm.kinds, strict=True) if k == "structured:ExecutiveSynthesis")
     system = synth_call[0].content
     assert isinstance(synth_call[0], SystemMessage) and "HOUSE STYLE (Agency house style)" in system
     assert "Lead with the number" in system and "facts and figures always take priority" in system
@@ -59,5 +59,5 @@ def test_live_brief_puts_house_style_into_synthesis_prompt(fake_llm):
     fake_llm.kinds.clear()
     fake_llm.responses[:] = [submit_call(fake_llm.macro)]
     run_brief(["macro-economy"], use_style=False)
-    synth_call = next(c for c, k in zip(fake_llm.calls, fake_llm.kinds) if k == "structured:ExecutiveSynthesis")
+    synth_call = next(c for c, k in zip(fake_llm.calls, fake_llm.kinds, strict=True) if k == "structured:ExecutiveSynthesis")
     assert "HOUSE STYLE" not in synth_call[0].content

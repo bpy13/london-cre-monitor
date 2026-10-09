@@ -7,11 +7,14 @@
 | ``test_deltas_prefer_same_source_and_label_cross_source`` | "What changed" compared different brokers (BNP 8.4% -> Avison Young 6.3%) as if vacancy had fallen 2.1pp |
 | ``test_deltas_never_compare_different_period_lengths`` | A half-year total followed by a quarterly one was reported as a halving; text ordering put 2026-H1 before 2026-Q1 |
 
+More: ``test_period_ordering.py`` (the brief's charts and KPI tiles compared period labels as text).
+
 Add a test here (with a row above) whenever you fix a bug that a test could have caught.
 """
 
 from __future__ import annotations
 
+from itertools import pairwise
 from pathlib import Path
 
 from cre_monitor.config import get_settings
@@ -35,7 +38,7 @@ def test_skill_conversation_is_append_only_with_one_tool_list(fake_llm):
     assert not any(k == "structured:SkillFinding" for k in fake_llm.kinds)   # no separate output call
     skill_calls = [c for c in fake_llm.calls if "SKILL INSTRUCTIONS" in str(c[0].content)]
     assert len(skill_calls) == 2
-    for earlier, later in zip(skill_calls, skill_calls[1:]):
+    for earlier, later in pairwise(skill_calls):
         assert later[: len(earlier)] == earlier                               # strictly append-only
 
 

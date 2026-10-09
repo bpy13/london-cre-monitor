@@ -257,8 +257,33 @@ style/reports/*.md|html|pdf ──► style learn ──► style/profile.json (
 | Change models | `.env`: `MODEL_ROUTER`, `MODEL_SKILL`, `MODEL_SYNTHESIS` |
 | Deliver reports elsewhere | Add a node after `report_writer` (e.g. email/Teams) |
 
+## Security and robustness (in place)
+* **Network guard (SSRF).** Every fetch goes through `tools/_http.http_get`, which allows only
+  `http(s)` URLs that resolve to public IP addresses, re-checked on every redirect. The model
+  picks URLs after reading untrusted pages and reports, so it can't be steered to cloud
+  metadata endpoints or intranet hosts.
+* **No HTML injection in the UI.** User-editable text (catalogue, submarkets, file names) is
+  escaped (`ui.components.esc`) wherever markdown allows HTML. Brief HTML is rendered with
+  Jinja autoescaping.
+* **Server-wide switches are admin-only.** The UI shows the offline/demo toggles only in
+  debug mode. Per-user choices (house style, partial brief, references) are per session or
+  per run.
+* **Concurrent use.** Short-lived SQLite connections with a 30 s busy timeout, so writers
+  queue instead of failing. Catalogue and skill edits use conflict detection and version
+  history.
+* **Model output is never trusted blindly.** Structured outputs are re-validated in code:
+  the validator for figures, unknown tools/metrics/skills dropped in authoring, number
+  guards for restyled text.
+* **Secrets** stay in `.env` / environment variables, never in data, exports or logs
+  (tested).
+* **CI** (`.github/workflows/ci.yml`): ruff, vulture, the offline tests and the eval set on
+  every push.
+
 ## Production hardening (not in PoC scope)
-* Postgres for metrics and checkpoints. A hosted scheduler (Azure Functions, Airflow) instead of Task Scheduler.
+* **Authentication on the UI** (none today: anyone with the link can use it and edit
+  skills/metrics). Put it behind SSO (e.g. an identity-aware proxy) before wider sharing.
+* Postgres for metrics and checkpoints. A hosted scheduler (Azure Functions, Airflow)
+  instead of Task Scheduler.
 * LangSmith tracing and evaluation datasets. Cost dashboards.
 * Paid data feeds (CoStar, EGi, PMA) as additional tools. Licensing review for broker content.
-* Authentication on the UI. Report distribution lists.
+* Report distribution lists.

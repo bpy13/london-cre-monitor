@@ -23,8 +23,8 @@ def test_repo_catalogue_is_consistent_with_skills_and_code():
     assert cat.units()["prime_rent"] == "GBP psf pa" and cat.units()["vacancy_rate"] == "%"
     assert [m.key for m in cat.tracked()] == ["prime_rent", "vacancy_rate", "take_up_sqft",
                                              "under_construction_sqft", "prime_yield", "bank_rate", "gilt_10y_yield"]
-    assert PROTECTED_METRICS <= set(cat.units())                        # code-referenced keys all exist
-    assert PROTECTED_SUBMARKETS <= set(cat.all_places())
+    assert set(cat.units()) >= PROTECTED_METRICS                        # code-referenced keys all exist
+    assert set(cat.all_places()) >= PROTECTED_SUBMARKETS
     assert not get_registry().errors                                    # every skill's metrics are in the catalogue
     assert cat.macro_geographies() == ["UK", "London"] and "Canary Wharf" in cat.submarket_names()
     assert cat.canonical_place("docklands") == "Canary Wharf" and cat.canonical_place("Atlantis") is None

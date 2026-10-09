@@ -11,6 +11,7 @@ Contents of ``exports/cre-export_<YYYYMMDD-HHMMSS>.zip``::
       briefs_index.csv              brief id, created, file paths inside the export
       conversations/<title>_<id>.md readable transcript per conversation
       conversations.json            the same in structured form (incl. findings, errors)
+      performance_checks/<run>.json performance-check runs (if any) + performance_checks.csv summary
       logs/*.log                    only with include_logs=True (for engineers)
 
 Design notes:
@@ -63,6 +64,7 @@ Exported {exported_at} (app version {version}){filter_note}.
 | `briefs_index.csv` | List of the exported briefs with their files |
 | `conversations/` | One readable Markdown transcript per chat conversation |
 | `conversations.json` | Conversations in structured form, including research findings, referenced conversations and error references |
+| `performance_checks/`, `performance_checks.csv` | Performance-check runs (agent scored against reference reports), if any: full results per run, and a one-row-per-run summary |
 | `manifest.json` | Export metadata and counts |
 {logs_row}
 **Please note:** figures come from the cited third-party sources (brokers, Bank of England,
@@ -197,6 +199,38 @@ def _export_conversations(base: Path, since: date | None) -> tuple[list[dict], l
     return conversations, turn_rows
 
 
+#: Columns of performance_checks.csv (one row per run; details in the JSON files).
+CHECK_COLUMNS = ["run_id", "kind", "report", "created_at", "coverage", "accuracy", "accuracy_same_source",
+                 "grounding", "citations_contain", "theme_coverage", "cost_usd_estimate"]
+
+
+def _export_performance_checks(base: Path, since: date | None) -> list[dict]:
+    """Copy performance-check runs (data/benchmarks/*.json) and write a one-row-per-run CSV."""
+    from cre_monitor.benchmark.store import list_runs
+
+    rows = []
+    out_dir = base / "performance_checks"
+    for run in list_runs():
+        if since is not None and run.created_at.date() < since:
+            continue
+        out_dir.mkdir(exist_ok=True)
+        (out_dir / f"{run.run_id}.json").write_text(run.model_dump_json(indent=2), encoding="utf-8")
+        rows.append({
+            "run_id": run.run_id, "kind": run.kind, "report": run.report,
+            "created_at": run.created_at.isoformat(timespec="seconds"),
+            "coverage": run.figure.get("coverage"), "accuracy": run.figure.get("accuracy"),
+            "accuracy_same_source": run.figure.get("accuracy_same_source"),
+            "grounding": run.figure.get("grounding"), "citations_contain": run.citation.get("pct_contains"),
+            "theme_coverage": (run.judgement or {}).get("theme_coverage"), "cost_usd_estimate": run.cost_usd,
+        })
+    if rows:
+        with (base / "performance_checks.csv").open("w", newline="", encoding="utf-8-sig") as fh:
+            writer = csv.DictWriter(fh, fieldnames=CHECK_COLUMNS)
+            writer.writeheader()
+            writer.writerows(rows)
+    return rows
+
+
 def export_data(
     out_dir: Path | None = None,
     since: date | None = None,
@@ -226,6 +260,7 @@ def export_data(
         metrics = _export_metrics(base, since)
         briefs = _export_briefs(base, since)
         conversations, turn_rows = _export_conversations(base, since)
+        checks = _export_performance_checks(base, since)
 
         logs = []
         if include_logs:
@@ -244,7 +279,7 @@ def export_data(
 
         counts = {
             "metric_rows": len(metrics), "briefs": len(briefs), "conversations": len(conversations),
-            "turns": len(turn_rows), "log_files": len(logs),
+            "turns": len(turn_rows), "performance_checks": len(checks), "log_files": len(logs),
         }
         (base / "manifest.json").write_text(json.dumps({
             "exported_at": now.isoformat(timespec="seconds"), "app_version": __version__,

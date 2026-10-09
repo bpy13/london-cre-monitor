@@ -8,7 +8,8 @@ Sidebar:
   the agent resumes with the earlier messages as context. The "⋮" menu renames
   or deletes a conversation. The open conversation is also in the page URL
   (``?thread=<id>``), so a refresh or bookmark reopens it.
-* **Settings** (offline/demo toggles), **Use house style**, the **Skills in the
+* **Settings** (offline/demo toggles - debug/admin mode only, because they are
+  server-wide), **Use house style**, the **Skills in the
   brief** tick boxes and **Run full brief now** (or "Run partial brief" when
   only some skills are ticked).
 * **Export data**: one zip with briefs, metrics history and conversations
@@ -41,6 +42,7 @@ that must survive a re-run lives in ``st.session_state``.
 
 from __future__ import annotations
 
+import logging
 import os
 import uuid
 from pathlib import Path
@@ -54,6 +56,7 @@ from cre_monitor.ui.reference_tab import reference_tab
 from cre_monitor.ui.skills_tab import skills_tab
 
 st.set_page_config(page_title="London CRE Monitor", page_icon="🏢", layout="wide")
+logger = logging.getLogger("cre_monitor.ui")
 
 #: Friendly labels for graph nodes shown in the progress panel.
 NODE_LABELS = {
@@ -200,17 +203,25 @@ def settings_panel() -> None:
     """Run-mode toggles, model info, skill selection and the manual brief trigger."""
     s = get_settings()
     with st.sidebar.expander("⚙️ Settings & brief", expanded=False):
-        offline = st.toggle("Offline data (fixtures)", value=s.cre_offline,
-                            help="Use canned data instead of live web/API calls.")
-        demo_allowed = bool(s.anthropic_api_key)
-        demo = st.toggle("Demo mode (no LLM)", value=bool(s.cre_demo_mode), disabled=not demo_allowed,
-                         help="Without ANTHROPIC_API_KEY demo mode is always on.")
-        # Apply toggles by updating env vars and rebuilding the settings singleton.
-        if offline != s.cre_offline or (demo_allowed and demo != s.cre_demo_mode):
-            os.environ["CRE_OFFLINE"] = "1" if offline else "0"
-            os.environ["CRE_DEMO_MODE"] = "1" if demo else "0"
-            get_settings.cache_clear()
-            st.rerun()
+        # The run modes are process-wide settings: flipping them changes the agent for EVERY user
+        # of this app. So they are only offered in debug (admin) mode; everyone else sees them.
+        if st.get_option("client.toolbarMode") == "developer":
+            st.caption("⚠️ Server-wide: these switches affect everyone using this app.")
+            offline = st.toggle("Offline data (fixtures)", value=s.cre_offline,
+                                help="Use canned data instead of live web/API calls.")
+            demo_allowed = bool(s.anthropic_api_key)
+            demo = st.toggle("Demo mode (no LLM)", value=bool(s.cre_demo_mode), disabled=not demo_allowed,
+                             help="Without ANTHROPIC_API_KEY demo mode is always on.")
+            # Apply toggles by updating env vars and rebuilding the settings singleton.
+            if offline != s.cre_offline or (demo_allowed and demo != s.cre_demo_mode):
+                os.environ["CRE_OFFLINE"] = "1" if offline else "0"
+                os.environ["CRE_DEMO_MODE"] = "1" if demo else "0"
+                get_settings.cache_clear()
+                logger.warning("Run modes changed from the UI: offline=%s demo=%s", offline, demo)
+                st.rerun()
+        else:
+            st.caption("Run modes are set by the administrator (`.env`: CRE_OFFLINE, CRE_DEMO_MODE; "
+                       "or `cre-monitor ui --debug`).")
         st.markdown(
             f"**LLM:** {'demo (canned findings)' if s.cre_demo_mode else s.model_synthesis}  \n"
             f"**Data:** {'offline fixtures' if s.cre_offline else ('Tavily + public APIs' if s.tavily_api_key else 'Google News + public APIs')}"

@@ -21,10 +21,11 @@ from __future__ import annotations
 
 import streamlit as st
 
+from cre_monitor.catalog import GROUP_ORDER
 from cre_monitor.ui.components import render_incident
 
-GROUPS = ["Rents", "Vacancy & availability", "Leasing", "Supply pipeline", "Investment", "Occupier demand", "Macro",
-          "Other"]
+#: Metric groups offered (the catalogue's display order, plus a catch-all).
+GROUPS = [*GROUP_ORDER, "Other"]
 
 
 def _assessment():

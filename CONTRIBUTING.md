@@ -12,7 +12,14 @@ person to read.
    * the README for user-facing changes;
    * `docs/ARCHITECTURE.md` for structural changes;
    * `docs/SKILLS.md` for new tools or skill conventions.
-4. Open a PR with a summary that covers *what* changed and *why*, plus how you tested it.
+4. Run the same checks as CI (`.github/workflows/ci.yml`) before pushing:
+   ```bash
+   ruff check src tests evals            # lint (config in pyproject.toml)
+   vulture src --min-confidence 70       # dead code
+   pytest -q                             # offline tests
+   python evals/run_evals.py             # evaluation set, demo mode
+   ```
+5. Open a PR with a summary that covers *what* changed and *why*, plus how you tested it.
 
 ## Code conventions
 * Python 3.11+, type hints everywhere, `from __future__ import annotations`.

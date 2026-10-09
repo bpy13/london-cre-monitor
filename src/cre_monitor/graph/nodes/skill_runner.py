@@ -261,7 +261,7 @@ def run_skill(skill_name: str, question: str, trace: list | None = None) -> Skil
         if trace is not None:
             trace.extend(out["messages"])
         return out["finding"]
-    except Exception as exc:  # noqa: BLE001 - isolate failures per skill
+    except Exception as exc:
         logger.exception("Skill %s failed", skill_name)
         return SkillFinding(
             skill=skill_name,

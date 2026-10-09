@@ -166,7 +166,9 @@ def edit_skill(name: str) -> None:
     from cre_monitor.skills import editor
     from cre_monitor.versioned import version_label
 
-    prefix = f"sk-{name}-"
+    # ":" cannot occur in skill names, so one skill's prefix never matches another's
+    # (with "-", clearing skill "news" would also clear "news-events").
+    prefix = f"sk:{name}:"
     draft, current_version = editor.load_draft(name)
     # The version the form was opened at: a save is refused if the file changed since.
     version = st.session_state.setdefault(f"{prefix}version", current_version)
@@ -241,7 +243,7 @@ def new_skill() -> None:
             with st.spinner("Claude is drafting the skill..."):
                 draft, notes = draft_skill(name, purpose)
             st.session_state.new_skill_draft = (draft.model_dump(), notes)
-            _reset_form("sk-new-")
+            _reset_form("sk+new:")
         except NeedsLiveMode as exc:
             st.info(f"{exc} Use the blank template instead.")
         except Exception as exc:  # noqa: BLE001
@@ -252,13 +254,13 @@ def new_skill() -> None:
         st.session_state.new_skill_draft = (SkillDraft(
             name=name, description=purpose or "", tools=["web_search", "fetch_document"], order=200,
             instructions=BLANK_INSTRUCTIONS).model_dump(), [])
-        _reset_form("sk-new-")
+        _reset_form("sk+new:")
     if saved := st.session_state.get("new_skill_draft"):
         data, notes = saved
         for n in notes:
             st.info(n)
         draft = SkillDraft.model_validate(data | {"name": name or data["name"]})
-        draft_form(draft, "sk-new-", is_new=True, version=None)
+        draft_form(draft, "sk+new:", is_new=True, version=None)
 
 
 # --------------------------------------------------------------------------

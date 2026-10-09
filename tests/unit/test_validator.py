@@ -72,7 +72,7 @@ def test_conflicting_sources_are_flagged_but_both_kept():
 
 
 def test_small_differences_are_not_conflicts():
-    cleaned, issues = validate([finding(metric(value=8.4), metric(value=8.9, source="CBRE"))], today=TODAY)
+    _, issues = validate([finding(metric(value=8.4), metric(value=8.9, source="CBRE"))], today=TODAY)
     assert not any("Sources disagree" in i.message for i in issues)
 
 

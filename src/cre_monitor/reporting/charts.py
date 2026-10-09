@@ -26,6 +26,7 @@ from __future__ import annotations
 import pandas as pd
 import plotly.graph_objects as go
 
+from cre_monitor.periods import parse_period, period_sort_key
 from cre_monitor.schemas import SkillFinding
 
 # --------------------------------------------------------------------------
@@ -98,11 +99,18 @@ def latest_by_submarket(df: pd.DataFrame, key: str) -> pd.DataFrame:
         return pd.DataFrame()
     sub = df[df["key"] == key].drop_duplicates(["submarket", "period", "source"])
     coverage = sub.groupby("source")["submarket"].nunique()
-    sub = sub.assign(_rank=sub["source"].map(coverage)).sort_values(["period", "_rank"])
+    # _t = true time order of the period (as text, "2026-H1" would sort before "2026-Q1").
+    sub = sub.assign(_rank=sub["source"].map(coverage), _t=sub["period"].map(period_sort_key))
+    sub = sub.sort_values(["_t", "_rank"])
     # Within the latest period, the last row is the best-covered source.
-    latest_period = sub.groupby("submarket")["period"].transform("max")
-    sub = sub[sub["period"] == latest_period]
-    return sub.groupby("submarket", as_index=False).last().drop(columns="_rank")
+    latest = sub.groupby("submarket")["_t"].transform("max")
+    sub = sub[sub["_t"] == latest]
+    return sub.groupby("submarket", as_index=False).last().drop(columns=["_rank", "_t"])
+
+
+def by_period(d: pd.DataFrame) -> pd.DataFrame:
+    """Rows sorted by the true time order of their ``period`` labels."""
+    return d.sort_values("period", key=lambda col: col.map(period_sort_key), kind="stable")
 
 
 def pick_series(d: pd.DataFrame) -> tuple[pd.DataFrame, bool]:
@@ -111,15 +119,19 @@ def pick_series(d: pd.DataFrame) -> tuple[pd.DataFrame, bool]:
     Prefers the source with the most observations, so the line is like-for-like.
     If no single source has 2+ points, falls back to mixing sources (one per
     period, latest-recorded source first) and returns ``mixed=True`` so the
-    chart can draw it dashed and say so.
+    chart can draw it dashed and say so. Only the most common period length is
+    kept, so a half-year figure is never joined to quarterly ones.
 
     Returns:
-        ``(rows sorted by period, mixed_flag)``.
+        ``(rows in true time order, mixed_flag)``.
     """
+    freq = d["period"].map(lambda p: (parsed.freq if (parsed := parse_period(p)) else None))
+    if freq.notna().any():
+        d = d[freq == freq.value_counts().index[0]]
     counts = d["source"].value_counts()
     if not counts.empty and counts.iloc[0] >= 2:
-        return d[d["source"] == counts.index[0]].sort_values("period"), False
-    mixed = d.sort_values("period").drop_duplicates("period", keep="last")
+        return by_period(d[d["source"] == counts.index[0]]), False
+    mixed = by_period(d).drop_duplicates("period", keep="last")
     return mixed, mixed["source"].nunique() > 1
 
 
@@ -137,7 +149,7 @@ def submarket_bar_chart(latest: pd.DataFrame, title: str, unit_label: str, fmt: 
     if latest.empty or len(latest) < 2:
         return None
     d = latest.sort_values("value")
-    period = d["period"].max()
+    period = max(d["period"], key=period_sort_key)
     sources = sorted(d["source"].unique())
     fig = go.Figure(
         go.Bar(
@@ -170,6 +182,7 @@ def trend_chart(history: pd.DataFrame, title: str, y_title: str, submarkets: lis
     submarkets = submarkets or TREND_SUBMARKETS
     fig = go.Figure()
     any_mixed = False
+    periods: set[str] = set()
     for sm in submarkets:
         rows = history[history["submarket"] == sm]
         if rows.empty:
@@ -178,6 +191,7 @@ def trend_chart(history: pd.DataFrame, title: str, y_title: str, submarkets: lis
         if len(d) < 2:
             continue
         any_mixed |= mixed
+        periods |= set(d["period"])
         color = SUBMARKET_COLORS.get(sm, SERIES[-1])
         fig.add_trace(
             go.Scatter(
@@ -197,7 +211,8 @@ def trend_chart(history: pd.DataFrame, title: str, y_title: str, submarkets: lis
     if not fig.data:
         return None
     fig.update_layout(hovermode="x unified")
-    fig.update_xaxes(type="category", categoryorder="category ascending")
+    # Explicit category order: true time order, not alphabetical.
+    fig.update_xaxes(type="category", categoryorder="array", categoryarray=sorted(periods, key=period_sort_key))
     if any_mixed:
         title += " (dashed = mixed sources, not like-for-like)"
     fig = _style(fig, title, y_title)
@@ -263,7 +278,7 @@ def rates_chart(history: dict[str, pd.DataFrame]) -> go.Figure | None:
         d = history.get(key)
         if d is None or d.empty:
             continue
-        d = d.sort_values("period")
+        d = by_period(d)
         fig.add_trace(
             go.Scatter(
                 x=d["period"], y=d["value"], name=label, mode="lines+markers",

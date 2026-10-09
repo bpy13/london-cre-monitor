@@ -29,7 +29,6 @@ In demo mode (no API key) only the deterministic parts work.
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Literal
 
@@ -301,8 +300,3 @@ def test_metric(a: MetricAssessment):
     finding = run_skill(skill, f"Find the latest '{label}' ({key}) for central London and its submarkets. "
                                "Record it as a metric with source and URL.")
     return any(m.key == key for m in finding.metrics), finding
-
-
-def describe(a: MetricAssessment) -> str:
-    """Compact JSON of an assessment, for logs."""
-    return json.dumps(a.model_dump(exclude_defaults=True), ensure_ascii=False)

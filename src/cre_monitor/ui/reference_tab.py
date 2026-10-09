@@ -86,8 +86,8 @@ def library() -> None:
     for path in examples:
         roles = file_roles(path.name)
         c_name, c_style, c_bench, c_del = st.columns([0.62, 0.12, 0.14, 0.12], vertical_alignment="center")
-        # Backticks: file names often contain "_" which Markdown would turn into italics.
-        c_name.markdown(f"`{path.name}` <small>· {path.stat().st_size // 1024 + 1} KB</small>", unsafe_allow_html=True)
+        # Code span: file names often contain "_" (Markdown italics). No HTML: names come from uploads.
+        c_name.markdown(f"`{path.name.replace('`', '')}` · {path.stat().st_size // 1024 + 1} KB")
         for col, role in ((c_style, "style"), (c_bench, "benchmark")):
             st.session_state[f"role-{role}-{path.name}"] = roles[role]   # the file on disk is the truth
             col.checkbox(role, key=f"role-{role}-{path.name}", label_visibility="collapsed",
@@ -318,7 +318,7 @@ def show_judge_run(rec) -> None:
     if j:
         t = st.columns(5)
         t[0].metric("Theme coverage", _fmt(j.get("theme_coverage")))
-        for col, name in zip(t[1:], ("consistency", "so_what", "structure", "readability")):
+        for col, name in zip(t[1:], ("consistency", "so_what", "structure", "readability"), strict=True):
             col.metric(name.replace("_", "-").capitalize(), f"{j[name]['score']}/5", help=j[name]["reason"])
         st.caption(j.get("summary", ""))
         st.dataframe(pd.DataFrame(j["themes"]), hide_index=True, width="stretch")

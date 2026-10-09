@@ -72,6 +72,23 @@ def merge_ready(two_installs):
     return source, _snapshot()
 
 
+def test_performance_check_runs_are_merged_once(merge_ready):
+    from datetime import datetime
+
+    from cre_monitor.benchmark.store import RunRecord, list_runs
+
+    source, _ = merge_ready
+    # A performance-check run recorded on the *source* installation.
+    run = RunRecord(run_id="20261009T101500-000001", kind="judge", report="ref.md", created_at=datetime(2026, 10, 9))
+    (source / "data" / "benchmarks").mkdir(parents=True)
+    (source / "data" / "benchmarks" / f"{run.run_id}.json").write_text(run.model_dump_json(), encoding="utf-8")
+    assert list_runs() == []
+
+    report = merge_installation(source)
+    assert report.benchmark_runs_copied == 1 and [r.run_id for r in list_runs()] == [run.run_id]
+    assert merge_installation(source).benchmark_runs_copied == 0   # idempotent
+
+
 def test_merge_into_empty_target_and_resume(two_installs):
     source, use = two_installs
     use("source")
@@ -220,7 +237,7 @@ def test_old_schema_source_merges(tmp_path):
 
 
 def test_report_conflicts_keep_target_file(two_installs):
-    source, use = two_installs
+    source, _ = two_installs
     (source / "reports" / "2026-10-08").mkdir(parents=True)
     (source / "data").mkdir(parents=True)
     (source / "data" / "metrics.sqlite").touch()

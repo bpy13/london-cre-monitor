@@ -1,0 +1,50 @@
+# Continuous integration: lint + the offline test suite on every push and pull request.
+#
+# Runs without any secrets: tests use offline fixtures, demo mode and a scripted fake
+# LLM (see docs/TESTING.md). Live tests (`-m live`) are deselected by default and are
+# not run here, because they need API keys and spend credit.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Chrome for PNG chart export (kaleido)
+        # One end-to-end test exports PNG charts, which needs a Chrome/Chromium.
+        run: plotly_get_chrome -y || echo "Using the runner's preinstalled Chrome"
+
+      - name: Lint (ruff)
+        run: ruff check src tests evals
+
+      - name: Dead code (vulture)
+        # 70%: below that, vulture mostly reports pydantic fields / typer commands used by name.
+        run: vulture src --min-confidence 70
+
+      - name: Tests (offline)
+        run: pytest -q
+
+      - name: Evaluation set (demo mode)
+        run: python evals/run_evals.py

@@ -59,7 +59,6 @@ def _benchmark_report(with_key: bool = True) -> ak.AnswerKey | None:
 
 
 def test_apply_edits_changes_status_value_and_rechecks_signals():
-    import pytest
 
     key = _benchmark_report()
     bad = next(e for e in key.entries if not e.in_document)

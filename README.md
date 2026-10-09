@@ -95,5 +95,10 @@ START ─► planner ─Send─► skill_runner × N ─► validator ─► per
   comparisons instead of resolving them.
 * **Coverage:** best with Tavily. Some broker data is licence-restricted and is
   deliberately not used.
-* **PoC infrastructure:** SQLite, a local scheduler and no UI login. Production would need
-  hosted infrastructure, tracing and authentication.
+* **No UI login.** Anyone with the link can use the app and edit skills, metrics and
+  submarkets (version history makes every edit undoable). Put it behind SSO before sharing
+  beyond the team.
+* **PoC infrastructure:** SQLite and a local scheduler. Production would need hosted
+  infrastructure and tracing. What is already hardened (network guard, HTML escaping,
+  concurrency, CI) is listed in [ARCHITECTURE.md](docs/ARCHITECTURE.md#security-and-robustness-in-place).
+* **Live path partly verified:** see [TESTING.md → Known gaps](docs/TESTING.md#8-known-gaps).

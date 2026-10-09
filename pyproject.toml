@@ -43,6 +43,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.2",
+    "ruff>=0.6",     # lint: `ruff check src tests evals`
+    "vulture>=2.11", # dead code: `vulture src --min-confidence 70`
 ]
 # LangGraph Studio / `langgraph dev` server (heavy: pulls grpc etc.).
 studio = [
@@ -57,6 +59,24 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 cre_monitor = ["reporting/templates/*.j2"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+# F: pyflakes (unused/undefined names); E9: syntax; B: likely bugs; UP: modern syntax; SIM/PIE: simplifications;
+# RUF: ruff-specific; BLE: blind `except Exception` must be marked deliberate (# noqa: BLE001 + reason);
+# E731: lambda assignment (allowed where marked).
+select = ["F", "E9", "E731", "B", "BLE", "UP", "SIM", "PIE", "RUF"]
+ignore = [
+    "E501",    # long lines: formatting is not enforced
+    "RUF001", "RUF002", "RUF003",  # ambiguous unicode: £, –, emoji are intentional
+    "RUF012",  # mutable class defaults: pydantic models handle them
+    "UP042",   # (str, Enum) kept: StrEnum would change str() of values used in templates
+    "SIM108", "SIM105",  # ternaries / contextlib.suppress: clarity first
+    "B008",    # typer.Option in defaults is typer's documented pattern
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

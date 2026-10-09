@@ -26,7 +26,7 @@ Mode = Literal["brief", "chat"]
 _REPLACE_MARKER = "__replace__"
 
 
-def Replace(findings: list[SkillFinding]) -> list[SkillFinding]:  # noqa: N802 - reads like a type
+def Replace(findings: list[SkillFinding]) -> list[SkillFinding]:
     """Wrap ``findings`` so the reducer *overwrites* state instead of appending.
 
     Implemented as a sentinel first element (rather than a list subclass)

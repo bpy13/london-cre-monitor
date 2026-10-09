@@ -77,7 +77,7 @@ class SkillDraft(BaseModel):
     instructions: str = Field(default="", description="Markdown body: goal, definitions, method, output guidance.")
 
     @classmethod
-    def from_file(cls, path: Path) -> "SkillDraft":
+    def from_file(cls, path: Path) -> SkillDraft:
         post = frontmatter.load(path)
         return cls.model_validate({**post.metadata, "instructions": post.content.strip()})
 

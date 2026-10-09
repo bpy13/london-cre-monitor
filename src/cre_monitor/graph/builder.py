@@ -39,6 +39,7 @@ from cre_monitor.graph.nodes import (
 from cre_monitor.graph.state import AgentState
 from cre_monitor.store import get_conversation_store
 from cre_monitor.store.conversations import MAX_REFS
+from cre_monitor.store.metrics import BUSY_TIMEOUT_S
 
 logger = logging.getLogger(__name__)
 
@@ -80,8 +81,9 @@ def get_chat_graph() -> CompiledStateGraph:
 
     s = get_settings()
     s.ensure_dirs()
-    # check_same_thread=False: Streamlit and LangGraph may call from worker threads.
-    conn = sqlite3.connect(s.checkpoint_db_path, check_same_thread=False)
+    # check_same_thread=False: Streamlit and LangGraph may call from worker threads (SqliteSaver
+    # serialises access with its own lock). The timeout lets a merge or a second process wait.
+    conn = sqlite3.connect(s.checkpoint_db_path, check_same_thread=False, timeout=BUSY_TIMEOUT_S)
     return build_graph(SqliteSaver(conn))
 
 
@@ -186,7 +188,7 @@ def _record_turn(thread_id: str, question: str, state: AgentState) -> None:
             issues=state.get("validation_issues"), findings=state.get("findings"),
             refs=state.get("context_refs"), incident=state.get("incident"),
         )
-    except Exception:  # noqa: BLE001 - history is a convenience; the answer matters more
+    except Exception:
         logger.exception("Could not record conversation turn for thread %s", thread_id)
 
 
@@ -200,4 +202,4 @@ def delete_conversation(thread_id: str) -> None:
 #: Compiling is cheap and side-effect free, so doing it at import is fine.
 graph = build_graph()
 
-__all__ = ["build_graph", "get_chat_graph", "run_brief", "ask", "new_thread_id", "delete_conversation", "graph"]
+__all__ = ["ask", "build_graph", "delete_conversation", "get_chat_graph", "graph", "new_thread_id", "run_brief"]

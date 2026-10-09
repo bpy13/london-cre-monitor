@@ -64,7 +64,7 @@ class SkillMetadata(BaseModel):
     keywords: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def _check_vocab(self) -> "SkillMetadata":
+    def _check_vocab(self) -> SkillMetadata:
         # Catch typos early: a misspelt metric key would silently never chart.
         units = metric_units()
         unknown = [m for m in self.metrics if m not in units]

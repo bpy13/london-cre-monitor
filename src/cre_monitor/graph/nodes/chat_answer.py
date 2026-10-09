@@ -131,7 +131,7 @@ def chat_answer(state: AgentState) -> dict:
             answer = reply.content if isinstance(reply.content, str) else "".join(
                 b.get("text", "") for b in reply.content if isinstance(b, dict)
             )
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # Fall back to the plain digest; the raw error goes to `errors` (-> Incident), not the answer text.
             logger.exception("Chat answer LLM failed; returning digest")
             answer = rule_based_answer(findings, deltas, issues, reference_context)

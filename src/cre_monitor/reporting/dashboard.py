@@ -110,7 +110,7 @@ def latest_by_place(df: pd.DataFrame, source: str | None = None) -> pd.DataFrame
     rank = {s: i for i, s in enumerate(sources_by_coverage(df))}
     d = df[df["source"] == source] if source else df
     rows = []
-    for place, g in d.groupby("submarket"):
+    for _place, g in d.groupby("submarket"):
         latest = g[g["end"] == g["end"].max()]
         rows.append(latest.loc[latest["source"].map(rank).idxmin()])
     return pd.DataFrame(rows).reset_index(drop=True) if rows else d.iloc[0:0]
@@ -227,7 +227,7 @@ def snapshot_chart(latest: pd.DataFrame, metric: MetricDef) -> go.Figure | None:
         return None
     d = latest.sort_values("value")
     labels = [format_value(v, metric.unit) for v in d["value"]]
-    hover = [f"{p}: {lab}<br>{per} · {src}" for p, lab, per, src in zip(d["submarket"], labels, d["period"], d["source"])]
+    hover = [f"{p}: {lab}<br>{per} · {src}" for p, lab, per, src in zip(d["submarket"], labels, d["period"], d["source"], strict=True)]
     fig = go.Figure(go.Bar(
         x=d["value"], y=d["submarket"], orientation="h", marker={"color": SERIES[0], "cornerradius": 4},
         text=labels, textposition="outside", textfont={"color": INK_SECONDARY}, cliponaxis=False,
@@ -260,7 +260,7 @@ def trend_figure(df: pd.DataFrame, places: list[str], metric: MetricDef,
     def trace(ln: Line, show_legend: bool) -> go.Scatter:
         r = ln.rows
         hover = [f"{ln.place}<br>{per}: {format_value(v, metric.unit)}<br>{src}"
-                 for per, v, src in zip(r["period"], r["value"], r["source"])]
+                 for per, v, src in zip(r["period"], r["value"], r["source"], strict=True)]
         return go.Scatter(
             x=r["end"], y=r["value"], mode="lines+markers", showlegend=show_legend,
             name=ln.place + (" (mixed sources)" if ln.mixed else f" ({ln.source})"),

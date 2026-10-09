@@ -12,7 +12,7 @@ from tests.support.apptest import button_labelled, run_app
 def test_edit_and_save_a_skill():
     at = run_app()
     assert at.selectbox(key="skill-select").value == "office-rents"     # first skill opened by default
-    at.text_area(key="sk-office-rents-desc").input("Prime and Grade A rents - edited from the Skills tab.")
+    at.text_area(key="sk:office-rents:desc").input("Prime and Grade A rents - edited from the Skills tab.")
     button_labelled(at, "💾 Save").click().run()
     assert not at.exception, at.exception
     assert get_registry().get("office-rents").meta.description.endswith("edited from the Skills tab.")
@@ -23,8 +23,8 @@ def test_edit_and_save_a_skill():
 def test_validation_errors_are_shown_and_nothing_is_saved():
     at = run_app()
     before = editor.skill_path("office-rents").read_text(encoding="utf-8")
-    at.multiselect(key="sk-office-rents-tools").set_value([])
-    at.text_area(key="sk-office-rents-instr").input("too short")
+    at.multiselect(key="sk:office-rents:tools").set_value([])
+    at.text_area(key="sk:office-rents:instr").input("too short")
     button_labelled(at, "💾 Save").click().run()
     errors = " ".join(e.value for e in at.error)
     assert "choose at least one tool" in errors and "too short" in errors
@@ -43,7 +43,7 @@ def test_create_skill_from_blank_template_then_delete_and_restore():
     assert "lease-events" in get_registry()
     assert at.selectbox(key="skill-select").value == "lease-events"   # the new skill is opened
 
-    at.button(key="sk-lease-events-delete").click().run()
+    at.button(key="sk:lease-events:delete").click().run()
     assert "lease-events" not in get_registry()
     (trash_id, _, _), = editor.list_trash()
     at.button(key=f"restore-{trash_id}").click().run()
@@ -54,7 +54,7 @@ def test_protected_skill_has_no_delete_button():
     at = run_app()
     at.selectbox(key="skill-select").set_value("market-synthesis").run()
     assert not at.exception, at.exception
-    assert not [b for b in at.button if b.key == "sk-market-synthesis-delete"]
+    assert not [b for b in at.button if b.key == "sk:market-synthesis:delete"]
 
 
 def test_add_metric_existing_name_works_in_demo_mode():

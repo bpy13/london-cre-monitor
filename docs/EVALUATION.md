@@ -142,7 +142,7 @@ no further skill is *started* once it is reached; a running skill is never inter
 | `benchmark/scoring.py` | Number matching, figure scoring, grounding, readability (pure) |
 | `benchmark/citations.py` | Cited-page check |
 | `benchmark/judge.py` | Brief rubric |
-| `benchmark/store.py` | Run history (`data/benchmarks/`) |
+| `benchmark/store.py` | Run history (`data/benchmarks/`; included in `cre-monitor export` and `merge`) |
 | `ui/reference_tab.py` | 📚 Reference reports tab |
 | `graph/nodes/skill_runner.py` | `run_skill(..., trace=)` keeps the transcript for grounding and tokens |
 

@@ -41,11 +41,29 @@ def test_untracking_a_metric_hides_its_card_and_saves_the_catalogue():
 
 def test_add_and_remove_submarket_from_ui():
     at = AppTest.from_file(APP, default_timeout=60).run()
-    next(t for t in at.text_input if t.label == "Name").input("Victoria")
-    next(t for t in at.text_input if t.label.startswith("Aliases (optional")).input("SW1")
+    at.text_input(key="add-sm-name").input("Victoria")
+    at.text_input(key="add-sm-aliases").input("SW1")
     next(b for b in at.button if b.label == "Add submarket").click().run()
     assert not at.exception, at.exception
     assert get_catalog().canonical_place("sw1") == "Victoria"
     at.button(key="rm-sm-Victoria").click().run()
     assert "Victoria" not in get_catalog().all_places()
     assert at.button(key="rm-sm-Paddington") and not [b for b in at.button if b.key == "rm-sm-Central London"]
+
+
+def test_edit_metric_definition_and_html_is_escaped():
+    """✏️ edits a metric's name/definition; user text never renders as HTML (stored-XSS guard)."""
+    at = AppTest.from_file(APP, default_timeout=60).run()
+    at.text_area(key="edit-def-prime_yield").input('Net initial yield <img src=x onerror="alert(1)">')
+    at.button(key="edit-save-prime_yield").click().run()
+    assert not at.exception, at.exception
+    assert get_catalog().metric("prime_yield").definition.startswith("Net initial yield")
+    rendered = " ".join(m.value for m in at.markdown)
+    assert "&lt;img" in rendered and "<img" not in rendered
+
+
+def test_run_mode_toggles_only_in_debug_mode():
+    """Offline/demo switches are server-wide, so ordinary users only see the current mode."""
+    at = AppTest.from_file(APP, default_timeout=60).run()
+    assert not [t for t in at.toggle if t.label.startswith(("Offline data", "Demo mode"))]
+    assert any("set by the administrator" in c.value for c in at.caption)

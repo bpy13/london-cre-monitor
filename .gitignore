@@ -13,9 +13,12 @@ merge-in/*
 !merge-in/README.md
 
 # Example reports for the house style (often licensed broker documents) - never committed.
-# The learned style/profile.json (a description, no copied text) IS committed for the team.
 style/reports/*
 !style/reports/README.md
+# The learned house style is local by default (anyone can click "Learn style" in the UI).
+# To share one team style deliberately: git add -f style/profile.json style/profile.md
+style/profile.json
+style/profile.md
 # Which local reports are style examples / benchmarks (describes git-ignored files).
 # Answer keys in style/benchmark/*.json are committed: numbers, links and short themes only.
 style/library.json

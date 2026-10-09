@@ -288,7 +288,7 @@ Full authoring guide: [SKILLS.md](SKILLS.md).
 | `skills/<name>/SKILL.md` | `skills/editor.py` (UI: Skills tab) or by hand | On edit | The skills (§5). Committed |
 | `skills/.history/<name>/`, `catalog/.history/` | `versioned.py` | Before each UI save | `<timestamp>__<file>` copies of the previous version, last 50 kept. Git-ignored |
 | `skills/.trash/<name>__<timestamp>/` | `skills/editor.delete_skill` | On delete from the UI | Deleted skill folders, restorable. Git-ignored |
-| `style/profile.json`, `style/profile.md` | `cre-monitor style learn` | On request | The house style (`StyleProfile`, above). Committable so the team shares one style; read by `synthesis` and `report_writer` unless `REPORT_STYLE=0` |
+| `style/profile.json`, `style/profile.md` | `cre-monitor style learn` | On request | The house style (`StyleProfile`, above). Local by default (git-ignored); commit with `git add -f` to share one team style; read by `synthesis` and `report_writer` unless `REPORT_STYLE=0` |
 | `style/library.json` | `style.set_roles` (UI library ticks) | On change | `{file: {"style": bool, "benchmark": bool}}` for the reports in `style/reports/`. Missing entry = style yes, benchmark no. Git-ignored |
 | `style/benchmark/<file>.json` | `benchmark.answer_key.save_key` | Build / moderation | `AnswerKey` (below). Committable: numbers, links and short themes only. History in `style/benchmark/.history/` |
 | `data/benchmarks/<run_id>.json` | `benchmark.store.save_run` | Each performance run / judgement | `RunRecord` (below) |

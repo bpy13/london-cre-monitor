@@ -86,8 +86,9 @@ from; the CLI uses every file in the folder unless roles are set.
    and writes a **style profile**: `style/profile.json`, plus `style/profile.md` for humans
    to review. Without a key, or with `--heuristic`, a rule-based learner is used instead
    (headings, sentence length, bullets, voice, number conventions; no LLM, free).
-3. Review `style/profile.md` (or `cre-monitor style show`). Commit `profile.json` if the
-   team should share the style. Edit the JSON by hand if needed.
+3. Review `style/profile.md` (or `cre-monitor style show`). Edit the JSON by hand if needed.
+   The profile is **local** (git-ignored), so each installation has its own. To share one style
+   with the team, commit it deliberately: `git add -f style/profile.json style/profile.md`.
 4. Run `cre-monitor brief`. The report header shows "House style".
 
 What changes in a brief:
@@ -430,7 +431,7 @@ The full template is in `.env.example`.
 | `catalog/metrics.yaml`, `catalog/submarkets.yaml` | Metric and submarket vocabularies (committed; editable in Dashboard → Metrics / Submarkets) |
 | `skills/<name>/SKILL.md` | The research skills (committed; editable in the Skills tab) |
 | `skills/.history/`, `catalog/.history/`, `skills/.trash/` | Earlier versions and deleted skills from UI edits (git-ignored, local safety net) |
-| `style/profile.json` / `profile.md` | The learned house style (committable) and its readable summary |
+| `style/profile.json` / `profile.md` | The learned house style and its readable summary (git-ignored; `git add -f` to share a team style) |
 | `style/library.json` | Which library reports are style examples / benchmarks (git-ignored) |
 | `style/benchmark/<file>.json` | Moderated answer keys (committable: numbers, links, short themes) |
 | `data/benchmarks/<run>.json` | Performance-check run history (scores, per-figure results, estimated cost) |

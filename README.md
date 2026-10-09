@@ -39,6 +39,9 @@ conda env automatically. Add the keys as Codespaces secrets.
 
 ## What you get
 
+**See a real output:** [examples/sample-brief/](examples/sample-brief/README.md) - a full live run
+(all 8 skills, Q2 2026 data), with licence-restricted sources removed.
+
 | Output | How |
 |---|---|
 | Market brief: executive summary, KPIs, what changed, risk/opportunity matrix, charts, per-topic sections, sources | `cre-monitor brief` writes HTML, Markdown and JSON to `reports/<date>/` |
@@ -77,6 +80,7 @@ START ─► planner ─Send─► skill_runner × N ─► validator ─► per
 | Doc | For |
 |---|---|
 | [docs/USAGE.md](docs/USAGE.md) | Every command, the UI guide, settings, Python API, outputs, Codespaces |
+| [examples/sample-brief/](examples/sample-brief/README.md) | A real brief from a full live run (redacted), and how to publish another |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Design goals, graph and nodes, skills mechanism, house style, extension points |
 | [style/reports/README.md](style/reports/README.md) | Supplying example reports for the house style (and the licence caveat) |
 | [docs/DATA_MODEL.md](docs/DATA_MODEL.md) | Every data structure (models, graph state, skill metadata), persistence and SQLite schema, fixture formats |

@@ -37,7 +37,7 @@ jobs:
         run: plotly_get_chrome -y || echo "Using the runner's preinstalled Chrome"
 
       - name: Lint (ruff)
-        run: ruff check src tests evals
+        run: ruff check src tests evals scripts
 
       - name: Dead code (vulture)
         # 70%: below that, vulture mostly reports pydantic fields / typer commands used by name.

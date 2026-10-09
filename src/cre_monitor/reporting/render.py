@@ -155,6 +155,7 @@ def write_report(
     out_dir: Path | None = None,
     incident: Incident | None = None,
     style: StyleProfile | None = None,
+    generated_at: datetime | None = None,
 ) -> dict[str, Path]:
     """Render and save the report files.
 
@@ -170,6 +171,8 @@ def write_report(
             "Technical details" section (HTML) / appendix (Markdown).
         style: House style profile; sets section order and headings
             (``style.profile.resolve_layout``). None = built-in layout.
+        generated_at: Time shown as "Generated" (default: now). Set it when re-rendering
+            an earlier run, so the header shows when the research was done.
 
     Returns:
         Mapping of output kind (``html``, ``markdown``, ``json``) to path.
@@ -199,7 +202,7 @@ def write_report(
     skills_meta = {s.name: s.meta for s in get_registry().all()}
     ctx = {
         "run_id": run_id,
-        "generated": datetime.now().strftime("%d %B %Y, %H:%M"),
+        "generated": (generated_at or datetime.now()).strftime("%d %B %Y, %H:%M"),
         "demo_mode": s.cre_demo_mode,
         "offline": s.cre_offline,
         "synthesis": synthesis,

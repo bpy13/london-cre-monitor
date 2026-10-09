@@ -14,7 +14,7 @@ person to read.
    * `docs/SKILLS.md` for new tools or skill conventions.
 4. Run the same checks as CI (`.github/workflows/ci.yml`) before pushing:
    ```bash
-   ruff check src tests evals            # lint (config in pyproject.toml)
+   ruff check src tests evals scripts    # lint (config in pyproject.toml)
    vulture src --min-confidence 70       # dead code
    pytest -q                             # offline tests
    python evals/run_evals.py             # evaluation set, demo mode

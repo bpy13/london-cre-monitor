@@ -21,6 +21,13 @@ The agent is **built from skills**. Each research area is a folder with a `SKILL
 (with charts) - a full live run (all 8 skills, Q2 2026 data), with licence-restricted sources
 removed. What was removed and why: [examples/sample-brief/](examples/sample-brief/README.md).
 
+## License
+
+This repository is provided under the [Proprietary Evaluation License](LICENSE). Permission is
+limited to viewing, executing, and evaluating the code. Commercial, internal, or production use;
+modifications outside technical evaluation; and redistribution are prohibited. See [LICENSE](LICENSE)
+for the full terms.
+
 ## Quick start
 
 ```powershell

@@ -7,6 +7,7 @@ name = "cre-monitor"
 version = "0.1.0"
 description = "LangGraph agent PoC that monitors the London commercial real estate (office) market using pluggable skills."
 readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = ">=3.11"
 authors = [{ name = "London FDE team" }]
 dependencies = [

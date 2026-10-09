@@ -32,9 +32,11 @@ specific: definitions, which reports, example searches) → ✅ Validate → �
 → 💾 Save → 🧪 Test run.
 
 **Add a new research topic**: 🧩 Skills → ➕ New skill → short name (e.g. `lease-events`) and
-one sentence on what it should research → ✨ Draft with Claude → review every field →
-💾 Create skill. If Claude says metrics are missing, add them first (Dashboard → ⚙️ Metrics),
-then tick them in the skill.
+one sentence on what it should research → ✨ Draft with Claude → review the fields →
+decide whether it should be **researched in every market brief** or stay on demand (chat only)
+→ 💾 Create skill. If Claude says metrics are missing, add them first (Dashboard → ⚙️ Metrics),
+then tick them in the skill. The **⚙️ Advanced settings** (plausible ranges, report position,
+model, …) come pre-filled; you rarely need to open them.
 
 **Add a submarket**: Dashboard → 📍 Submarkets → Add, with aliases (other spellings brokers use).
 
@@ -89,5 +91,5 @@ git add skills catalog && git commit -m "Add average lease length metric"
 | Editing, validating, saving, tracking, managing submarkets | Free |
 | Check feasibility / Draft with Claude / Check with Claude | One call to the strongest model (roughly 5-20 US cents; it reads the whole catalogue and skill list) |
 | Test now / Test run | One research run (a few cents to ~$0.50 in live mode) |
-| Every skill in the brief | Runs on every scheduled brief, so a new skill adds its research cost each time |
+| A skill with "Research this topic in every market brief" ticked | Runs in every scheduled / full brief, so it adds its research cost each time. Untick it to keep a topic on demand (chat only) |
 | Performance check | Answer key: one call (a few cents). Figure run: only the skills that collect the figures (designed for under $1; estimate shown first). Brief judgement: one call; readability and citation checks are free |

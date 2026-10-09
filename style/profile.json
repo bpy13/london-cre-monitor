@@ -1,0 +1,33 @@
+{
+  "name": "House style learned from 2 report(s) (heuristic)",
+  "sources": [
+    "bnp_central_london_office_market_update_q1_2026.html",
+    "savills_central_london_office_market_watch.html"
+  ],
+  "learned_at": "2026-10-09T12:56:50",
+  "method": "heuristic",
+  "voice": "impersonal third person, professional and factual",
+  "audience": "",
+  "layout": [
+    {
+      "section": "topics",
+      "title": "Demand Normalises After Strong 2025 Finish"
+    },
+    {
+      "section": "summary",
+      "title": "City Highlights"
+    }
+  ],
+  "headline_style": "",
+  "paragraph_style": "average sentence 26 words; 0% of lines are bullets",
+  "number_style": "rents as '£X psf', yield / rate moves in basis points (bp), areas in 'm sq ft', periods as 'Q2 2026'",
+  "techniques": [
+    "Keep sentences around 26 words",
+    "Write mainly in prose paragraphs",
+    "Benchmark figures against long-term averages",
+    "Quote changes year on year / quarter on quarter"
+  ],
+  "preferred_phrases": [],
+  "avoid": [],
+  "example_sentences": []
+}

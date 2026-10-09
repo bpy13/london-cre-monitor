@@ -20,6 +20,21 @@ def test_edit_and_save_a_skill():
     assert len(editor.versions("office-rents")) == 1
 
 
+def test_advanced_settings_are_kept_when_saving_the_essentials():
+    """Plausible ranges, position, model, websites and trigger words live in a collapsed section;
+    saving a description change must keep them exactly as they were."""
+    before = get_registry().get("office-rents").meta
+    at = run_app()
+    assert any(e.label.startswith("⚙️ Advanced settings") for e in at.expander)
+    assert at.checkbox(key="sk:office-rents:brief").label.startswith("Research this topic in every market brief")
+    at.text_area(key="sk:office-rents:desc").input("Prime and Grade A rents - edited, advanced settings untouched.")
+    button_labelled(at, "💾 Save").click().run()
+    after = get_registry().get("office-rents").meta
+    assert after.description.endswith("advanced settings untouched.")
+    assert (after.sanity_ranges, after.order, after.model_tier, after.preferred_domains, after.keywords) == \
+           (before.sanity_ranges, before.order, before.model_tier, before.preferred_domains, before.keywords)
+
+
 def test_validation_errors_are_shown_and_nothing_is_saved():
     at = run_app()
     before = editor.skill_path("office-rents").read_text(encoding="utf-8")

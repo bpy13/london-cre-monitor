@@ -5,9 +5,12 @@ conflict check, soft delete) and :mod:`cre_monitor.authoring` (Claude drafts a
 new skill / reviews a draft). Layout:
 
 * a picker with every skill, plus **➕ New skill**;
-* for an existing skill: a form with every field in plain English and the
-  instructions, then **Validate**, **Check with Claude**, **Save**; a **Test run**;
-  earlier versions with **Restore**; **Delete** (to the trash);
+* for an existing skill: a form with the essentials (description, tools,
+  metrics, whether it is researched in every brief, instructions) and a
+  collapsed **Advanced settings** section for rarely changed fields (plausible
+  ranges, preferred websites, trigger words, report position, model); then
+  **Validate**, **Check with Claude**, **Save**; a **Test run**; earlier versions
+  with **Restore**; **Delete** (to the trash);
 * for a new skill: name + what it should research, then **Draft with Claude**
   (live) or **Start from a blank template**, then the same form;
 * **Deleted skills** with **Restore** at the bottom.
@@ -25,6 +28,14 @@ from cre_monitor.skills.editor import PROTECTED_SKILLS, TOOL_LABELS, SkillDraft
 from cre_monitor.ui.components import render_incident
 
 NEW = "➕ New skill"
+#: The in_brief switch, phrased by its effect (the frontmatter field is `in_brief`).
+BRIEF_LABEL = "Research this topic in every market brief (not only when asked in chat)"
+#: Model tiers (config.py) in plain English, for the Advanced settings.
+TIERS = {
+    "skill": "Standard (Sonnet) - recommended",
+    "synthesis": "Strongest (Opus) - slower, costs more",
+    "router": "Fastest (Haiku) - cheapest, weaker research",
+}
 BLANK_INSTRUCTIONS = """# <Topic>
 
 ## Goal
@@ -78,27 +89,42 @@ def draft_form(draft: SkillDraft, prefix: str, *, is_new: bool, version: str | N
         metrics = c2.multiselect("Metrics it must record", metric_keys, default=[m for m in draft.metrics
                                  if m in metric_keys], format_func=lambda k: f"{cat.label(k)} ({cat.units()[k]})",
                                  key=f"{prefix}metrics", help="Add new metrics in Dashboard > Metrics first.")
-        ranges = pd.DataFrame([{"metric": k, "min": lo, "max": hi} for k, (lo, hi) in draft.sanity_ranges.items()],
-                              columns=["metric", "min", "max"])
-        st.caption("**Plausible ranges** - figures outside them are treated as mis-reads and dropped.")
-        ranges = st.data_editor(
-            ranges, num_rows="dynamic", hide_index=True, key=f"{prefix}ranges", width="stretch",
-            column_config={"metric": st.column_config.SelectboxColumn("Metric", options=metric_keys, required=True),
-                           "min": st.column_config.NumberColumn("Min", required=True),
-                           "max": st.column_config.NumberColumn("Max", required=True)})
-        domains = c1.text_input("Preferred websites (comma-separated)", ", ".join(draft.preferred_domains),
-                                key=f"{prefix}domains")
-        keywords = c2.text_input("Trigger words (comma-separated)", ", ".join(draft.keywords), key=f"{prefix}keywords",
-                                 help="Used to route chat questions when Claude is unavailable.")
-        c3, c4, c5 = st.columns(3)
-        in_brief = c3.checkbox("Include in the brief", draft.in_brief, key=f"{prefix}brief")
-        order = c4.number_input("Position in the report", value=int(draft.order), step=10, key=f"{prefix}order",
-                                help="Lower numbers come first (existing skills use 10-80).")
-        tier = c5.selectbox("Model", ["skill", "synthesis", "router"], index=["skill", "synthesis", "router"].index(
-            draft.model_tier) if draft.model_tier in ("skill", "synthesis", "router") else 0, key=f"{prefix}tier",
-            help="skill = standard research model; synthesis = strongest (costlier); router = fastest.")
+        in_brief = st.checkbox(
+            BRIEF_LABEL, draft.in_brief, key=f"{prefix}brief",
+            help="**Ticked**: researched in every full market brief - the scheduled weekly brief and "
+                 "*Run full brief now* - and listed in the sidebar's partial-brief tick boxes. Each brief then "
+                 "includes a section on this topic, and costs one more research run (a few cents to ~$0.50).\n\n"
+                 "**Unticked**: on demand only - researched when a chat question needs it (or with *Test run*). "
+                 "Good for niche topics, or for a new skill you are still refining.")
         instructions = st.text_area("Instructions (Markdown) - what the research agent is told", draft.instructions,
                                     height=380, key=f"{prefix}instr")
+
+        # Rarely changed: sensible defaults are set for new skills (and by "Draft with Claude").
+        # The values are always saved as shown, so collapsing this section never loses them.
+        with st.expander("⚙️ Advanced settings - usually no need to change"):
+            ranges = pd.DataFrame([{"metric": k, "min": lo, "max": hi} for k, (lo, hi) in draft.sanity_ranges.items()],
+                                  columns=["metric", "min", "max"])
+            st.caption("**Plausible ranges** - a safety net: figures outside them are treated as mis-reads "
+                       "(e.g. 85% vacancy) and dropped.")
+            ranges = st.data_editor(
+                ranges, num_rows="dynamic", hide_index=True, key=f"{prefix}ranges", width="stretch",
+                column_config={"metric": st.column_config.SelectboxColumn("Metric", options=metric_keys, required=True),
+                               "min": st.column_config.NumberColumn("Min", required=True),
+                               "max": st.column_config.NumberColumn("Max", required=True)})
+            a1, a2 = st.columns(2)
+            domains = a1.text_input("Preferred websites (comma-separated)", ", ".join(draft.preferred_domains),
+                                    key=f"{prefix}domains", help="Sources the research agent should look at first.")
+            keywords = a2.text_input("Trigger words (comma-separated)", ", ".join(draft.keywords),
+                                     key=f"{prefix}keywords",
+                                     help="Used to route chat questions to this skill when Claude is unavailable.")
+            order = a1.number_input("Position in the report", value=int(draft.order), step=10, key=f"{prefix}order",
+                                    help="Order of the topic sections in the brief: lower numbers come first "
+                                         "(built-in topics use 10-80; new skills start at 200, i.e. at the end). "
+                                         "Equal numbers are fine - they are then ordered alphabetically.")
+            tier = a2.selectbox("Model", list(TIERS), index=list(TIERS).index(draft.model_tier)
+                                if draft.model_tier in TIERS else 0, format_func=TIERS.get, key=f"{prefix}tier",
+                                help="Which Claude model researches this topic. Keep the standard model unless "
+                                     "the performance check shows a reason to change.")
         b1, b2, b3 = st.columns(3)
         do_validate = b1.form_submit_button("✅ Validate", width="stretch")
         do_review = b2.form_submit_button("🔍 Check with Claude", width="stretch",
@@ -290,8 +316,12 @@ def skills_tab() -> None:
         # First visit, or the selected skill was deleted: open the first skill. (Set via session
         # state only - passing index= as well makes Streamlit warn.)
         st.session_state["skill-select"] = names[0] if names else NEW
-    labels = {n: f"{n}  ·  {'in brief' if reg.get(n).meta.in_brief and reg.get(n).meta.tools else 'not in brief'}"
-              for n in names}
+    def _status(meta) -> str:
+        if not meta.tools:
+            return "writes the brief's summary"      # meta-skill (market-synthesis)
+        return "in every brief" if meta.in_brief else "on demand (chat only)"
+
+    labels = {n: f"{n}  ·  {_status(reg.get(n).meta)}" for n in names}
     choice = st.selectbox("Skill", [NEW, *names], key="skill-select", format_func=lambda n: labels.get(n, n))
     if choice == NEW:
         new_skill()

@@ -173,7 +173,7 @@ conversations would be used.
 | Tab | Purpose |
 |---|---|
 | **Chat** | Multi-turn Q&A. Shows live progress (which skills are running), then the answer with its sources, the skills used, any relevant charts and the data-quality notes |
-| **Briefs** | Browse past briefs (newest first), view them inline, and download the HTML or Markdown. **🗑 Delete brief** opens a confirmation that removes the brief's HTML, Markdown, findings JSON and charts. The **Also remove its figures from the metrics history** checkbox (off by default) also deletes that run's figures, which changes "what changed" deltas and Dashboard trends |
+| **Briefs** | Browse past briefs (newest first), view them inline, and download the HTML or Markdown. While an installation has no briefs yet, the repo's **📘 sample brief** (`examples/sample-brief/`, a redacted live run) is shown read-only instead. **🗑 Delete brief** opens a confirmation that removes the brief's HTML, Markdown, findings JSON and charts. The **Also remove its figures from the metrics history** checkbox (off by default) also deletes that run's figures, which changes "what changed" deltas and Dashboard trends |
 | **Dashboard** | The metric history in `data/metrics.sqlite`, focused on the metrics you track, plus managing metrics and submarkets. See [Dashboard](#dashboard) |
 | **Reference reports** | Library of reports you supply, the house style, and the performance check. See [Reference reports tab](#reference-reports-tab) |
 | **Skills** | View, edit, add, delete and restore the research skills without touching files. See [Skills tab](#skills-tab) |

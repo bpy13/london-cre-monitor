@@ -115,6 +115,8 @@ class Settings(BaseSettings):
     fixtures_dir: Path = PROJECT_ROOT / "fixtures"
     data_dir: Path = PROJECT_ROOT / "data"
     reports_dir: Path = PROJECT_ROOT / "reports"
+    #: Sample brief committed to the repo; shown in the UI's Briefs tab while there are no briefs yet.
+    sample_brief_dir: Path = PROJECT_ROOT / "examples" / "sample-brief"
     #: Where `cre-monitor export` writes its zip files (git-ignored).
     exports_dir: Path = PROJECT_ROOT / "exports"
     #: House style: example reports in style/reports/ (git-ignored), learned profile in style/profile.json.

@@ -457,13 +457,14 @@ def _figure_relevant(fig, keys: set[str]) -> bool:
 # --------------------------------------------------------------------------
 
 def briefs_tab() -> None:
-    from cre_monitor.reporting.briefs import list_briefs
+    from cre_monitor.reporting.briefs import list_briefs, sample_brief
 
     if msg := st.session_state.pop("brief_deleted_msg", None):
         st.success(msg, icon="🗑")
     briefs = list_briefs()
     if not briefs:
         st.info("No briefs yet. Click **Run full brief now** in the sidebar, or run `cre-monitor brief`.")
+        show_sample_brief(sample_brief())
         return
     by_label = {b.label: b for b in briefs}
     brief = by_label[st.selectbox("Brief", list(by_label), key="brief-select")]
@@ -479,6 +480,23 @@ def briefs_tab() -> None:
     # interactive Plotly charts). That is safe here because the file is our own
     # generated report, whose template HTML-escapes all model/source text.
     st.iframe(path, height=1400)
+
+
+def show_sample_brief(brief) -> None:
+    """The repo's sample brief, read-only (no delete), while this installation has no briefs."""
+    if brief is None:
+        return
+    st.markdown(f"**📘 Sample brief** - a full live run of {brief.created_at:%d %B %Y}, with licence-restricted "
+                "sources removed (see `examples/sample-brief/README.md`). It disappears once you have briefs "
+                "of your own.")
+    path: Path = brief.html
+    md_path = path.with_suffix(".md")
+    c1, c2, _ = st.columns(3)
+    c1.download_button("Download HTML", path.read_bytes(), file_name=path.name, mime="text/html", key="sample-html")
+    if md_path.exists():
+        c2.download_button("Download Markdown", md_path.read_bytes(), file_name=md_path.name, mime="text/markdown",
+                           key="sample-md")
+    st.iframe(path, height=1400)  # our own generated report (escaped template), as for normal briefs
 
 
 def delete_brief_dialog(brief) -> None:

@@ -45,6 +45,9 @@ were rebuilt without restricted history - e.g. prime rents show JLL's figures on
 * This is a PoC output for evaluating the agent - not investment advice. To measure its accuracy
   systematically, use the performance check ([docs/EVALUATION.md](../../docs/EVALUATION.md)).
 
+In the app, this sample appears read-only in the **Briefs** tab while an installation has no briefs of
+its own (e.g. a fresh clone or Codespace), and disappears once you run a brief.
+
 To publish another run the same way:
 `python scripts/publish_sample_brief.py reports/<date>/findings_<run_id>.json examples/<name>`
 - then review the output before committing.

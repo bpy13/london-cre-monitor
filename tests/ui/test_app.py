@@ -88,6 +88,26 @@ def test_api_failure_shows_decorated_panel_with_reference(monkeypatch):
     assert "Error code" not in assistant_text(at)          # raw text only inside "for engineers"
 
 
+def test_sample_brief_shown_only_while_there_are_no_briefs(monkeypatch, tmp_path):
+    from cre_monitor.config import get_settings
+    from cre_monitor.graph.builder import run_brief
+    from cre_monitor.reporting.briefs import list_briefs, sample_brief
+
+    assert sample_brief() is not None and list_briefs() == []      # the repo's examples/sample-brief
+    at = AppTest.from_file(APP, default_timeout=60).run()
+    assert not at.exception, at.exception
+    assert any("Sample brief" in m.value for m in at.markdown)
+    assert not [b for b in at.button if (b.key or "").startswith("del-brief-")]   # read-only
+
+    run_brief(["office-rents"])                                      # a brief of our own...
+    at = AppTest.from_file(APP, default_timeout=60).run()
+    assert not any("Sample brief" in m.value for m in at.markdown)    # ... replaces the sample
+
+    monkeypatch.setenv("SAMPLE_BRIEF_DIR", str(tmp_path / "none"))   # no sample folder: nothing breaks
+    get_settings.cache_clear()
+    assert sample_brief() is None
+
+
 def test_delete_brief_from_briefs_tab():
     from cre_monitor.graph.builder import run_brief
     from cre_monitor.reporting.briefs import get_brief

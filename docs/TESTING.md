@@ -52,14 +52,14 @@ its folder's marker (`tests/conftest.py`), so both forms below select the same t
 | **Unit** | `tests/unit/` · `-m unit` | One module in isolation: pure functions, or the module's own temporary files. No graph runs, no CLI, no fake LLM | 89 tests, ~4 s |
 | **Integration** | `tests/integration/` · `-m integration` | Several components together: the skill agent and Claude-assisted features driven by the fake LLM, stores with real files, export/merge between installations, CLI commands | 73 tests |
 | **End to end** | `tests/e2e/` · `-m e2e` | User journeys through the whole LangGraph pipeline: a brief or chat turn from start to finish, in demo mode or with every LLM call failing | 13 tests |
-| **UI** | `tests/ui/` · `-m ui` | The Streamlit app, run headlessly with `AppTest` | 27 tests |
+| **UI** | `tests/ui/` · `-m ui` | The Streamlit app, run headlessly with `AppTest` | 28 tests |
 | **Regression** | `tests/regression/` · `-m regression` | Reproductions of bugs that were found and fixed (table in `test_fixed_bugs.py`) | 6 tests |
 | **Live** | `tests/live/` · `-m live` | Real BoE, ONS, Nomis, Google News, Tavily; one real skill run if a key is set. Deselected by default | 7 tests (opt-in) |
 | Evaluation | `evals/run_evals.py` | Routing, grounding and citations over a question set (demo or live) | – |
 | Performance check | `cre-monitor bench` | The live agent against reference reports ([EVALUATION.md](EVALUATION.md)) | – |
 
 ```bash
-pytest                      # all offline types (208 tests, ~50-90 s)
+pytest                      # all offline types (209 tests, ~50-90 s)
 pytest tests/unit           # fastest feedback while coding (or: pytest -m unit)
 pytest -m "unit or regression"
 pytest -m "not ui"          # skip the slower Streamlit tests
@@ -77,7 +77,7 @@ Shared test code lives in `tests/support/` (not collected as tests):
 
 ## 4. Test files
 
-`pytest` runs 208 offline tests. `pytest -m live` runs 7 more. CI (`.github/workflows/ci.yml`) runs lint, dead-code check, the offline tests and the eval set on every push and pull request.
+`pytest` runs 209 offline tests. `pytest -m live` runs 7 more. CI (`.github/workflows/ci.yml`) runs lint, dead-code check, the offline tests and the eval set on every push and pull request.
 
 ### Unit (`tests/unit/`)
 | File | Tests | Covers |
@@ -122,7 +122,7 @@ Shared test code lives in `tests/support/` (not collected as tests):
 ### UI (`tests/ui/`)
 | File | Tests | Covers |
 |---|---|---|
-| `test_app.py` | 11 | Tabs render; chat turn with skills shown; conversations listed, reopened, opened from `?thread=`; reference picker; **API failure shows the styled panel with an `ERR-` reference and no raw text**; delete a brief; sidebar export; house style learn/show/delete/clear and the Use-house-style toggle; **partial brief** tick boxes |
+| `test_app.py` | 12 | Tabs render; the read-only sample brief is shown only while there are no briefs; chat turn with skills shown; conversations listed, reopened, opened from `?thread=`; reference picker; **API failure shows the styled panel with an `ERR-` reference and no raw text**; delete a brief; sidebar export; house style learn/show/delete/clear and the Use-house-style toggle; **partial brief** tick boxes |
 | `test_dashboard_tab.py` | 5 | Tracked headline cards, no submarket cap, switching metrics; untracking hides a card and saves the catalogue; add/remove a submarket with aliases, protected places have no delete button; edit a metric's definition with **user HTML shown as text** (stored-XSS guard); offline/demo switches hidden outside debug mode |
 | `test_skills_and_metrics_ui.py` | 7 | Skills tab: edit + save, advanced settings kept when only the essentials are edited, validation errors (nothing saved), create from template → delete → restore, protected skill; Add a metric: Track it (demo), needs Claude (demo), with the fake LLM nothing saved before approval and the proposal is editable |
 | `test_reference_tab.py` | 4 | Reference reports tab: house style moved from the sidebar, library roles saved; answer-key moderation + Accept all safe, AI steps need live mode; figure run scorecard and cost warning; brief judgement in demo mode |

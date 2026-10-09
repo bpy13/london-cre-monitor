@@ -75,6 +75,21 @@ def list_briefs(reports_dir: Path | None = None) -> list[Brief]:
     return sorted(briefs, key=lambda b: b.created_at, reverse=True)
 
 
+def sample_brief() -> Brief | None:
+    """The sample brief committed to the repo (``examples/sample-brief/``), if present.
+
+    Shown read-only in the UI's Briefs tab only while an installation has no briefs of
+    its own, so a fresh clone has something to look at. It is never listed by
+    :func:`list_briefs`, so export, delete and the performance check never touch it.
+    """
+    folder = get_settings().sample_brief_dir
+    html = next(iter(sorted(folder.glob("brief_*.html"))), None) if folder.is_dir() else None
+    if html is None:
+        return None
+    run_id = html.stem.removeprefix("brief_")
+    return Brief(run_id=run_id, date_dir=folder, html=html, created_at=_created_at(run_id, html))
+
+
 def get_brief(run_id: str, reports_dir: Path | None = None) -> Brief | None:
     """Find a brief by run id (``None`` if unknown or the id is malformed)."""
     if not RUN_ID_RE.match(run_id):
